@@ -1,5 +1,5 @@
 import LogoutButton from './Logout';
-import { Container, Nav, Navbar } from 'react-bootstrap';
+import { Container, Nav, Navbar, Image, Dropdown } from 'react-bootstrap';
 
 const NavBar = () => {
     return (
@@ -11,7 +11,18 @@ const NavBar = () => {
                         <Nav.Link href='/'>Dashboard</Nav.Link>
                     </Nav>
                     <Nav>
-                        <LogoutButton />
+                        <Dropdown>
+                            <Image src="" roundedCircle />
+                            <Dropdown.Toggle />
+                            <Dropdown.Menu>
+                                <Dropdown.Item href='/profile'>
+                                    Profile
+                                </Dropdown.Item>
+                                <Dropdown.Item>
+                                    <LogoutButton />
+                                </Dropdown.Item>
+                            </Dropdown.Menu>
+                        </Dropdown>
                     </Nav>
                 </Navbar.Collapse>
             </Container>

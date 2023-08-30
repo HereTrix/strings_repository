@@ -62,7 +62,11 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
 
     return (
         <>
-            <Button onClick={() => setShowDialog(true)} className="mb-3" >Add localization key</Button>
+            <Button
+                onClick={() => setShowDialog(true)
+                } className="my-2" >
+                Add localization key
+            </Button>
             <ListGroup>
                 {tokens && tokens.map((token) =>
                     <StringTokenListItem

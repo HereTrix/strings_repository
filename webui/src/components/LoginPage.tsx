@@ -31,7 +31,7 @@ const LoginPage = () => {
         const result = await http<LoginResponse>({
             isAuth: true,
             method: APIMethod.post,
-            path: "api/login",
+            path: "/api/login",
             data: { "username": data.login, "password": data.password }
         })
 
@@ -53,27 +53,23 @@ const LoginPage = () => {
         <>
             <Container className="align-content-center" fluid>
                 <Form validated={validated} onSubmit={handleSubmit(onSubmit)} className="container">
-                    <Row className="mb-3">
-                        <Form.Group>
-                            <Form.Label>Login</Form.Label>
-                            <Form.Control
-                                required
-                                type="text"
-                                placeholder="Enter login"
-                                {...register("login")} />
-                        </Form.Group>
-                    </Row>
-                    <Row className="mb-3">
-                        <Form.Group>
-                            <Form.Label>Password</Form.Label>
-                            <Form.Control
-                                required
-                                type="password"
-                                placeholder="Enter password"
-                                {...register("password")} />
-                        </Form.Group>
-                    </Row>
-                    <Button type="submit" className="mb-2">Login</Button>
+                    <Form.Group className="my-2">
+                        <Form.Label>Login</Form.Label>
+                        <Form.Control
+                            required
+                            type="text"
+                            placeholder="Enter login"
+                            {...register("login")} />
+                    </Form.Group>
+                    <Form.Group className="my-2">
+                        <Form.Label>Password</Form.Label>
+                        <Form.Control
+                            required
+                            type="password"
+                            placeholder="Enter password"
+                            {...register("password")} />
+                    </Form.Group>
+                    <Button type="submit" className="my-2">Login</Button>
                 </Form >
             </Container>
             <ToastContainer className="p-3" position="middle-center">

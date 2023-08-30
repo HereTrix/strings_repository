@@ -8,8 +8,7 @@ from pycountry import *
 
 
 class ProjectAPI(generics.GenericAPIView):
-    queryset = Project.objects.all()
-    serializer_class = ProjectSerializer
+
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):

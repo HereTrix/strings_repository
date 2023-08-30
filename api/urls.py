@@ -2,7 +2,7 @@ from django.urls import path
 from api.views.export import ExportAPI, ExportFormatsAPI
 from api.views.generic import *
 from api.views.language import LanguageAPI
-from api.views.project import CreateProjectAPI, ProjectAPI, ProjectAvailableLanguagesAPI, ProjectListAPI, LanguageListAPI, ProjectParticipantsAPI, StringTokenListAPI, TranslationsListAPI
+from api.views.project import *
 from api.views.translation import StringTokenAPI, TranslationAPI
 from knox.views import LogoutView
 
@@ -10,6 +10,7 @@ urlpatterns = [
     path('login', SignInAPI.as_view()),
     path('logout', LogoutView.as_view()),
     path('profile', ProfileAPI.as_view()),
+    path('password', ChangePasswordAPI.as_view()),
     path('project/<int:pk>/availableLanguages',
          ProjectAvailableLanguagesAPI.as_view()),
     path('project/<int:pk>', ProjectAPI.as_view()),

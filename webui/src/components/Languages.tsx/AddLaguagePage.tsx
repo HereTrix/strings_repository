@@ -62,7 +62,7 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
                 <Modal.Title>Add language</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Row>
+                <Row className="my-2">
                     <Typeahead
                         id="basic-typeahead-single"
                         labelKey="name"
@@ -86,7 +86,7 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
                         }}
                     />
                 </Row>
-                <Button type="submit" className="mb-3" onClick={submit}>Save</Button>
+                <Button type="submit" className="my-2" onClick={submit}>Save</Button>
             </Modal.Body>
         </Modal>
     )

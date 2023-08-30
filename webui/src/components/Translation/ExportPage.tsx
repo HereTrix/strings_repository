@@ -98,7 +98,7 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
                         )
                     }}
                 />
-                <Dropdown>
+                <Dropdown className="my-2">
                     <Dropdown.Toggle variant="success" id="dropdown-basic">
                         {selectedType ? selectedType.name : "Select format"}
                     </Dropdown.Toggle>
@@ -110,11 +110,14 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
                         })}
                     </Dropdown.Menu>
                 </Dropdown>
-                <Row className="mb-3">
-                    {error && <label className="error">{error}</label>}
-                </Row>
+                {error &&
+                    <Row className="my-3">
+                        <label className="error">{error}</label>
+                    </Row>
+                }
                 <Button
                     onClick={onExport}
+                    className="my-2"
                 >
                     Export
                 </Button>

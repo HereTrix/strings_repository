@@ -7,7 +7,7 @@ from .transport_models import *
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'email')
+        fields = ('email', 'first_name', 'last_name')
 
 
 class ParticipantSerializer(serializers.ModelSerializer):

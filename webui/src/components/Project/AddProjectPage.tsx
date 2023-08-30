@@ -46,24 +46,24 @@ const AddProjectPage: FC<AddProjectProps> = ({ show, onHide, onSuccess }) => {
                 <Modal.Title>Add project</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Form onSubmit={handleSubmit(onSubmit)} className="container">
-                    <Row className="mb-3">
+                <Form onSubmit={handleSubmit(onSubmit)}>
+                    <Form.Group className="my-2">
                         <Form.Label>Project name</Form.Label>
                         <Form.Control
                             required
                             type="text"
                             placeholder="Enter project name"
                             {...register("projectName")} />
-                    </Row>
-                    <Row className="mb-3">
+                    </Form.Group>
+                    <Form.Group className="my-2">
                         <Form.Label>Project description</Form.Label>
                         <Form.Control
                             as="textarea"
                             placeholder="Enter project description"
                             {...register("description")} />
-                    </Row>
+                    </Form.Group>
                     {error && <Form.Label>{error}</Form.Label>}
-                    <Button type="submit" className="mb-2">
+                    <Button type="submit" className="my-2">
                         Create
                     </Button>
                 </Form>

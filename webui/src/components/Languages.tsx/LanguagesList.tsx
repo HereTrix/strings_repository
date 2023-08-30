@@ -65,7 +65,7 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
 
     return (
         <>
-            <Button onClick={() => setShowDialog(true)} className="mb-3" >Add language</Button>
+            <Button onClick={() => setShowDialog(true)} className="my-2" >Add language</Button>
             <ListGroup>
                 {languages && languages.map((language) =>
                     <LanguageListItem

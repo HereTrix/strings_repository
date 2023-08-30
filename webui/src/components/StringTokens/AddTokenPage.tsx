@@ -47,23 +47,23 @@ const AddTokenPage: FC<AddTokenPageProps> = ({ project_id, show, onHide, onSucce
             </Modal.Header>
             <Modal.Body>
                 <Form onSubmit={handleSubmit(onSubmit)} className="container">
-                    <Row className="mb-3">
+                    <Form.Group className="my-2">
                         <Form.Label>Localization key</Form.Label>
                         <Form.Control
                             required
                             type="text"
                             placeholder="Enter Localization key"
                             {...register("token")} />
-                    </Row>
-                    <Row className="mb-3">
+                    </Form.Group>
+                    <Form.Group className="my-2">
                         <Form.Label>Comment</Form.Label>
                         <Form.Control
                             as="textarea"
                             placeholder="Enter comment"
                             {...register("comment")} />
-                    </Row>
+                    </Form.Group>
                     {error && <Form.Label>{error}</Form.Label>}
-                    <Button type="submit" className="mb-2">Add</Button>
+                    <Button type="submit" className="my-2">Add</Button>
                 </Form>
             </Modal.Body>
         </Modal>
