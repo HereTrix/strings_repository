@@ -7,6 +7,7 @@ import ProjectInfo from "./ProjectInfo"
 import LanguagesList from "../Languages.tsx/LanguagesList"
 import StringTokensList from "../StringTokens/StringTokensList"
 import ExportPage from "../Translation/ExportPage"
+import HistoryPage from "../History/HistoryPage"
 
 const ProjectPage = () => {
 
@@ -56,6 +57,12 @@ const ProjectPage = () => {
                             <StringTokensList project={project} />
                         </Tab>
                     }
+                    <Tab
+                        eventKey="history"
+                        title="History"
+                    >
+                        <HistoryPage project={project} />
+                    </Tab>
                     <Tab
                         eventKey="info"
                         title="info"

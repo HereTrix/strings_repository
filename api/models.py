@@ -79,6 +79,7 @@ class Translation(models.Model):
         Language, on_delete=models.CASCADE, related_name='translation')
     token = models.ForeignKey(
         StringToken, on_delete=models.CASCADE, related_name='translation')
+    updated_at = models.DateTimeField('updated_at', auto_now_add=True)
 
     class Meta:
         unique_together = ['token', 'language']

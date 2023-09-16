@@ -1,6 +1,7 @@
 from django.urls import path
 from api.views.export import ExportAPI, ExportFormatsAPI
 from api.views.generic import *
+from api.views.history import ProjectHistoryAPI, ProjectHistoryExportAPI
 from api.views.language import LanguageAPI
 from api.views.project import *
 from api.views.translation import StringTokenAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI
@@ -21,6 +22,8 @@ urlpatterns = [
     path('project/<int:pk>/tags', ProjectTagsAPI.as_view()),
     path('project/<int:pk>/translations/<str:code>',
          TranslationsListAPI.as_view()),
+    path('project/<int:pk>/history/export', ProjectHistoryExportAPI.as_view()),
+    path('project/<int:pk>/history', ProjectHistoryAPI.as_view()),
     path('projects/list', ProjectListAPI.as_view()),
     path('project', CreateProjectAPI.as_view()),
     path('language', LanguageAPI.as_view()),

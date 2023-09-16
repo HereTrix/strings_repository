@@ -55,7 +55,6 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
 
         const codes = selectedLanguages.map((lang) => lang.code).join(",")
 
-        console.log(selectedType, codes)
         const result = await download({
             method: APIMethod.get,
             path: '/api/export',

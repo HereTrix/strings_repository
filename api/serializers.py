@@ -126,3 +126,21 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ['tag']
+
+
+class HistorySerializer(serializers.ModelSerializer):
+    language = serializers.SlugRelatedField(
+        many=False,
+        read_only=True,
+        slug_field='code'
+    )
+
+    token = serializers.SlugRelatedField(
+        many=False,
+        read_only=True,
+        slug_field='token'
+    )
+
+    class Meta:
+        model = Translation
+        fields = ['translation', 'updated_at', 'language', 'token']
