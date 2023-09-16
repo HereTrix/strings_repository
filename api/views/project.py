@@ -1,8 +1,8 @@
 from django.http import JsonResponse
 import django.core.exceptions as exception
 from rest_framework import generics, permissions, status
-from api.models import Language, Project, ProjectRole, StringToken, Translation
-from api.serializers import ParticipantSerializer, ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer, StringTranslationSerializer, TranslationSerializer
+from api.models import Language, Project, ProjectRole, StringToken, Tag, Translation
+from api.serializers import ParticipantSerializer, ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer, StringTranslationSerializer, TagSerializer, TranslationSerializer
 from api.transport_models import APIProject
 from pycountry import *
 
@@ -65,6 +65,7 @@ class ProjectParticipantsAPI(generics.GenericAPIView):
 
 
 class CreateProjectAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         try:
@@ -149,11 +150,21 @@ class StringTokenListAPI(generics.GenericAPIView):
 
     def get(self, request, pk):
         user = request.user
+        query = request.GET.get('q')
+        tags = request.GET.get('tags')
         try:
             tokens = StringToken.objects.filter(
                 project__id=pk,
                 project__roles__user=user
-            ).prefetch_related('tags')
+            )
+
+            if query:
+                tokens = tokens.filter(token__icontains=query)
+
+            if tags:
+                tokens = tokens.filter(tags__tag=tags)
+
+            tokens = tokens.prefetch_related('tags')
             serializer = StringTokenSerializer(tokens, many=True)
             return JsonResponse(serializer.data, safe=False)
         except Exception as e:
@@ -167,11 +178,25 @@ class TranslationsListAPI(generics.GenericAPIView):
 
     def get(self, request, pk, code):
         user = request.user
+        tags = request.GET.get('tags')
+        query = request.GET.get('q')
         try:
             tokens = StringToken.objects.filter(
                 project__pk=pk,
                 project__roles__user=user
             ).prefetch_related('translation', 'tags')
+
+            if query:
+                tokens = tokens.filter(
+                    translation__translation__icontains=query
+                ) | tokens.filter(
+                    token__icontains=query
+                )
+
+            if tags:
+                tokens = tokens.filter(
+                    tags__tag=tags
+                )
 
             result = [StringTokenModelSerializer(token=token, code=code).toJson()
                       for token in tokens]
@@ -181,3 +206,21 @@ class TranslationsListAPI(generics.GenericAPIView):
             return JsonResponse({
                 'error': e
             }, status.HTTP_404_NOT_FOUND)
+
+
+class ProjectTagsAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        user = request.user
+        try:
+            tags = Tag.objects.filter(
+                tokens__project__pk=pk,
+                tokens__project__roles__user=user
+            )
+            data = [tag.tag for tag in tags]
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            return JsonResponse({
+                'error': e
+            }, status=status.HTTP_400_BAD_REQUEST)

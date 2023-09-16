@@ -2,10 +2,11 @@ import { ChangeEventHandler, FC, useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import { APIMethod, http } from "../Utils/network"
 import Translation from "../model/Translation"
-import { Button, Container, ListGroup, Row, Stack } from "react-bootstrap"
+import { Button, Container, Dropdown, ListGroup, Row, Stack } from "react-bootstrap"
 import { history } from "../Utils/history"
 import ExportPage from "./ExportPage"
 import Project from "../model/Project"
+import SearchBar from "../UI/SearchBar"
 
 type TranslationListItemProps = {
     translation: Translation,
@@ -35,7 +36,7 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, onSave
                 </Row>
                 <Row>
                     <textarea defaultValue={translation.translation} onChange={onTranslationChange} />
-                    {canSave && <Button onClick={save}>Save</Button>}
+                    {canSave && <Button onClick={save} className="my-1">Save</Button>}
                 </Row>
             </Stack>
         </ListGroup.Item>
@@ -50,6 +51,10 @@ const TranslationPage = () => {
     const [project, setProject] = useState<Project>()
     const [translations, setTranslations] = useState<Translation[]>()
 
+    const [selectedTag, setSelectedTag] = useState<string>()
+    const [query, setQuery] = useState<string>("")
+    const [tags, setTags] = useState<string[]>([])
+
     const fetchProject = async () => {
         const data = await http<Project>({
             method: APIMethod.get,
@@ -62,9 +67,23 @@ const TranslationPage = () => {
     }
 
     const fetch = async () => {
+        fetchData(selectedTag, query)
+    }
+
+    const fetchData = async (tag: string | undefined, term: string) => {
+        var params = new Map<string, string>()
+        if (tag) {
+            params.set('tags', tag)
+        }
+
+        if (term) {
+            params.set('q', term)
+        }
+
         const result = await http<Translation[]>({
             method: APIMethod.get,
-            path: `/api/project/${project_id}/translations/${code}`
+            path: `/api/project/${project_id}/translations/${code}`,
+            params: params
         })
 
         if (result.error) {
@@ -72,6 +91,27 @@ const TranslationPage = () => {
         } else {
             setTranslations(result.value)
         }
+    }
+
+    const fetchTags = async () => {
+        const result = await http<[string]>({
+            method: APIMethod.get,
+            path: `/api/project/${project_id}/tags`
+        })
+
+        if (result.value) {
+            setTags(result.value)
+        }
+    }
+
+    const selectTag = async (tag: string | undefined) => {
+        setSelectedTag(tag)
+        fetchData(tag, query)
+    }
+
+    const onSearch = async (query: string) => {
+        setQuery(query)
+        fetchData(selectedTag, query)
     }
 
     const saveTranslation = async (translation: Translation) => {
@@ -99,6 +139,7 @@ const TranslationPage = () => {
     useEffect(() => {
         fetchProject()
         fetch()
+        fetchTags()
     }, [])
 
     return (
@@ -107,8 +148,32 @@ const TranslationPage = () => {
                 <Button onClick={backToProject}>Back to project</Button>
                 {project && <Button onClick={onExport}>Export</Button>}
             </Container>
+            <label>This is translation for {code}</label>
+            <Stack direction="horizontal" gap={5}>
+                {tags && <>
+                    <Dropdown className="my-2">
+                        <Dropdown.Toggle variant="success" id="dropdown-basic">
+                            {selectedTag ? selectedTag : "Filter by tag"}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            {selectedTag &&
+                                <Dropdown.Item
+                                    onClick={() => selectTag(undefined)}
+                                    style={{ backgroundColor: "red", color: "white" }}
+                                >
+                                    Clear
+                                </Dropdown.Item>
+                            }
+                            {tags.map((tag) =>
+                                <Dropdown.Item onClick={() => selectTag(tag)} key={tag}>{tag}</Dropdown.Item>
+                            )}
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </>
+                }
+                <SearchBar onSearch={onSearch} />
+            </Stack>
             <ListGroup>
-                <label>This is translation for {code}</label>
                 {translations && translations.map(
                     (translation) => <TranslationListItem
                         translation={translation}

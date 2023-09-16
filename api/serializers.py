@@ -120,3 +120,9 @@ class StringTokenModelSerializer:
             'comment': self.token.comment,
             'tags': [tag.tag for tag in self.token.tags.all()]
         }
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['tag']

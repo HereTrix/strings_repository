@@ -82,7 +82,14 @@ export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
         body: data
     }
 
-    const response = await fetch(request.path, requestOptions)
+    var path = request.path
+
+    if (request.params) {
+        const query = new URLSearchParams(request.params)
+        path = path + "?" + query.toString()
+    }
+
+    const response = await fetch(path, requestOptions)
     if (response.status == 401) {
         localStorage.removeItem("auth")
         history.navigate("/login", { replace: true })

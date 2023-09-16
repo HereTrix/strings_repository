@@ -76,7 +76,7 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
                             return (
                                 <Row >
                                     <Col>
-                                        <img src={"/static/flags/" + language.code.toLocaleLowerCase() + ".png"} alt={language.code} />
+                                        <img src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code} />
                                     </Col>
                                     <Col>
                                         <label className="align-items-center">{language.name}</label>

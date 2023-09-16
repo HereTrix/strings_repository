@@ -1,7 +1,7 @@
 from django.http import HttpResponse, JsonResponse
 import django.core.exceptions as exception
 from rest_framework import generics, permissions, status
-from api.models import Language, Translation, StringToken, Project, ProjectRole
+from api.models import Language, Tag, Translation, StringToken, Project, ProjectRole
 from api.serializers import StringTokenSerializer, TranslationSerializer
 
 
@@ -19,7 +19,10 @@ class StringTokenAPI(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         try:
             project = Project.objects.get(
-                pk=project_id, roles__user=user, roles__role__in=ProjectRole.change_token_roles)
+                pk=project_id,
+                roles__user=user,
+                roles__role__in=ProjectRole.change_token_roles
+            )
         except Project.DoesNotExist:
             return JsonResponse({
                 'error': 'Project not fount'
@@ -116,3 +119,58 @@ class TranslationAPI(generics.GenericAPIView):
         translation.save()
 
         return JsonResponse({}, status=status.HTTP_200_OK)
+
+
+class StringTokenTagAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        user = request.user
+        tags = request.data['tags']
+        try:
+            token = StringToken.objects.get(
+                pk=pk,
+                project__roles__user=user,
+                project__roles__role__in=ProjectRole.change_token_roles
+            )
+            token.tags.clear()
+            for tag in tags:
+                token_tag, _ = Tag.objects.get_or_create(
+                    tag=tag
+                )
+                token.tags.add(token_tag)
+
+            token.save()
+            return JsonResponse({})
+        except StringToken.DoesNotExist:
+            return JsonResponse({
+                'error': 'Token not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+class StringTokenTranslationsAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_or_empty(self, translation, language):
+        try:
+            return translation.get(language=language).translation
+        except Translation.DoesNotExist:
+            return ''
+
+    def get(self, request, pk):
+        user = request.user
+        try:
+            # TODO: Need to refactor
+            token = StringToken.objects.get(
+                pk=pk,
+                project__roles__user=user,
+            )
+
+            data = [{'code': lang.code, 'translation': self.get_or_empty(token.translation, lang)}
+                    for lang in token.project.languages.all()]
+
+            return JsonResponse(data, safe=False)
+        except StringToken.DoesNotExist:
+            return JsonResponse({
+                'error': 'Token not found'
+            }, status=status.HTTP_404_NOT_FOUND)

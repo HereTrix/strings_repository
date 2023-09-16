@@ -63,7 +63,7 @@ class StringToken(models.Model):
     comment = models.TextField('Comment', blank=True)
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='tokens')
-    tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(Tag, related_name="tokens")
 
     class Meta:
         unique_together = ['token', 'project']

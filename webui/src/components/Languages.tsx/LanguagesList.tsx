@@ -22,7 +22,7 @@ const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, onDe
             href={"/project/" + project_id + "/language/" + language.code.toLocaleLowerCase()}
             action
             className="d-flex justify-content-between align-items-start">
-            <img className="icon" src={"/static/flags/" + language.code.toLocaleLowerCase() + ".png"} alt={language.code} />
+            <img className="icon" src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code} />
             <label>{language.name}</label>
             <Button onClick={onDelete}>Delete</Button>
         </ListGroup.Item>
@@ -51,7 +51,7 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
     const load = async () => {
         const result = await http<Language[]>({
             method: APIMethod.get,
-            path: "/api/project/" + project.id + "/languages",
+            path: `/api/project/${project.id}/languages`,
         })
 
         if (result.value) {
