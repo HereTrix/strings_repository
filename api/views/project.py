@@ -184,7 +184,7 @@ class TranslationsListAPI(generics.GenericAPIView):
             tokens = StringToken.objects.filter(
                 project__pk=pk,
                 project__roles__user=user
-            ).prefetch_related('translation', 'tags')
+            ).prefetch_related('translation', 'tags').distinct()
 
             if query:
                 tokens = tokens.filter(
