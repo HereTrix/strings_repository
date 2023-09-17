@@ -1,17 +1,26 @@
 from xml.dom import minidom
+import zipfile
+
+from django.http import HttpResponse
+
+from api.file_processors.export_file_type import ExportFile
 
 
 class AndroidResourceFileWriter:
 
-    def __init__(self, records):
-        self.records = records
+    def __init__(self):
+        self.response = HttpResponse(content_type='application/zip')
+        self.zip_file = zipfile.ZipFile(self.response, 'w')
 
-    def convert_file(self):
+    def path(self, code):
+        return f'/values-{code.lower()}/strings{ExportFile.android.file_extension()}'
+
+    def append(self, records, code):
         root = minidom.Document()
         xml = root.createElement('resources')
         root.appendChild(xml)
 
-        for record in self.records:
+        for record in records:
             if record.comment:
                 comment = root.createComment(record.comment)
                 xml.appendChild(comment)
@@ -22,4 +31,14 @@ class AndroidResourceFileWriter:
                 item.appendChild(text)
             xml.appendChild(item)
 
-        return root.toxml()
+        data = root.toxml()
+
+        self.zip_file.writestr(
+            self.path(code=code),
+            data
+        )
+
+    def http_response(self):
+        self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
+        self.zip_file.close()
+        return self.response

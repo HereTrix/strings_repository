@@ -16,6 +16,7 @@ type ExportPageProps = {
 interface AvailableFormat {
     type: number
     name: string
+    extension: string
 }
 
 const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.Element => {
@@ -62,7 +63,7 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
         })
 
         if (result.value) {
-            fileDownload(result.value, 'resources.zip')
+            fileDownload(result.value.content, result.value.name)
             onHide()
         } else {
         }
@@ -104,7 +105,7 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
                     <Dropdown.Menu>
                         {availableFormats && availableFormats.map((format) => {
                             return (
-                                <Dropdown.Item onClick={() => setSelectedType(format)} key={format.type}>{format.name}</Dropdown.Item>
+                                <Dropdown.Item onClick={() => setSelectedType(format)} key={format.type}>{`${format.name} (${format.extension})`}</Dropdown.Item>
                             )
                         })}
                     </Dropdown.Menu>

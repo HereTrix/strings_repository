@@ -1,12 +1,14 @@
 class TranslationModel:
 
-    def __init__(self, token, translation, comment=None):
+    def __init__(self, token, translation, comment=None, tags=None):
         self.token = token
         self.translation = translation
         self.comment = comment
+        self.tags = tags
 
     def __init__(self, token_model, code):
         self.token = token_model.token
+        self.tags = [tag.tag for tag in token_model.tags.all()]
 
         translation = token_model.translation.filter(
             language__code=code.upper()).first()

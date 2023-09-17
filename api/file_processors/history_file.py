@@ -13,8 +13,10 @@ class HistoryFileWriter:
         ws.title = 'Report'
 
         key_item = 'Localization key'
+        tags_item = 'Tags'
+        comment_item = 'Comments'
 
-        header = [key_item] + self.languages
+        header = [key_item] + self.languages + [tags_item, comment_item]
 
         indexes = {k: v + 1 for v, k in enumerate(header)}
 
@@ -25,13 +27,27 @@ class HistoryFileWriter:
         row = 2
 
         for token in self.data:
-            cell = ws.cell(row=row, column=indexes[key_item])
-            cell.value = token.token
+            ws.cell(
+                row=row,
+                column=indexes[key_item],
+                value=token.token
+            )
+            ws.cell(
+                row=row,
+                column=indexes[tags_item],
+                value=','.join([tag.tag for tag in token.tags.all()])
+            )
+            ws.cell(
+                row=row,
+                column=indexes[comment_item],
+                value=token.comment
+            )
             for translation in token.translation.all():
-                cell = ws.cell(row=row,
-                               column=indexes[translation.language.code]
-                               )
-                cell.value = translation.translation
+                cell = ws.cell(
+                    row=row,
+                    column=indexes[translation.language.code],
+                    value=translation.translation
+                )
             row += 1
 
         wb.save(response)

@@ -56,7 +56,7 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
         })
 
         if (result.value) {
-            fileDownload(result.value, 'report.xlsx')
+            fileDownload(result.value.content, result.value.name)
         } else {
         }
     }

@@ -20,7 +20,12 @@ export interface APIResponse<T> {
     error?: string
 }
 
-export async function download(request: APIRequest): Promise<APIResponse<Blob>> {
+interface File {
+    name: string
+    content: Blob
+}
+
+export async function download(request: APIRequest): Promise<APIResponse<File>> {
     var headers: HeadersInit = []
     headers.push(["Content-Type", "application/json"])
 
@@ -54,7 +59,14 @@ export async function download(request: APIRequest): Promise<APIResponse<Blob>> 
         return { error: "Not authorized" }
     } else if (response.status == 200) {
         const blob = await response.blob()
-        return { value: blob }
+        const disposition = response.headers.get('content-disposition')
+        var filename
+        if (disposition) {
+            filename = disposition.split('filename=')[1]
+        } else {
+            filename = ''
+        }
+        return { value: { content: blob, name: filename } }
     } else {
         return { error: "Failed to load" }
     }

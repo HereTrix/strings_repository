@@ -1,4 +1,8 @@
 import enum
+import zipfile
+
+from django.http import HttpResponse
+from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
 
 
@@ -102,12 +106,20 @@ class AppleStringsFileReader:
 
 class AppleStringsFileWriter:
 
-    def __init__(self, records):
-        self.records = records
+    def __init__(self):
+        self.response = HttpResponse(content_type='application/zip')
+        self.zip_file = zipfile.ZipFile(self.response, 'w')
 
-    def convert_file(self):
-        items = [self.convert_item(x) for x in self.records]
-        return '\n'.join(items)
+    def path(self, code):
+        return f'/{code.lower()}.lproj/Localizable{ExportFile.strings.file_extension()}'
+
+    def append(self, records, code):
+        data = '\n'.join([self.convert_item(x) for x in records])
+
+        self.zip_file.writestr(
+            self.path(code=code),
+            data
+        )
 
     def convert_item(self, item):
         translation = item.translation if item.translation else ''
@@ -115,3 +127,8 @@ class AppleStringsFileWriter:
             return f'/*{item.comment}*/\n"{item.token}" = "{translation}";'
         else:
             return f'"{item.token}" = "{translation}";'
+
+    def http_response(self):
+        self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
+        self.zip_file.close()
+        return self.response

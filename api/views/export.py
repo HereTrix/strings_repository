@@ -10,7 +10,7 @@ from api.transport_models import TranslationModel
 class ExportFormatsAPI(generics.GenericAPIView):
 
     def get(self, request):
-        result = [{'type': file.value, 'name': file.file_extension()}
+        result = [{'type': file.value, 'name': file.vendor(), 'extension': file.file_extension()}
                   for file in ExportFile]
         return JsonResponse(result, safe=False)
 
@@ -35,29 +35,24 @@ class ExportAPI(generics.GenericAPIView):
 
                 lang_codes = [lang.code for lang in languages]
 
-            print(f'codes: {lang_codes}')
-            response = HttpResponse(content_type='application/zip')
-            zip_file = zipfile.ZipFile(response, 'w')
             processor = FileProcessor(type=file_type)
 
             tokens = StringToken.objects.filter(
                 project__pk=project_id,
                 project__roles__user=user
-            ).prefetch_related('translation')
+            ).prefetch_related('translation', 'tags')
 
             for code in lang_codes:
                 try:
                     records = [TranslationModel(token_model=token, code=code)
                                for token in tokens]
 
-                    zip_file.writestr(
-                        processor.path(code=code), processor.export(records=records))
+                    processor.append(records=records, code=code)
                 except Exception as e:
                     print(e)
 
-            response['Content-Disposition'] = 'attachment; filename="resources.zip"'
-            zip_file.close()
-            return response
+            return processor.http_response()
         except Exception as e:
-            print(e)
-            return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({
+                'error': e
+            }, status=status.HTTP_400_BAD_REQUEST)
