@@ -36,8 +36,13 @@ class DotNetFileWriter:
     {record.comment}
 -->
 '''
+        cleared = record.translation \
+            .replace('&', '&amp;') \
+            .replace('<', '&lt;') \
+            .replace('"', '&quot;') \
+            .replace('>', '&gt;')
         return text + f'''    <data name="{record.token}" xml:space="preserve">
-        <value>{record.translation}</value>
+        <value>{cleared}</value>
     </data>
 '''
 

@@ -26,6 +26,7 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({ item, onSave })
     }
 
     const onSavePress = () => {
+        setCanSave(false)
         onSave(text)
     }
 

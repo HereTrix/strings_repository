@@ -24,6 +24,7 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, onSave
     }
 
     const save = () => {
+        setCanSave(false)
         const newTranslation: Translation = { token: translation.token, translation: text }
         onSave(newTranslation)
     }
