@@ -6,6 +6,7 @@ class ExportFile(enum.Enum):
     android = 1
     excel = 2
     excel_single = 3
+    json = 4
 
     def file_extension(self):
         match self:
@@ -17,6 +18,8 @@ class ExportFile(enum.Enum):
                 return '.xlsx'
             case ExportFile.excel_single:
                 return '.xlsx'
+            case ExportFile.json:
+                return '.json'
 
     def vendor(self):
         match self:
@@ -28,3 +31,5 @@ class ExportFile(enum.Enum):
                 return 'Excel with separate sheets'
             case ExportFile.excel_single:
                 return 'Excel with single sheet'
+            case ExportFile.json:
+                return 'Key and Value'
