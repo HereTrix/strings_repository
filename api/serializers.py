@@ -128,19 +128,20 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ['tag']
 
 
-class HistorySerializer(serializers.ModelSerializer):
-    language = serializers.SlugRelatedField(
-        many=False,
-        read_only=True,
-        slug_field='code'
-    )
+class EditorFieldSerializer(serializers.RelatedField):
+    def to_representation(self, value):
+        return f'{value.first_name} {value.last_name}'
 
+
+class HistorySerializer(serializers.ModelSerializer):
     token = serializers.SlugRelatedField(
         many=False,
         read_only=True,
         slug_field='token'
     )
+    editor = EditorFieldSerializer(read_only=True)
 
     class Meta:
-        model = Translation
-        fields = ['translation', 'updated_at', 'language', 'token']
+        model = HistoryRecord
+        fields = ['updated_at', 'language',
+                  'token', 'editor', 'old_value', 'new_value']

@@ -9,15 +9,19 @@ type HistoryPageProps = {
 }
 
 interface HistoryData {
-    translation: string
     updated_at: string
     language: string
     token: string
+    editor: string
+    old_value: string | undefined
+    new_value: string
 }
+
+interface HistoryRecord { }
 
 const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
 
-    const [data, setData] = useState<HistoryData[]>()
+    const [data, setData] = useState<Map<string, HistoryData[]>>()
 
     const [dateFrom, setDateFrom] = useState<string>()
     const [dateTo, setDateTo] = useState<string>()
@@ -44,7 +48,17 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
         })
 
         if (result.value) {
-            setData(result.value)
+            const grouped = new Map<string, HistoryData[]>();
+
+            result.value.forEach(obj => {
+                var value = grouped.get(obj.token)
+                if (!value) {
+                    value = []
+                }
+                value.push(obj)
+                grouped.set(obj.token, value);
+            });
+            setData(grouped)
         }
     }
 
@@ -80,28 +94,36 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
                     </Container>
                     <Button onClick={loadHistory}>Show</Button>
                 </Stack>
-                <Button onClick={exportHistory}>Export</Button>
+                <Button onClick={exportHistory}>Export history</Button>
             </Container>
-            <Table>
-                <thead>
-                    <tr>
-                        <th>Updated at:</th>
-                        <th>Language</th>
-                        <th>Localization key</th>
-                        <th>Translation</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {data && data.map((item) =>
-                        <tr key={item.language + item.token}>
-                            <td>{item.updated_at}</td>
-                            <td>{item.language}</td>
-                            <td>{item.token}</td>
-                            <td>{item.translation}</td>
-                        </tr>
-                    )}
-                </tbody>
-            </Table>
+            {data && [...data.keys()].map((key) => {
+                const value = data.get(key)
+                return <Container key={key}>
+                    <h2>{key}</h2>
+                    <Table>
+                        <thead>
+                            <tr>
+                                <th>Updated at:</th>
+                                <th>Language</th>
+                                <th>Old translation</th>
+                                <th>New translation</th>
+                                <th>Editor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {value && value.map((item) =>
+                                <tr key={item.token + item.updated_at}>
+                                    <td>{item.updated_at}</td>
+                                    <td>{item.language}</td>
+                                    <td>{item.old_value}</td>
+                                    <td>{item.new_value}</td>
+                                    <td>{item.editor}</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </Table>
+                </Container>
+            })}
         </>
     )
 }

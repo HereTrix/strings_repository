@@ -4,7 +4,7 @@ from rest_framework import generics, permissions, status
 from api.file_processors.history_file import HistoryFileWriter
 from django.db.models import Prefetch
 
-from api.models import Project, StringToken, Translation
+from api.models import HistoryRecord, Project, StringToken, Translation
 from api.serializers import HistorySerializer
 
 
@@ -21,25 +21,26 @@ class ProjectHistoryAPI(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            translations = Translation.objects.filter(
+            records = HistoryRecord.objects.filter(
                 token__project__pk=pk,
                 token__project__roles__user=user
-            )
+            ).prefetch_related('token')
 
             if time_from:
                 date = datetime.strptime(time_from, '%Y-%m-%d')
-                translations = translations.filter(
+                records = records.filter(
                     updated_at__gte=date
                 )
 
             if time_to:
                 date = datetime.strptime(time_to, '%Y-%m-%d')
-                translations = translations.filter(
+                records = records.filter(
                     updated_at__lte=date
                 )
-            translations = translations.order_by('updated_at')
+            records = records.select_related(
+                'token').order_by('updated_at')
 
-            serializer = HistorySerializer(translations, many=True)
+            serializer = HistorySerializer(records, many=True)
             return JsonResponse(serializer.data, safe=False)
         except Exception as e:
             return JsonResponse({
@@ -61,39 +62,30 @@ class ProjectHistoryExportAPI(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            project = Project.objects.get(
-                pk=pk,
-                roles__user=user
-            )
-
-            languages = [lang.code for lang in project.languages.all()]
-
-            tokens = StringToken.objects.filter(
-                project=project
-            )
+            records = HistoryRecord.objects.filter(
+                token__project__pk=pk,
+                token__project__roles__user=user
+            ).prefetch_related('token')
 
             if time_from:
                 date = datetime.strptime(time_from, '%Y-%m-%d')
-                tokens = tokens.filter(
-                    translation__updated_at__gte=date
+                records = records.filter(
+                    updated_at__gte=date
                 )
 
             if time_to:
                 date = datetime.strptime(time_to, '%Y-%m-%d')
-                tokens = tokens.filter(
-                    translation__updated_at__lte=date
+                records = records.filter(
+                    updated_at__lte=date
                 )
-
-            tokens = tokens.prefetch_related(Prefetch(
-                'translation',
-                queryset=Translation.objects.select_related('language'))
-            ).distinct()
+            records = records.select_related(
+                'token').order_by('updated_at')
 
             response = HttpResponse(
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             response['Content-Disposition'] = 'attachment; filename=report.xlsx'
 
-            writer = HistoryFileWriter(data=tokens, languages=languages)
+            writer = HistoryFileWriter(data=records)
             writer.write(response=response)
             return response
         except Exception as e:

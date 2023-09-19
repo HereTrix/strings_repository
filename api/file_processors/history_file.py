@@ -1,11 +1,11 @@
 import openpyxl
+from datetime import datetime
 
 
 class HistoryFileWriter:
 
-    def __init__(self, data, languages):
+    def __init__(self, data):
         self.data = data
-        self.languages = languages
 
     def write(self, response):
         wb = openpyxl.Workbook()
@@ -15,8 +15,12 @@ class HistoryFileWriter:
         key_item = 'Localization key'
         tags_item = 'Tags'
         comment_item = 'Comments'
+        language_item = 'Language'
+        translation_item = 'Translation'
+        update_item = 'Updated at'
 
-        header = [key_item] + self.languages + [tags_item, comment_item]
+        header = [key_item, language_item,
+                  translation_item, tags_item, comment_item, update_item]
 
         indexes = {k: v + 1 for v, k in enumerate(header)}
 
@@ -26,28 +30,37 @@ class HistoryFileWriter:
 
         row = 2
 
-        for token in self.data:
+        for item in self.data:
             ws.cell(
                 row=row,
                 column=indexes[key_item],
-                value=token.token
+                value=item.token.token
+            )
+            ws.cell(
+                row=row,
+                column=indexes[language_item],
+                value=item.language
+            )
+            ws.cell(
+                row=row,
+                column=indexes[translation_item],
+                value=item.new_value
             )
             ws.cell(
                 row=row,
                 column=indexes[tags_item],
-                value=','.join([tag.tag for tag in token.tags.all()])
+                value=','.join([tag.tag for tag in item.token.tags.all()])
             )
             ws.cell(
                 row=row,
                 column=indexes[comment_item],
-                value=token.comment
+                value=item.token.comment
             )
-            for translation in token.translation.all():
-                cell = ws.cell(
-                    row=row,
-                    column=indexes[translation.language.code],
-                    value=translation.translation
-                )
+            ws.cell(
+                row=row,
+                column=indexes[update_item],
+                value=item.updated_at.strftime('%Y-%m-%d %H:%M')
+            )
             row += 1
 
         wb.save(response)

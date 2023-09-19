@@ -74,7 +74,7 @@ class StringToken(models.Model):
 
 class Translation(models.Model):
     id = models.AutoField('id', primary_key=True)
-    translation = models.TextField("translation", blank=True)
+    translation = models.TextField('translation', blank=True)
     language = models.ForeignKey(
         Language, on_delete=models.CASCADE, related_name='translation')
     token = models.ForeignKey(
@@ -86,3 +86,15 @@ class Translation(models.Model):
 
     def __str__(self):
         return f"{self.id} {self.translation}"
+
+
+class HistoryRecord(models.Model):
+    id = models.AutoField('id', primary_key=True)
+    token = models.ForeignKey(
+        StringToken, on_delete=models.CASCADE, related_name='history')
+    language = models.CharField(max_length=2)
+    updated_at = models.DateTimeField('updated_at', auto_now_add=True)
+    editor = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name='history')
+    old_value = models.TextField('old_value', blank=True)
+    new_value = models.TextField('new_value', blank=True)

@@ -1,8 +1,9 @@
 from django.http import HttpResponse, JsonResponse
 import django.core.exceptions as exception
 from rest_framework import generics, permissions, status
-from api.models import Language, Tag, Translation, StringToken, Project, ProjectRole
+from api.models import HistoryRecord, Language, Tag, Translation, StringToken, Project, ProjectRole
 from api.serializers import StringTokenSerializer, TranslationSerializer
+from datetime import datetime
 
 
 class StringTokenAPI(generics.GenericAPIView):
@@ -80,23 +81,29 @@ class TranslationAPI(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         text = request.data['translation']
 
-        translations = Translation.objects.filter(
-            token__project__pk=project_id,
-            token__project__roles__user=user,
-            token__token=token,
-            language__code=code.upper(),
-        )
-        translation = translations.first()
+        try:
+            tokens = StringToken.objects.filter(
+                project__pk=project_id,
+                project__roles__user=user,
+                token=token
+            )
+            token = tokens.first()
+        except StringToken.DoesNotExist:
+            return JsonResponse({
+                'error': 'Token not found'
+            })
 
-        if translation is None:
+        old_value = ''
+        try:
+            translation = Translation.objects.get(
+                token=token,
+                language__code=code.upper(),
+            )
+
+            old_value = translation.translation
+
+        except Translation.DoesNotExist:
             try:
-                tokens = StringToken.objects.filter(
-                    project__pk=project_id,
-                    project__roles__user=user,
-                    token=token
-                )
-                token = tokens.first()
-
                 languages = Language.objects.filter(
                     project__pk=project_id,
                     code=code.upper()
@@ -106,17 +113,24 @@ class TranslationAPI(generics.GenericAPIView):
                 translation = Translation()
                 translation.language = language
                 translation.token = token
-            except StringToken.DoesNotExist:
-                return JsonResponse({
-                    'error': 'Token not found'
-                }, status=status.HTTP_400_BAD_REQUEST)
             except Language.DoesNotExist:
                 return JsonResponse({
                     'error': 'Language not found'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
         translation.translation = text
+        translation.updated_at = datetime.now()
         translation.save()
+
+        # Add history
+        record = HistoryRecord()
+        record.token = token
+        record.old_value = old_value
+        record.new_value = text
+        record.updated_at = datetime.now()
+        record.editor = user
+        record.language = translation.language.code
+        record.save()
 
         return JsonResponse({}, status=status.HTTP_200_OK)
 
