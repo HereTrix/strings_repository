@@ -4,11 +4,13 @@ import PasswordPage from "./PasswordPage"
 import ProfileDetailsPage from "./ProfileDetails"
 import { APIMethod, http } from "../Utils/network"
 import Profile from "../model/Profile"
+import ProfileActivatePage from "./ProfileActivate"
 
 const ProfilePage = () => {
 
     const [passwordSectionOpen, setPasswordSectionOpen] = useState<boolean>(false)
     const [infoSectionOpen, setInfoSectionOpen] = useState<boolean>(false)
+    const [activationSectionOpen, setActivationSectionOpen] = useState<boolean>(false)
 
     const [profile, setProfile] = useState<Profile>()
 
@@ -66,6 +68,25 @@ const ProfilePage = () => {
                 <Collapse in={passwordSectionOpen}>
                     <div>
                         <PasswordPage />
+                    </div>
+                </Collapse>
+            </Container>
+            <Container className="square border rounded-3 my-2">
+                <Stack
+                    direction="horizontal"
+                    gap={3}
+                    onClick={() => setActivationSectionOpen(!activationSectionOpen)}
+                    className="my-2">
+                    <label>Project activation</label>
+                    <Button
+                        className="ms-auto"
+                        onClick={() => setActivationSectionOpen(!activationSectionOpen)}>
+                        {passwordSectionOpen ? "Collapse" : "Reveal"}
+                    </Button>
+                </Stack>
+                <Collapse in={activationSectionOpen}>
+                    <div>
+                        <ProfileActivatePage />
                     </div>
                 </Collapse>
             </Container>

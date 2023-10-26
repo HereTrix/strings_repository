@@ -23,7 +23,8 @@ class ProjectRole(models.Model):
         editor = 'editor'
         translator = 'translator'
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='roles')
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='roles')
     role = models.CharField(max_length=10, choices=Role.choices)
@@ -34,6 +35,7 @@ class ProjectRole(models.Model):
     change_language_roles = [Role.owner, Role.admin]
     change_token_roles = [Role.owner, Role.admin, Role.editor]
     change_participants_roles = [Role.owner, Role.admin]
+    common_roles = [Role.admin, Role.editor, Role.translator]
 
 
 class Language(models.Model):
@@ -98,3 +100,11 @@ class HistoryRecord(models.Model):
         User, on_delete=models.SET_NULL, null=True, related_name='history')
     old_value = models.TextField('old_value', blank=True)
     new_value = models.TextField('new_value', blank=True)
+
+
+class Invitation(models.Model):
+    id = models.AutoField('id', primary_key=True)
+    code = models.CharField(max_length=16, unique=True)
+    role = models.CharField(max_length=10, choices=ProjectRole.Role.choices)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name='invitations')

@@ -1,8 +1,8 @@
 from django.http import JsonResponse
 import django.core.exceptions as exception
 from rest_framework import generics, permissions, status
-from api.models import Language, Project, ProjectRole, StringToken, Tag, Translation
-from api.serializers import ParticipantSerializer, ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer, StringTranslationSerializer, TagSerializer, TranslationSerializer
+from api.models import Language, Project, ProjectRole, StringToken, Tag
+from api.serializers import ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer
 from api.transport_models import APIProject
 from pycountry import *
 
@@ -42,26 +42,6 @@ class ProjectAPI(generics.GenericAPIView):
             return JsonResponse({
                 'error': str(e)
             }, status=status.HTTP_404_NOT_FOUND)
-
-
-class ProjectParticipantsAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, pk):
-        try:
-            user = request.user
-            project = Project.objects.get(
-                pk=pk,
-                roles__user=user,
-                roles__role__in=ProjectRole.change_participants_roles
-            )
-
-            users = [
-                role.user for role in project.roles.all()]
-            serializer = ParticipantSerializer(users, many=True)
-            return JsonResponse(serializer.data, safe=False)
-        except Project.DoesNotExist:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateProjectAPI(generics.GenericAPIView):

@@ -10,12 +10,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('email', 'first_name', 'last_name')
 
 
-class ParticipantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('first_name', 'last_name', 'email')
-
-
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
@@ -43,6 +37,25 @@ class APIProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = APIProject
         fields = ['id', 'name', 'description', 'languages']
+
+
+class ProjectParticipantsSerializer:
+
+    def serialize(roles, user):
+        role = [role for role in roles if role.user == user][0]
+        can_edit = role.role == ProjectRole.Role.admin or role.role == ProjectRole.Role.owner
+
+        users = [
+            {
+                'can_edit': can_edit and not role.user.id == user.id,
+                'id': role.user.id,
+                'first_name': role.user.first_name,
+                'last_name': role.user.last_name,
+                'email': role.user.email,
+                'role': role.role
+            } for role in roles]
+
+        return users
 
 
 class ProjectSerializer(serializers.ModelSerializer):

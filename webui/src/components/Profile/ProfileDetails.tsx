@@ -1,4 +1,4 @@
-import { FC } from "react"
+import { FC, useState } from "react"
 import { Button, Container, Form, Row } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
 import Profile from "../model/Profile"
@@ -16,6 +16,8 @@ type ProfileDetailsProps = {
 
 const ProfileDetailsPage: FC<ProfileDetailsProps> = ({ profile }) => {
 
+    const [error, setError] = useState<string>()
+
     const {
         register,
         handleSubmit,
@@ -30,7 +32,7 @@ const ProfileDetailsPage: FC<ProfileDetailsProps> = ({ profile }) => {
         })
 
         if (result.error) {
-
+            setError(result.error)
         } else {
 
         }
@@ -71,6 +73,9 @@ const ProfileDetailsPage: FC<ProfileDetailsProps> = ({ profile }) => {
                         Save
                     </Button>
                 </Form.Group>
+                {error &&
+                    <Form.Label className="error">{error}</Form.Label>
+                }
             </Form>
         </Container>
     )

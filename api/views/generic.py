@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from api.models import User
+from api.models import Invitation, ProjectRole, User
 from api.serializers import UserSerializer, ProfileSerializer, LoginSerializer
 from rest_framework import generics, permissions, status
 from knox.models import AuthToken
@@ -78,3 +78,46 @@ class ProfileAPI(generics.GenericAPIView):
 
         serializer = UserSerializer(user)
         return JsonResponse(serializer.data)
+
+
+class ActivateProjectAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user = request.user
+            code = request.data['code']
+
+            invite = Invitation.objects.get(
+                code=code)
+
+            existing_role = [
+                role for role in invite.project.roles.all() if role.user == user]
+
+            ids = [role.user.id for role in invite.project.roles.all()]
+
+            print("role ", existing_role, ids)
+
+            if existing_role:
+                return JsonResponse({
+                    'error': 'Already participating in project'
+                })
+
+            role = ProjectRole()
+            role.user = user
+            role.project = invite.project
+            role.role = invite.role
+            role.save()
+
+            invite.delete()
+
+            return JsonResponse({})
+        except Invitation.DoesNotExist:
+            return JsonResponse({
+                'error': 'Wrong activation code'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return JsonResponse({
+                'error': e
+            }, status=status.HTTP_400_BAD_REQUEST)
