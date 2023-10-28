@@ -1,10 +1,11 @@
 import fileDownload from "js-file-download";
 import { FC, useEffect, useState } from "react";
-import { Button, Col, Dropdown, DropdownButton, Modal, Row } from "react-bootstrap";
+import { Button, Col, Dropdown, DropdownButton, Modal, Row, Stack } from "react-bootstrap";
 import { download, APIMethod, http } from "../Utils/network";
 import Project from "../model/Project";
 import { Typeahead } from "react-bootstrap-typeahead";
 import Language from "../model/Language";
+import OptionalImage from "../UI/OptionalImage";
 
 type ExportPageProps = {
     project: Project
@@ -87,14 +88,13 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
 
                         var language = item as Language
                         return (
-                            <Row >
-                                <Col>
-                                    <img src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code} />
-                                </Col>
-                                <Col>
-                                    <label className="align-items-center">{language.name}</label>
-                                </Col>
-                            </Row>
+                            <Stack direction="horizontal" gap={3}>
+                                <OptionalImage
+                                    src={`/static/flags/${language.code.toLocaleLowerCase()}.png`}
+                                    alt={language.code} />
+                                <label className="align-items-center">{language.name}</label>
+
+                            </Stack>
                         )
                     }}
                 />

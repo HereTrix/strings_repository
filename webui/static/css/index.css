@@ -11,6 +11,10 @@ form {
     width: auto;
 }
 
+.display-linebreak {
+    white-space: pre-line;
+}
+
 .error {
     color: red;
     text-align: center;

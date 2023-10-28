@@ -6,12 +6,14 @@ import PageNotFound from "./PageNotFound";
 import ProjectPage from "./Project/ProjectPage";
 import TranslationPage from './Translation/TranslationPage';
 import ProfilePage from './Profile/ProfilePage';
+import ActivateUserPage from './ActivateUserPage';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/activate" element={<ActivateUserPage />} />
         <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
         <Route path="/project/:id" element={<RequireAuth><ProjectPage /></RequireAuth>} />
         <Route path="/project/:project_id/language/:code" element={<RequireAuth><TranslationPage /></RequireAuth>} />

@@ -56,12 +56,14 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
 
     return (
         <>
-            <Row className="my-2">
-                <Col>
-                    <Button
-                        onClick={() => setInviteUser(true)}>Invite user</Button>
-                </Col>
-            </Row>
+            {roles.length > 0 &&
+                <Row className="my-2">
+                    <Col>
+                        <Button
+                            onClick={() => setInviteUser(true)}>Invite user</Button>
+                    </Col>
+                </Row>
+            }
             <label>{project.description ? project.description : "No description"}</label>
             {participants &&
                 <ListGroup>

@@ -9,6 +9,7 @@ from api.views.translation import StringTokenAPI, StringTokenTagAPI, StringToken
 from knox.views import LogoutView
 
 urlpatterns = [
+    path('signup', SignUpAPI.as_view()),
     path('login', SignInAPI.as_view()),
     path('logout', LogoutView.as_view()),
     path('profile', ProfileAPI.as_view()),

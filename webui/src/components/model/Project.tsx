@@ -1,7 +1,10 @@
 import Language from "./Language"
 
 export enum ProjectRole {
-    owner, admin, editor, translator
+    owner = 'owner',
+    admin = 'admin',
+    editor = 'editor',
+    translator = 'translator'
 }
 
 interface Project {

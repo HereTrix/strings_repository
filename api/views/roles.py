@@ -19,10 +19,16 @@ class RolesAPI(generics.GenericAPIView):
                 user=user,
             ).first()
 
-            if role.role in ProjectRole.common_roles:
+            if role.role == ProjectRole.Role.admin:
                 data = ProjectRole.common_roles
-            else:
+            elif role.role == ProjectRole.Role.owner:
                 data = [role.value for role in ProjectRole.Role]
+            elif role.role == ProjectRole.Role.editor:
+                data = [ProjectRole.Role.translator, ProjectRole.Role.editor]
+            else:
+                return JsonResponse({
+                    'error': 'User is not allowed to set roles'
+                }, status=status.HTTP_403_FORBIDDEN)
             return JsonResponse(data, safe=False)
         except Exception as e:
             return JsonResponse({
@@ -44,7 +50,9 @@ class ProjectParticipantsAPI(generics.GenericAPIView):
 
             return JsonResponse(ProjectParticipantsSerializer.serialize(project.roles.all(), user), safe=False)
         except Project.DoesNotExist:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({
+                'error': 'Participants can not be viewed'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, pk):
         try:

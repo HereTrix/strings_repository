@@ -3,6 +3,7 @@ import StringToken from "../model/StringToken"
 import { APIMethod, http } from "../Utils/network"
 import TokenTranslation from "../model/TokenTranslation"
 import { Button, ListGroup, Stack } from "react-bootstrap"
+import OptionalImage from "../UI/OptionalImage"
 
 type TokenTranslationsPageProps = {
     project_id: number
@@ -35,9 +36,7 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({ item, onSave })
             className="d-flex justify-content-between align-items-start">
             <Stack>
                 <Stack direction="horizontal" gap={2}>
-
-                    <img
-                        className="icon"
+                    <OptionalImage
                         src={`/static/flags/${item.code.toLocaleLowerCase()}.png`}
                         alt={item.code} />
                     <label>{item.code}</label>

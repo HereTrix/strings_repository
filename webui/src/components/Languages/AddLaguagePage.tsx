@@ -1,8 +1,9 @@
 import { FC, useEffect, useState } from "react"
-import { Button, Col, Modal, Row } from "react-bootstrap"
+import { Button, Col, Modal, Row, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
 import Language from "../model/Language"
 import { Typeahead } from "react-bootstrap-typeahead"
+import OptionalImage from "../UI/OptionalImage"
 
 type AddLaguagePageProps = {
     project_id: number
@@ -67,21 +68,17 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
                         id="basic-typeahead-single"
                         labelKey="name"
                         options={available}
-                        placeholder="Choose a country..."
+                        placeholder="Choose a language..."
                         onChange={(data) => { setSelectedLanguages(data as Language[]) }}
                         selected={selectedLanguages}
                         renderMenuItemChildren={(item) => {
 
                             var language = item as Language
                             return (
-                                <Row >
-                                    <Col>
-                                        <img src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code} />
-                                    </Col>
-                                    <Col>
-                                        <label className="align-items-center">{language.name}</label>
-                                    </Col>
-                                </Row>
+                                <Stack direction="horizontal" gap={3}>
+                                    <OptionalImage image={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code.toUpperCase()} />
+                                    <label className="align-items-center display-linebreak">{language.name}</label>
+                                </Stack>
                             )
                         }}
                     />

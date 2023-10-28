@@ -1,10 +1,10 @@
-import { FC, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import { APIMethod, http } from "../Utils/network"
-import { Button, Col, Container, Row, Stack, Tab, Tabs } from "react-bootstrap"
+import { Button, Container, Stack, Tab, Tabs } from "react-bootstrap"
 import Project, { ProjectRole } from "../model/Project"
 import ProjectInfo from "./ProjectInfo"
-import LanguagesList from "../Languages.tsx/LanguagesList"
+import LanguagesList from "../Languages/LanguagesList"
 import StringTokensList from "../StringTokens/StringTokensList"
 import ExportPage from "../Translation/ExportPage"
 import HistoryPage from "../History/HistoryPage"
@@ -49,7 +49,7 @@ const ProjectPage = () => {
                     >
                         <LanguagesList project={project} />
                     </Tab>
-                    {project.role != ProjectRole.translator &&
+                    {project.role !== ProjectRole.translator &&
                         <Tab
                             eventKey="tokens"
                             title="Localization keys"

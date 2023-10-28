@@ -72,7 +72,7 @@ class LanguageAPI(generics.GenericAPIView):
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
         try:
-            language = Language.objects.get(code=code, project=project_id)
+            language = Language.objects.get(code=code, project=project)
             language.delete()
             return JsonResponse({}, status=status.HTTP_200_OK)
         except Language.DoesNotExist:

@@ -103,8 +103,10 @@ export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
 
     const response = await fetch(path, requestOptions)
     if (response.status == 401) {
-        localStorage.removeItem("auth")
-        history.navigate("/login", { replace: true })
+        if (!request.isAuth) {
+            localStorage.removeItem("auth")
+            history.navigate("/login", { replace: true })
+        }
         return { error: "Not authorized" }
     } else if (response.status == 204) { // No content
         return {}

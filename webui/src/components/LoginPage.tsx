@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react"
-import { Button, Col, Container, Form, Row, Toast, ToastContainer } from "react-bootstrap";
+import { useState } from "react"
+import { Button, Container, Form, Toast, ToastContainer } from "react-bootstrap";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { APIMethod, http } from "./Utils/network";
@@ -37,6 +37,7 @@ const LoginPage = () => {
 
         const error = result.error
         if (error) {
+            console.log(error)
             setError(error)
             return
         }
@@ -49,33 +50,44 @@ const LoginPage = () => {
 
     }
 
+    const onUserActivate = () => {
+        navigate("/activate", { replace: true })
+    }
+
     return (
         <>
             <Container className="align-content-center" fluid>
-                <Form validated={validated} onSubmit={handleSubmit(onSubmit)} className="container">
-                    <Form.Group className="my-2">
-                        <Form.Label>Login</Form.Label>
-                        <Form.Control
-                            required
-                            type="text"
-                            placeholder="Enter login"
-                            {...register("login")} />
+                <Form validated={validated} onSubmit={handleSubmit(onSubmit)} className="container my-2">
+                    <Form.Group className="border rounded m-4 p-5 shadow">
+                        <Form.Group className="my-2">
+                            <Form.Label>Login</Form.Label>
+                            <Form.Control
+                                required
+                                type="text"
+                                placeholder="Enter login"
+                                {...register("login")} />
+                        </Form.Group>
+                        <Form.Group className="my-2">
+                            <Form.Label>Password</Form.Label>
+                            <Form.Control
+                                required
+                                type="password"
+                                placeholder="Enter password"
+                                {...register("password")} />
+                        </Form.Group>
+                        <Form.Group className="my-2">
+                            <Button type="submit" className="my-2">Login</Button>
+                        </Form.Group>
+                        <Form.Group className="my-2">
+                            <Button onClick={onUserActivate} className="btn-light shadow-sm my-2">Activate user</Button>
+                        </Form.Group>
                     </Form.Group>
-                    <Form.Group className="my-2">
-                        <Form.Label>Password</Form.Label>
-                        <Form.Control
-                            required
-                            type="password"
-                            placeholder="Enter password"
-                            {...register("password")} />
-                    </Form.Group>
-                    <Button type="submit" className="my-2">Login</Button>
                 </Form >
             </Container>
             <ToastContainer className="p-3" position="middle-center">
-                <Toast show={error ? true : false} onClose={() => setError(null)} delay={3000} autohide>
+                <Toast show={error ? true : false} onClose={() => setError(null)} delay={5000} autohide>
                     <Toast.Header>
-                        <strong className="me-auto">Error</strong>
+                        <strong className="me-auto error">Error</strong>
                     </Toast.Header>
                     <Toast.Body>{error}</Toast.Body>
                 </Toast>

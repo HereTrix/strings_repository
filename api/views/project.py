@@ -1,10 +1,11 @@
 from django.http import JsonResponse
 import django.core.exceptions as exception
 from rest_framework import generics, permissions, status
+from api.languages.langcoder import Langcoder
 from api.models import Language, Project, ProjectRole, StringToken, Tag
 from api.serializers import ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer
 from api.transport_models import APIProject
-from pycountry import *
+from repository.settings import LANGUAGE_CODE
 
 
 class ProjectAPI(generics.GenericAPIView):
@@ -17,8 +18,8 @@ class ProjectAPI(generics.GenericAPIView):
             project = Project.objects.get(
                 pk=pk, roles__user=user)
 
-            api_languages = [{'code': lang.code, 'name': pycountry.countries.get(
-                alpha_2=lang.code).name} for lang in project.languages.all()]
+            api_languages = [{'code': lang.code, 'name': Langcoder.language(
+                lang.code)} for lang in project.languages.all()]
 
             role = project.roles.get(user=user)
 
@@ -96,9 +97,13 @@ class ProjectAvailableLanguagesAPI(generics.GenericAPIView):
             languages = Language.objects.filter(project__id=pk,
                                                 project__roles__user=user,
                                                 project__roles__role__in=ProjectRole.change_language_roles)
-            unused = [{"code": lang.alpha_2, "name": lang.name}
-                      for lang in pycountry.countries if hasattr(lang, 'alpha_2') and
-                      not any(used.code == lang.alpha_2 for used in languages)]
+
+            unused = list(filter(lambda val: not any(
+                used.code == val[LANGUAGE_CODE] for used in languages), Langcoder.all_languages()))
+
+            return JsonResponse(unused, safe=False)
+        except Language.DoesNotExist:
+            unused = Langcoder.all_languages()
             return JsonResponse(unused, safe=False)
         except Exception as e:
             return JsonResponse({
@@ -116,7 +121,7 @@ class LanguageListAPI(generics.GenericAPIView):
                 project__id=pk,
                 project__roles__user=user
             )
-            result = [{"code": lang.code, "name": pycountry.countries.get(alpha_2=lang.code).name}
+            result = [{"code": lang.code, "name": Langcoder.language(lang.code)}
                       for lang in languages]
             return JsonResponse(result, safe=False, status=status.HTTP_200_OK)
         except Exception as e:

@@ -121,3 +121,55 @@ class ActivateProjectAPI(generics.GenericAPIView):
             return JsonResponse({
                 'error': e
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SignUpAPI(generics.GenericAPIView):
+
+    def post(self, request):
+
+        login = request.data.get('login')
+        if not login:
+            return JsonResponse({
+                'error': 'Login should not be empty'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        password = request.data.get('password')
+        regex = "^(?=.*[A-Za-z])(?=.*\d).{8,}$"
+        if not re.fullmatch(regex, password):
+            return JsonResponse({
+                'error': 'Password is not strong enough'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        code = request.data.get('code')
+        if not code:
+            return JsonResponse({
+                'error': 'Invitation code should not be empty'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            invitation = Invitation.objects.get(code=code)
+        except Invitation.DoesNotExist:
+            return JsonResponse({
+                'error': 'Invitation code is invalid'
+            })
+
+        try:
+            user = User.objects.get(username=login)
+            return JsonResponse({
+                'error': 'Please, activate code on your profile page'
+            })
+        except User.DoesNotExist:
+            user = User()
+            user.username = login
+            user.set_password(password)
+            user.save()
+
+        role = ProjectRole()
+        role.role = invitation.role
+        role.user = user
+        role.project = invitation.project
+        role.save()
+
+        invitation.delete()
+
+        return JsonResponse({})

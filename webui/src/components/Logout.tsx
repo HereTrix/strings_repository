@@ -1,4 +1,4 @@
-import { Button } from "react-bootstrap"
+import { Button, Container } from "react-bootstrap"
 import { useNavigate } from "react-router-dom"
 import { APIMethod, http } from "./Utils/network"
 
@@ -9,7 +9,7 @@ const LogoutButton = () => {
     const logout = async () => {
         const result = await http({
             method: APIMethod.post,
-            path: "api/logout"
+            path: "/api/logout"
         })
 
         localStorage.removeItem("auth")
@@ -17,9 +17,9 @@ const LogoutButton = () => {
     }
 
     return (
-        <Button onClick={logout}>
+        <Container onClick={logout} className="bg-primary rounded text-white p-2">
             Logout
-        </Button>
+        </Container>
     )
 }
 
