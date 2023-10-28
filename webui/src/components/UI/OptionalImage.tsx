@@ -5,6 +5,7 @@ type OptionalImageProps = {
     alt: string
 }
 
+// taken from https://dev.to/know_dhruv/react-handle-image-loading-error-gracefully-using-custom-hook-21c2
 const useImageError = () => {
     const [el, setEl] = useState<any>(null); // contains image reference
     const [error, setError] = useState(false); // contains error flag

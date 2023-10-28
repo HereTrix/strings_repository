@@ -76,7 +76,7 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
                             var language = item as Language
                             return (
                                 <Stack direction="horizontal" gap={3}>
-                                    <OptionalImage image={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code.toUpperCase()} />
+                                    <OptionalImage src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code.toUpperCase()} />
                                     <label className="align-items-center display-linebreak">{language.name}</label>
                                 </Stack>
                             )
