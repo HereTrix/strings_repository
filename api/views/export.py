@@ -24,6 +24,7 @@ class ExportAPI(generics.GenericAPIView):
             codes = request.GET.get('codes')
             project_id = request.GET['project_id']
             type = request.GET['type']
+            tags_query = request.GET.get('tags')
             file_type = ExportFile(int(type))
 
             if codes:
@@ -35,12 +36,18 @@ class ExportAPI(generics.GenericAPIView):
 
                 lang_codes = [lang.code for lang in languages]
 
+            if tags_query:
+                tags = tags_query.split(',')
+
             processor = FileProcessor(type=file_type)
 
             tokens = StringToken.objects.filter(
                 project__pk=project_id,
                 project__roles__user=user
             ).prefetch_related('translation', 'tags')
+
+            if tags:
+                tokens = tokens.filter(tags__tag__in=tags).distinct()
 
             for code in lang_codes:
                 try:

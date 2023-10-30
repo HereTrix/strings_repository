@@ -70,10 +70,12 @@ const ProjectPage = () => {
                         <ProjectInfo project={project} />
                     </Tab>
                 </Tabs>
-                <ExportPage
-                    project={project}
-                    show={showExport}
-                    onHide={() => setShowExport(false)} />
+                {showExport &&
+                    <ExportPage
+                        project={project}
+                        show={showExport}
+                        onHide={() => setShowExport(false)} />
+                }
             </>}
         </Container >
     )

@@ -25,6 +25,9 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
     const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([])
     const [availableFormats, setAvailableFormats] = useState<AvailableFormat[]>()
     const [selectedType, setSelectedType] = useState<AvailableFormat>()
+    const [selectedTags, setSelectedTags] = useState<string[]>()
+
+    const [tags, setTags] = useState<string[]>([])
 
     const [error, setError] = useState<string | undefined>()
 
@@ -39,12 +42,24 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
         }
     }
 
+    const fetchTags = async () => {
+        const result = await http<string[]>({
+            method: APIMethod.get,
+            path: `/api/project/${project.id}/tags`
+        })
+
+        if (result.value) {
+            setTags(result.value)
+        }
+    }
+
     useEffect(() => {
         const lang = project.languages.find((lang) => lang.code.toLowerCase() == code?.toLowerCase())
         if (lang) {
             setSelectedLanguages([lang])
         }
         fetchTypes()
+        fetchTags()
     }, [])
 
     const onExport = async () => {
@@ -60,7 +75,12 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
         const result = await download({
             method: APIMethod.get,
             path: '/api/export',
-            params: { 'codes': codes, 'project_id': project.id, 'type': selectedType?.type }
+            params: {
+                'codes': codes,
+                'project_id': project.id,
+                'type': selectedType?.type,
+                'tags': selectedTags?.join(",")
+            }
         })
 
         if (result.value) {
@@ -97,6 +117,20 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
                             </Stack>
                         )
                     }}
+                />
+                <Typeahead
+                    id="basic-typeahead-multiple"
+                    multiple
+                    labelKey={"tag"}
+                    options={tags}
+                    placeholder="Select tags..."
+                    onChange={(data) => {
+                        setSelectedTags(
+                            data.map((val: any) => typeof val === 'string' ? val : val.tag)
+                        )
+                    }}
+                    selected={selectedTags}
+                    className="my-2"
                 />
                 <Dropdown className="my-2">
                     <Dropdown.Toggle variant="success" id="dropdown-basic">

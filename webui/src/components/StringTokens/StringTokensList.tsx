@@ -85,7 +85,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     }
 
     const fetchTags = async () => {
-        const result = await http<[string]>({
+        const result = await http<string[]>({
             method: APIMethod.get,
             path: `/api/project/${project.id}/tags`
         })
