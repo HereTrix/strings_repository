@@ -3,6 +3,7 @@ import { Button, Container, Form, Toast, ToastContainer } from "react-bootstrap"
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { APIMethod, http } from "./Utils/network";
+import ErrorAlert from "./UI/ErrorAlert";
 
 type Inputs = {
     login: string
@@ -17,8 +18,8 @@ const LoginPage = () => {
 
     const navigate = useNavigate()
 
-    const [validated, setValidated] = useState(false);
-    const [error, setError] = useState<string | null>(null)
+    const [validated, setValidated] = useState(false)
+    const [error, setError] = useState<string>()
 
     const {
         register,
@@ -84,14 +85,7 @@ const LoginPage = () => {
                     </Form.Group>
                 </Form >
             </Container>
-            <ToastContainer className="p-3" position="middle-center">
-                <Toast show={error ? true : false} onClose={() => setError(null)} delay={5000} autohide>
-                    <Toast.Header>
-                        <strong className="me-auto error">Error</strong>
-                    </Toast.Header>
-                    <Toast.Body>{error}</Toast.Body>
-                </Toast>
-            </ToastContainer>
+            <ErrorAlert error={error} onClose={() => setError(undefined)} />
         </>
     );
 }

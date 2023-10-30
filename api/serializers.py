@@ -158,3 +158,9 @@ class HistorySerializer(serializers.ModelSerializer):
         model = HistoryRecord
         fields = ['updated_at', 'language',
                   'token', 'editor', 'old_value', 'new_value']
+
+
+class ProjectAccessTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectAccessToken
+        fields = ['token', 'permission', 'expiration']

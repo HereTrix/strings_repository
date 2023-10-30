@@ -108,3 +108,16 @@ class Invitation(models.Model):
     role = models.CharField(max_length=10, choices=ProjectRole.Role.choices)
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='invitations')
+
+
+class ProjectAccessToken(models.Model):
+    class AccessTokenPermissions(models.TextChoices):
+        write = 'write'
+        read = 'read'
+
+    token = models.CharField(max_length=16, unique=True)
+    permission = models.CharField(
+        max_length=10, choices=AccessTokenPermissions.choices)
+    expiration = models.DateTimeField(null=True)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name='access_tokens')

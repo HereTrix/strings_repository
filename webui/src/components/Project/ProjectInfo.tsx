@@ -1,9 +1,10 @@
 import { FC, useEffect, useState } from "react"
 import Project, { ProjectRole } from "../model/Project"
-import { Button, Col, Dropdown, ListGroup, ListGroupItem, Row, Stack } from "react-bootstrap"
+import { Button, Col, Container, Dropdown, ListGroup, ListGroupItem, Row, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
 import Participant from "../model/Participant"
 import InviteUserPage from "./InviteUserPage"
+import AccessTokenPage from "./AccessToken"
 
 type ProjectInfoProps = {
     project: Project
@@ -13,6 +14,7 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
 
     const [participants, setParticipants] = useState<Participant[]>()
     const [inviteUser, setInviteUser] = useState<boolean>(false)
+    const [accessToken, setAccessToken] = useState<boolean>(false)
     const [roles, setRoles] = useState<string[]>([])
 
     const loadParticipants = async () => {
@@ -57,12 +59,14 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
     return (
         <>
             {roles.length > 0 &&
-                <Row className="my-2">
-                    <Col>
+                <Container className="align-content-right" fluid>
+                    <Stack direction="horizontal" gap={3} className="my-2">
                         <Button
                             onClick={() => setInviteUser(true)}>Invite user</Button>
-                    </Col>
-                </Row>
+                        <Button
+                            onClick={() => setAccessToken(true)}>Access token</Button>
+                    </Stack>
+                </Container>
             }
             <label>{project.description ? project.description : "No description"}</label>
             {participants &&
@@ -100,14 +104,20 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
                     )}
                 </ListGroup >
             }
-            {
-                inviteUser &&
+            {inviteUser &&
                 <InviteUserPage
                     projectId={project.id}
                     roles={roles}
                     show={inviteUser}
                     onHide={() => setInviteUser(false)}
                     onSuccess={() => loadParticipants()}
+                />
+            }
+            {accessToken &&
+                <AccessTokenPage
+                    project={project}
+                    show={accessToken}
+                    onHide={() => setAccessToken(false)}
                 />
             }
         </>

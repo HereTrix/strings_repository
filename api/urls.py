@@ -4,7 +4,7 @@ from api.views.generic import *
 from api.views.history import ProjectHistoryAPI, ProjectHistoryExportAPI
 from api.views.language import LanguageAPI
 from api.views.project import *
-from api.views.roles import ProjectInvitationAPI, ProjectParticipantsAPI, RolesAPI
+from api.views.roles import ProjectAccessTokenAPI, ProjectInvitationAPI, ProjectParticipantsAPI, RolesAPI
 from api.views.translation import StringTokenAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI
 from knox.views import LogoutView
 
@@ -20,6 +20,7 @@ urlpatterns = [
     # project
     path('project/<int:pk>/availableLanguages',
          ProjectAvailableLanguagesAPI.as_view()),
+    path('project/<int:pk>/access_token', ProjectAccessTokenAPI.as_view()),
     path('project/<int:pk>/participants', ProjectParticipantsAPI.as_view()),
     path('project/<int:pk>/languages', LanguageListAPI.as_view()),
     path('project/<int:pk>/tokens', StringTokenListAPI.as_view()),

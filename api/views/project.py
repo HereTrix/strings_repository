@@ -121,6 +121,7 @@ class LanguageListAPI(generics.GenericAPIView):
                 project__id=pk,
                 project__roles__user=user
             )
+
             result = [{"code": lang.code, "name": Langcoder.language(lang.code)}
                       for lang in languages]
             return JsonResponse(result, safe=False, status=status.HTTP_200_OK)
