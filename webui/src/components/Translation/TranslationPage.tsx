@@ -1,19 +1,22 @@
 import { ChangeEventHandler, FC, useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import { APIMethod, http } from "../Utils/network"
-import Translation from "../model/Translation"
+import Translation, { TranslationModel } from "../model/Translation"
 import { Button, Container, Dropdown, ListGroup, Row, Stack } from "react-bootstrap"
 import { history } from "../Utils/history"
 import ExportPage from "./ExportPage"
 import Project from "../model/Project"
 import SearchBar from "../UI/SearchBar"
+import TagsContainer from "../UI/TagsContainer"
+import ErrorAlert from "../UI/ErrorAlert"
 
 type TranslationListItemProps = {
-    translation: Translation,
+    translation: TranslationModel,
     onSave: (translation: Translation) => void
+    onTagClick: (tag: string) => void
 }
 
-const TranslationListItem: FC<TranslationListItemProps> = ({ translation, onSave }) => {
+const TranslationListItem: FC<TranslationListItemProps> = ({ translation, onSave, onTagClick }) => {
 
     const [canSave, setCanSave] = useState<boolean>(false)
     const [text, setText] = useState<string | undefined>(translation.translation)
@@ -32,9 +35,14 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, onSave
     return (
         <ListGroup.Item >
             <Stack>
-                <Row>
+                <Stack direction="horizontal" gap={4}>
                     <label>{translation.token}</label>
-                </Row>
+                    {translation.tags &&
+                        <TagsContainer
+                            tags={translation.tags}
+                            onTagClick={onTagClick}
+                        />}
+                </Stack>
                 <Row>
                     <textarea defaultValue={translation.translation} onChange={onTranslationChange} />
                     {canSave && <Button onClick={save} className="my-1">Save</Button>}
@@ -50,11 +58,13 @@ const TranslationPage = () => {
     const [showExport, setShowExport] = useState(false)
 
     const [project, setProject] = useState<Project>()
-    const [translations, setTranslations] = useState<Translation[]>()
+    const [translations, setTranslations] = useState<TranslationModel[]>()
 
     const [selectedTag, setSelectedTag] = useState<string>()
     const [query, setQuery] = useState<string>("")
     const [tags, setTags] = useState<string[]>([])
+
+    const [error, setError] = useState<string>()
 
     const fetchProject = async () => {
         const data = await http<Project>({
@@ -64,6 +74,8 @@ const TranslationPage = () => {
 
         if (data.value) {
             setProject(data.value)
+        } else {
+            setError(data.error)
         }
     }
 
@@ -81,14 +93,14 @@ const TranslationPage = () => {
             params.set('q', term)
         }
 
-        const result = await http<Translation[]>({
+        const result = await http<TranslationModel[]>({
             method: APIMethod.get,
             path: `/api/project/${project_id}/translations/${code}`,
             params: params
         })
 
         if (result.error) {
-
+            setError(result.error)
         } else {
             setTranslations(result.value)
         }
@@ -102,6 +114,8 @@ const TranslationPage = () => {
 
         if (result.value) {
             setTags(result.value)
+        } else {
+            setError(result.error)
         }
     }
 
@@ -123,7 +137,7 @@ const TranslationPage = () => {
         })
 
         if (result.error) {
-
+            setError(result.error)
         } else {
 
         }
@@ -179,7 +193,9 @@ const TranslationPage = () => {
                     (translation) => <TranslationListItem
                         translation={translation}
                         onSave={saveTranslation}
-                        key={translation.token} />
+                        onTagClick={tag => setSelectedTag(tag)}
+                        key={translation.token}
+                    />
                 )}
             </ListGroup>
             {project &&
@@ -189,6 +205,7 @@ const TranslationPage = () => {
                     show={showExport}
                     onHide={() => setShowExport(false)} />
             }
+            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </Container>
     )
 }

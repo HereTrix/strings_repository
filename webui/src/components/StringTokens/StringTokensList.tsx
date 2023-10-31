@@ -7,6 +7,8 @@ import AddTokenPage from "./AddTokenPage"
 import SearchBar from "../UI/SearchBar"
 import AddTokenTagPage from "./AddTokenTagPage"
 import TokenTranslationsPage from "./TokenTranslationsPage"
+import ErrorAlert from "../UI/ErrorAlert"
+import TagsContainer from "../UI/TagsContainer"
 
 type StringTokenProps = {
     project: Project
@@ -17,9 +19,10 @@ type StringTokenItemProps = {
     token: StringToken
     onAddTag: () => void
     onDelete: () => void
+    onTagClick: (tag: string) => void
 }
 
-const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, onAddTag, onDelete }) => {
+const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, onAddTag, onDelete, onTagClick }) => {
 
     const [open, setOpen] = useState<boolean>(false)
 
@@ -27,19 +30,32 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, onAd
         <ListGroup.Item
             className="d-flex justify-content-between align-items-start">
             <Container>
-                <Container
+                <Stack direction="horizontal" gap={4}
                     onClick={() => setOpen(!open)}
-                    className="d-flex justify-content-between align-items-start"
                 >
                     <label>{token.token}</label>
+                    {token.tags &&
+                        <TagsContainer
+                            tags={token.tags}
+                            onTagClick={onTagClick}
+                        />}
                     <Stack
                         direction="horizontal"
                         gap={3}
                     >
-                        <Button onClick={onAddTag}>Add tag</Button>
-                        <Button onClick={onDelete} className="btn-danger">Delete</Button>
+                        <Button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onAddTag()
+                            }}
+                            className="text-nowrap"
+                        >Add tag</Button>
+                        <Button onClick={(e) => {
+                            e.stopPropagation()
+                            onDelete()
+                        }} className="btn-danger">Delete</Button>
                     </Stack>
-                </Container>
+                </Stack>
                 <Collapse in={open}>
                     <div>
                         <TokenTranslationsPage project_id={project_id} token={token} open={open} />
@@ -58,6 +74,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const [selectedTag, setSelectedTag] = useState<string>()
     const [query, setQuery] = useState<string>("")
     const [selectedToken, setSelectedToken] = useState<StringToken>()
+    const [error, setError] = useState<string>()
 
     const fetch = async () => {
         fetchData(selectedTag, query)
@@ -81,6 +98,8 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
 
         if (result.value) {
             setTokens(result.value)
+        } else {
+            setError(result.error)
         }
     }
 
@@ -92,6 +111,8 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
 
         if (result.value) {
             setTags(result.value)
+        } else {
+            setError(result.error)
         }
     }
 
@@ -113,7 +134,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         })
 
         if (result.error) {
-
+            setError(result.error)
         } else {
             fetch()
         }
@@ -162,22 +183,34 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                         token={token}
                         project_id={project.id}
                         onAddTag={() => setSelectedToken(token)}
-                        onDelete={() => deleteToken(token)} />
+                        onDelete={() => deleteToken(token)}
+                        onTagClick={(tag => selectTag(tag))}
+                    />
                 )}
             </ListGroup>
-            <AddTokenPage
+            {showDialog && <AddTokenPage
                 project_id={project.id}
                 show={showDialog}
                 onHide={() => setShowDialog(false)}
-                onSuccess={fetch} />
+                onSuccess={() => {
+                    fetch()
+                    setShowDialog(false)
+                }
+                } />
+            }
             {selectedToken &&
                 <AddTokenTagPage
                     token={selectedToken}
                     tags={tags}
                     onHide={() => setSelectedToken(undefined)}
-                    onSuccess={() => { }}
+                    onSuccess={() => {
+                        fetch()
+                        fetchTags()
+                        setSelectedToken(undefined)
+                    }}
                 />
             }
+            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </>
     )
 }
