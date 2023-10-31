@@ -12,7 +12,9 @@ Overview
 * User roles for each project
 * Custom tags for translations separation
 * Export translations to file
+* Full history of changes
 * Import translations from file
+* [Figma plugin support](https://github.com/HereTrix/strings_repository-figma-plugin)
 
 Installation
 --------
