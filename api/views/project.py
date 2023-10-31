@@ -138,6 +138,14 @@ class StringTokenListAPI(generics.GenericAPIView):
         user = request.user
         query = request.GET.get('q')
         tags = request.GET.get('tags')
+        offset = request.GET.get('offset')
+        limit = request.GET.get('limit')
+
+        if not offset:
+            offset = 0
+        else:
+            offset = int(offset)
+
         try:
             tokens = StringToken.objects.filter(
                 project__id=pk,
@@ -150,10 +158,16 @@ class StringTokenListAPI(generics.GenericAPIView):
             if tags:
                 tokens = tokens.filter(tags__tag=tags)
 
-            tokens = tokens.prefetch_related('tags')
+            if limit:
+                limit = int(limit)
+                tokens = tokens.prefetch_related('tags')[offset:offset+limit]
+            else:
+                tokens = tokens.prefetch_related('tags')
+
             serializer = StringTokenSerializer(tokens, many=True)
             return JsonResponse(serializer.data, safe=False)
         except Exception as e:
+            # except StringToken.DoesNotExist as e:
             return JsonResponse({
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -166,6 +180,14 @@ class TranslationsListAPI(generics.GenericAPIView):
         user = request.user
         tags = request.GET.get('tags')
         query = request.GET.get('q')
+        offset = request.GET.get('offset')
+        limit = request.GET.get('limit')
+
+        if not offset:
+            offset = 0
+        else:
+            offset = int(offset)
+
         try:
             tokens = StringToken.objects.filter(
                 project__pk=pk,
@@ -183,6 +205,12 @@ class TranslationsListAPI(generics.GenericAPIView):
                 tokens = tokens.filter(
                     tags__tag=tags
                 )
+
+            if limit:
+                limit = int(limit)
+                tokens = tokens.prefetch_related('tags')[offset:offset+limit]
+            else:
+                tokens = tokens.prefetch_related('tags')
 
             result = [StringTokenModelSerializer(token=token, code=code).toJson()
                       for token in tokens]

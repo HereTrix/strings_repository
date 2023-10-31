@@ -27,6 +27,7 @@
     "react-bootstrap-typeahead": "^6.2.3",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.45.2",
+    "react-infinite-scroll-component": "^6.1.0",
     "react-router-dom": "^6.14.2",
     "ts-loader": "^9.4.4",
     "typescript": "^5.1.6"

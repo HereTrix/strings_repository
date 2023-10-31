@@ -9,6 +9,7 @@ import AddTokenTagPage from "./AddTokenTagPage"
 import TokenTranslationsPage from "./TokenTranslationsPage"
 import ErrorAlert from "../UI/ErrorAlert"
 import TagsContainer from "../UI/TagsContainer"
+import InfiniteScroll from "react-infinite-scroll-component"
 
 type StringTokenProps = {
     project: Project
@@ -68,6 +69,10 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, onAd
 
 const StringTokensList: FC<StringTokenProps> = ({ project }) => {
 
+    const limit = 20
+    const [hasMore, setHasMore] = useState<boolean>(true)
+    const [offset, setOffset] = useState<number>(0)
+
     const [showDialog, setShowDialog] = useState(false)
     const [tokens, setTokens] = useState<StringToken[]>()
     const [tags, setTags] = useState<string[]>([])
@@ -77,10 +82,10 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const [error, setError] = useState<string>()
 
     const fetch = async () => {
-        fetchData(selectedTag, query)
+        fetchData(selectedTag, query, offset)
     }
 
-    const fetchData = async (tag: string | undefined, term: string) => {
+    const fetchData = async (tag: string | undefined, term: string, offset: number) => {
         var params = new Map<string, string>()
         if (tag) {
             params.set('tags', tag)
@@ -90,6 +95,9 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
             params.set('q', term)
         }
 
+        params.set('offset', `${offset}`)
+        params.set('limit', `${limit}`)
+
         const result = await http<StringToken[]>({
             method: APIMethod.get,
             path: `/api/project/${project.id}/tokens`,
@@ -97,8 +105,19 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         })
 
         if (result.value) {
-            setTokens(result.value)
+            if (result.value.length < limit) {
+                setHasMore(false)
+            } else {
+                setHasMore(true)
+            }
+            if (offset === 0) {
+                setTokens(result.value)
+            } else {
+                console.log('append')
+                setTokens(tokens?.concat(result.value))
+            }
         } else {
+            setHasMore(false)
             setError(result.error)
         }
     }
@@ -117,13 +136,15 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     }
 
     const selectTag = async (tag: string | undefined) => {
+        setOffset(0)
         setSelectedTag(tag)
-        fetchData(tag, query)
+        fetchData(tag, query, 0)
     }
 
     const onSearch = async (query: string) => {
+        setOffset(0)
         setQuery(query)
-        fetchData(selectedTag, query)
+        fetchData(selectedTag, query, 0)
     }
 
     const deleteToken = async (token: StringToken) => {
@@ -176,18 +197,31 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                 }
                 <SearchBar onSearch={onSearch} />
             </Stack>
-            <ListGroup>
-                {tokens && tokens.map((token) =>
-                    <StringTokenListItem
-                        key={token.id}
-                        token={token}
-                        project_id={project.id}
-                        onAddTag={() => setSelectedToken(token)}
-                        onDelete={() => deleteToken(token)}
-                        onTagClick={(tag => selectTag(tag))}
-                    />
-                )}
-            </ListGroup>
+            {tokens &&
+                <InfiniteScroll
+                    dataLength={tokens.length}
+                    next={() => {
+                        const newOffset = offset + limit
+                        setOffset(newOffset)
+                        fetchData(selectedTag, query, newOffset)
+                    }}
+                    hasMore={hasMore}
+                    loader={<p>Loading...</p>}
+                >
+                    <ListGroup>
+                        {tokens.map((token) =>
+                            <StringTokenListItem
+                                key={token.id}
+                                token={token}
+                                project_id={project.id}
+                                onAddTag={() => setSelectedToken(token)}
+                                onDelete={() => deleteToken(token)}
+                                onTagClick={(tag => selectTag(tag))}
+                            />
+                        )}
+                    </ListGroup>
+                </InfiniteScroll>
+            }
             {showDialog && <AddTokenPage
                 project_id={project.id}
                 show={showDialog}

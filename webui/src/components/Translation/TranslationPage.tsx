@@ -9,6 +9,7 @@ import Project from "../model/Project"
 import SearchBar from "../UI/SearchBar"
 import TagsContainer from "../UI/TagsContainer"
 import ErrorAlert from "../UI/ErrorAlert"
+import InfiniteScroll from "react-infinite-scroll-component"
 
 type TranslationListItemProps = {
     translation: TranslationModel,
@@ -54,6 +55,10 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, onSave
 
 const TranslationPage = () => {
 
+    const limit = 20
+    const [hasMore, setHasMore] = useState<boolean>(true)
+    const [offset, setOffset] = useState<number>(0)
+
     const { project_id, code } = useParams()
     const [showExport, setShowExport] = useState(false)
 
@@ -80,10 +85,10 @@ const TranslationPage = () => {
     }
 
     const fetch = async () => {
-        fetchData(selectedTag, query)
+        fetchData(selectedTag, query, offset)
     }
 
-    const fetchData = async (tag: string | undefined, term: string) => {
+    const fetchData = async (tag: string | undefined, term: string, offset: number) => {
         var params = new Map<string, string>()
         if (tag) {
             params.set('tags', tag)
@@ -93,16 +98,29 @@ const TranslationPage = () => {
             params.set('q', term)
         }
 
+        params.set('offset', `${offset}`)
+        params.set('limit', `${limit}`)
+
         const result = await http<TranslationModel[]>({
             method: APIMethod.get,
             path: `/api/project/${project_id}/translations/${code}`,
             params: params
         })
 
-        if (result.error) {
-            setError(result.error)
+        if (result.value) {
+            if (result.value.length < limit) {
+                setHasMore(false)
+            } else {
+                setHasMore(true)
+            }
+            if (offset === 0) {
+                setTranslations(result.value)
+            } else {
+                setTranslations(translations?.concat(result.value))
+            }
         } else {
-            setTranslations(result.value)
+            setHasMore(false)
+            setError(result.error)
         }
     }
 
@@ -120,13 +138,15 @@ const TranslationPage = () => {
     }
 
     const selectTag = async (tag: string | undefined) => {
+        setOffset(0)
         setSelectedTag(tag)
-        fetchData(tag, query)
+        fetchData(tag, query, 0)
     }
 
     const onSearch = async (query: string) => {
+        setOffset(0)
         setQuery(query)
-        fetchData(selectedTag, query)
+        fetchData(selectedTag, query, 0)
     }
 
     const saveTranslation = async (translation: Translation) => {
@@ -188,16 +208,29 @@ const TranslationPage = () => {
                 }
                 <SearchBar onSearch={onSearch} />
             </Stack>
-            <ListGroup>
-                {translations && translations.map(
-                    (translation) => <TranslationListItem
-                        translation={translation}
-                        onSave={saveTranslation}
-                        onTagClick={tag => setSelectedTag(tag)}
-                        key={translation.token}
-                    />
-                )}
-            </ListGroup>
+            {translations &&
+                <InfiniteScroll
+                    dataLength={translations.length}
+                    next={() => {
+                        const newOffset = offset + limit
+                        setOffset(newOffset)
+                        fetchData(selectedTag, query, newOffset)
+                    }}
+                    hasMore={hasMore}
+                    loader={<p>Loading...</p>}
+                >
+                    <ListGroup>
+                        {translations.map(
+                            (translation) => <TranslationListItem
+                                translation={translation}
+                                onSave={saveTranslation}
+                                onTagClick={tag => setSelectedTag(tag)}
+                                key={translation.token}
+                            />
+                        )}
+                    </ListGroup>
+                </InfiniteScroll>
+            }
             {project &&
                 <ExportPage
                     project={project}
