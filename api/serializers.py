@@ -134,6 +134,18 @@ class StringTokenModelSerializer:
             'tags': [tag.tag for tag in self.token.tags.all()]
         }
 
+    def toSimplifiedJson(self):
+        translation = self.token.translation.filter(
+            language__code=self.code.upper()).first()
+        if translation:
+            text = translation.translation
+        else:
+            text = ''
+        return {
+            'token': self.token.token,
+            'translation': text,
+        }
+
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:

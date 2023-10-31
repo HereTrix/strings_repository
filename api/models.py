@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -71,7 +72,7 @@ class StringToken(models.Model):
         unique_together = ['token', 'project']
 
     def __str__(self):
-        return self.token
+        return f"{self.id} {self.token}"
 
 
 class Translation(models.Model):
@@ -88,6 +89,42 @@ class Translation(models.Model):
 
     def __str__(self):
         return f"{self.id} {self.translation}"
+
+    def create_translation(user: User, token: StringToken, code: str, project_id, text: str):
+        old_value = ''
+        try:
+            translation = Translation.objects.get(
+                token=token,
+                language__code=code.upper(),
+            )
+
+            old_value = translation.translation
+
+        except Translation.DoesNotExist:
+            languages = Language.objects.filter(
+                project__pk=project_id,
+                code=code.upper()
+            )
+            language = languages.first()
+
+            translation = Translation()
+            translation.language = language
+            translation.token = token
+
+        translation.translation = text
+        translation.updated_at = datetime.now()
+        translation.save()
+
+        # Add history
+        if old_value != text:
+            record = HistoryRecord()
+            record.token = token
+            record.old_value = old_value
+            record.new_value = text
+            record.updated_at = datetime.now()
+            record.editor = user
+            record.language = translation.language.code
+            record.save()
 
 
 class HistoryRecord(models.Model):
@@ -119,5 +156,7 @@ class ProjectAccessToken(models.Model):
     permission = models.CharField(
         max_length=10, choices=AccessTokenPermissions.choices)
     expiration = models.DateTimeField(null=True)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='access')
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='access_tokens')

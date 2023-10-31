@@ -152,6 +152,7 @@ class ProjectAccessTokenAPI(generics.GenericAPIView):
 
             token = ProjectAccessToken()
             token.permission = type
+            token.user = user
             token.token = ''.join(random.choices(string.ascii_letters, k=16))
             token.project = project
             if expiration:

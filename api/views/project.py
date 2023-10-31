@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 import django.core.exceptions as exception
 from rest_framework import generics, permissions, status
-from api.languages.langcoder import Langcoder
+from api.languages.langcoder import LANGUAGE_CODE_KEY, Langcoder
 from api.models import Language, Project, ProjectRole, StringToken, Tag
 from api.serializers import ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer
 from api.transport_models import APIProject
@@ -99,7 +99,7 @@ class ProjectAvailableLanguagesAPI(generics.GenericAPIView):
                                                 project__roles__role__in=ProjectRole.change_language_roles)
 
             unused = list(filter(lambda val: not any(
-                used.code == val[LANGUAGE_CODE] for used in languages), Langcoder.all_languages()))
+                used.code == val[LANGUAGE_CODE_KEY] for used in languages), Langcoder.all_languages()))
 
             return JsonResponse(unused, safe=False)
         except Language.DoesNotExist:

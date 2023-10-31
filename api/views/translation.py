@@ -82,55 +82,27 @@ class TranslationAPI(generics.GenericAPIView):
         text = request.data['translation']
 
         try:
-            tokens = StringToken.objects.filter(
+            token = StringToken.objects.filter(
                 project__pk=project_id,
                 project__roles__user=user,
                 token=token
+            ).first()
+
+            Translation.create_translation(
+                user=user,
+                token=token,
+                code=code,
+                project_id=project_id,
+                text=text
             )
-            token = tokens.first()
         except StringToken.DoesNotExist:
             return JsonResponse({
                 'error': 'Token not found'
             })
-
-        old_value = ''
-        try:
-            translation = Translation.objects.get(
-                token=token,
-                language__code=code.upper(),
-            )
-
-            old_value = translation.translation
-
-        except Translation.DoesNotExist:
-            try:
-                languages = Language.objects.filter(
-                    project__pk=project_id,
-                    code=code.upper()
-                )
-                language = languages.first()
-
-                translation = Translation()
-                translation.language = language
-                translation.token = token
-            except Language.DoesNotExist:
-                return JsonResponse({
-                    'error': 'Language not found'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-        translation.translation = text
-        translation.updated_at = datetime.now()
-        translation.save()
-
-        # Add history
-        record = HistoryRecord()
-        record.token = token
-        record.old_value = old_value
-        record.new_value = text
-        record.updated_at = datetime.now()
-        record.editor = user
-        record.language = translation.language.code
-        record.save()
+        except Language.DoesNotExist:
+            return JsonResponse({
+                'error': 'Language not found'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return JsonResponse({}, status=status.HTTP_200_OK)
 

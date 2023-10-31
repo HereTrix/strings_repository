@@ -1,10 +1,10 @@
 import os
 
 LANGUAGE_KEY = 'Subtag'
-LANGUAGE_NAME_KEY = 'Description'
+LANGUAGE_DESC_KEY = 'Description'
 
-LANGUAGE_CODE = 'code'
-LANGUAGE_NAME = 'name'
+LANGUAGE_CODE_KEY = 'code'
+LANGUAGE_NAME_KEY = 'name'
 
 languages = {}
 code_name = []
@@ -30,10 +30,10 @@ class Langcoder:  # Languages file processor
             line = line.rstrip('\n')
             if line == '%%':
                 data = Langcoder.parse_item(lines)
-                languages[data[LANGUAGE_KEY].upper()] = data[LANGUAGE_NAME_KEY]
+                languages[data[LANGUAGE_KEY].upper()] = data[LANGUAGE_DESC_KEY]
                 code_name.append({
-                    LANGUAGE_CODE: data[LANGUAGE_KEY],
-                    LANGUAGE_NAME: data[LANGUAGE_NAME_KEY]
+                    LANGUAGE_CODE_KEY: data[LANGUAGE_KEY],
+                    LANGUAGE_NAME_KEY: data[LANGUAGE_DESC_KEY]
                 })
                 lines.clear()
             else:
