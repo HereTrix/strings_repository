@@ -47,11 +47,14 @@ class ImportAPI(views.APIView):
 
         tag_models = []
         if tags:
-            for tag in tags:
-                tag_model = Tag.objects.get_or_create(
-                    tag=tag
-                )
-                tag_models.append(tag_model)
+            for tag in tags.split(','):
+                try:
+                    tag_model = Tag.objects.get(
+                        tag=tag
+                    )
+                    tag_models.append(tag_model)
+                except Tag.DoesNotExist:
+                    print(tag)
 
         for record in records:
             try:
@@ -74,7 +77,7 @@ class ImportAPI(views.APIView):
                 token.project = project
 
             if tag_models:
-                token.tags = tag_models
+                token.tags.set(tag_models)
 
             token.save()
 

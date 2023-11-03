@@ -43,13 +43,18 @@ const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
             setError("File should be selected")
         }
 
+        var tagToSend: string[] = []
+        if (selectedTags) {
+            tagToSend = selectedTags
+        }
+
         const result = await upload({
             method: APIMethod.post,
             path: `/api/import`,
             data: {
                 "file": data.file[0],
                 "code": selectedLanguage,
-                "tags": tags,
+                "tags": tagToSend,
                 "project_id": project.id
             }
         })
