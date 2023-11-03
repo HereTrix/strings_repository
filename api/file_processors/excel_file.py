@@ -60,7 +60,7 @@ class ExcelFileWriter:
             row += 1
 
     def http_response(self):
-        with tempfile.NamedTemporaryFile() as tmp:
+        with tempfile.NamedTemporaryFile(delete=True) as tmp:
             self.wb.save(tmp.name)
             tmp.seek(0)
             stream = tmp.read()

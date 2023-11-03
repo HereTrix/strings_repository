@@ -16,24 +16,22 @@ class AppleStringsFileReader:
         single_line_comment = 4
         multi_line_comment = 5
 
-    def __init__(self, content):
-        self.content = content
-
-    def read(self):
+    def read(self, content):
         state = AppleStringsFileReader.State.scan
         prev_symbol = None
         is_completed = False
         records = []
-        record = TranslationModel('', '')
+        record = TranslationModel.create('', '')
         comment = None
-        for char in self.content:
+
+        for char in content:
             match state:
                 # Scan is emitted when
                 case AppleStringsFileReader.State.scan:
                     if is_completed:
                         record.comment = comment
                         records.append(record)
-                        record = TranslationModel('', '')
+                        record = TranslationModel.create('', '')
                         # All comments before key = value belongs to this pair
                         comment = None
                         is_completed = False

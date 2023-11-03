@@ -1,24 +1,27 @@
 class TranslationModel:
 
-    def __init__(self, token, translation, comment=None, tags=None):
-        self.token = token
-        self.translation = translation
-        self.comment = comment
-        self.tags = tags
+    def create(token, translation, comment=None, tags=None):
+        model = TranslationModel()
+        model.token = token
+        model.translation = translation
+        model.comment = comment
+        model.tags = tags
+        return model
 
-    def __init__(self, token_model, code):
-        self.token = token_model.token
-        self.tags = [tag.tag for tag in token_model.tags.all()]
+    def __init__(self, token_model=None, code=None):
+        if token_model:
+            self.token = token_model.token
+            self.tags = [tag.tag for tag in token_model.tags.all()]
 
-        translation = token_model.translation.filter(
-            language__code=code.upper()).first()
-        if translation:
-            text = translation.translation
-        else:
-            text = ''
+            translation = token_model.translation.filter(
+                language__code=code.upper()).first()
+            if translation:
+                text = translation.translation
+            else:
+                text = ''
 
-        self.translation = text
-        self.comment = token_model.comment
+            self.translation = text
+            self.comment = token_model.comment
 
     def __eq__(self, other):
         if not isinstance(other, TranslationModel):

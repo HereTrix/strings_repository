@@ -72,6 +72,49 @@ export async function download(request: APIRequest): Promise<APIResponse<File>> 
     }
 }
 
+export async function upload<T>(request: APIRequest): Promise<APIResponse<T>> {
+    var data = new FormData()
+    for (const item in request.data) {
+        console.log(`Item: ${item} `)
+        data.append(item, request.data[item])
+    }
+
+    var headers: HeadersInit = []
+
+    if (!request.isAuth) {
+        const token = localStorage.getItem("auth")
+        if (token) {
+            headers.push(["Authorization", token])
+        }
+    }
+
+    var path = request.path
+
+    var requestOptions = {
+        method: request.method,
+        headers: headers,
+        body: data
+    }
+    const response = await fetch(path, requestOptions)
+    if (response.status == 401) {
+        if (!request.isAuth) {
+            localStorage.removeItem("auth")
+            history.navigate("/login", { replace: true })
+        }
+        return { error: "Not authorized" }
+    } else if (response.status == 204) { // No content
+        return {}
+    }
+    const json = await response.json()
+    console.log("Response:\n", json)
+    const error = json["error"]
+    if (error) {
+        return { error: error }
+    }
+
+    return { value: json as T }
+}
+
 export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
     var headers: HeadersInit = []
     headers.push(["Content-Type", "application/json"])

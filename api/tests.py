@@ -7,8 +7,8 @@ class AppleStringsTestCase(TestCase):
 
     def testStringsWriter(self):
         input = [
-            TranslationModel('token', 'value', 'Some\ncomment'),
-            TranslationModel('empty_comment', 'Empty comment value'),
+            TranslationModel.create('token', 'value', 'Some\ncomment'),
+            TranslationModel.create('empty_comment', 'Empty comment value'),
         ]
         expectation = '''/*Some
 comment*/
@@ -24,10 +24,10 @@ comment*/
 "token" = "value";
 "empty_comment" = "Empty comment value";'''
         expectation = [
-            TranslationModel('token', 'value',
-                             'Some comment\nAnd another one'),
-            TranslationModel('empty_comment', 'Empty comment value'),
+            TranslationModel.create('token', 'value',
+                                    'Some comment\nAnd another one'),
+            TranslationModel.create('empty_comment', 'Empty comment value'),
         ]
-        reader = AppleStringsFileReader(input)
-        result = reader.read()
+        reader = AppleStringsFileReader()
+        result = reader.read(input)
         self.assertEqual(result, expectation)

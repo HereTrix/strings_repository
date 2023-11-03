@@ -43,7 +43,7 @@ const AddTokenPage: FC<AddTokenPageProps> = ({ project_id, show, onHide, onSucce
     return (
         <Modal show={show} onHide={onHide}>
             <Modal.Header closeButton>
-                <Modal.Title>Add language</Modal.Title>
+                <Modal.Title>Add localization key</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form onSubmit={handleSubmit(onSubmit)} className="container">

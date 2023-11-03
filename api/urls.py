@@ -2,6 +2,7 @@ from django.urls import path
 from api.views.export import ExportAPI, ExportFormatsAPI
 from api.views.generic import *
 from api.views.history import ProjectHistoryAPI, ProjectHistoryExportAPI
+from api.views.import_api import ImportAPI
 from api.views.language import LanguageAPI
 from api.views.plugin import FetchLanguagesAPI, PullAPI, PushAPI
 from api.views.project import *
@@ -43,6 +44,7 @@ urlpatterns = [
          StringTokenTranslationsAPI.as_view()),
     path('translation', TranslationAPI.as_view()),
     path('export', ExportAPI.as_view()),
+    path('import', ImportAPI.as_view()),
     path('supported_formats', ExportFormatsAPI.as_view()),
     # plugin
     path('plugin/pull', PullAPI.as_view()),

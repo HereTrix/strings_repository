@@ -8,12 +8,14 @@ import LanguagesList from "../Languages/LanguagesList"
 import StringTokensList from "../StringTokens/StringTokensList"
 import ExportPage from "../Translation/ExportPage"
 import HistoryPage from "../History/HistoryPage"
+import ImportPage from "../Translation/ImportPage"
 
 const ProjectPage = () => {
 
     const [error, setError] = useState<string | null>()
     const [project, setProject] = useState<Project>()
     const [showExport, setShowExport] = useState(false)
+    const [showImport, setShowImport] = useState(false)
 
     const { id } = useParams()
 
@@ -40,7 +42,14 @@ const ProjectPage = () => {
             {project && <>
                 <Stack direction="horizontal" gap={3}>
                     <h1>{project.name}</h1>
-                    <Button className="ms-auto" onClick={() => setShowExport(true)}>Export</Button>
+                    <Button
+                        className="ms-auto"
+                        onClick={() => setShowImport(true)}
+                    >Import</Button>
+                    <Button
+                        className="mx-2"
+                        onClick={() => setShowExport(true)}
+                    >Export</Button>
                 </Stack>
                 <Tabs>
                     <Tab
@@ -70,6 +79,12 @@ const ProjectPage = () => {
                         <ProjectInfo project={project} />
                     </Tab>
                 </Tabs>
+                {showImport &&
+                    <ImportPage
+                        project={project}
+                        show={showImport}
+                        onHide={() => setShowImport(false)} />
+                }
                 {showExport &&
                     <ExportPage
                         project={project}
