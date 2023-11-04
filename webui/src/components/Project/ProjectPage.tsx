@@ -12,6 +12,8 @@ import ImportPage from "../Translation/ImportPage"
 
 const ProjectPage = () => {
 
+    const [activeTab, setActiveTab] = useState('languages')
+
     const [error, setError] = useState<string | null>()
     const [project, setProject] = useState<Project>()
     const [showExport, setShowExport] = useState(false)
@@ -33,6 +35,12 @@ const ProjectPage = () => {
         }
     }
 
+    const activateTab = (tab: string | null) => {
+        if (tab) {
+            setActiveTab(tab)
+        }
+    }
+
     useEffect(() => {
         fetch()
     }, [])
@@ -51,7 +59,7 @@ const ProjectPage = () => {
                         onClick={() => setShowExport(true)}
                     >Export</Button>
                 </Stack>
-                <Tabs>
+                <Tabs activeKey={activeTab} onSelect={(e) => activateTab(e)}>
                     <Tab
                         eventKey="languages"
                         title="Languages"
@@ -63,7 +71,7 @@ const ProjectPage = () => {
                             eventKey="tokens"
                             title="Localization keys"
                         >
-                            <StringTokensList project={project} />
+                            {activeTab === "tokens" && <StringTokensList project={project} />}
                         </Tab>
                     }
                     <Tab
@@ -83,7 +91,11 @@ const ProjectPage = () => {
                     <ImportPage
                         project={project}
                         show={showImport}
-                        onHide={() => setShowImport(false)} />
+                        onHide={() => {
+                            setShowImport(false)
+                            setProject(undefined)
+                            fetch()
+                        }} />
                 }
                 {showExport &&
                     <ExportPage

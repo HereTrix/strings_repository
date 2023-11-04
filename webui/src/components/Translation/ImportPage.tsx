@@ -1,11 +1,11 @@
 import { FC, useEffect, useState } from "react"
 import Project from "../model/Project"
 import { Button, Dropdown, Form, Modal } from "react-bootstrap"
-import Language from "../model/Language"
 import { SubmitHandler, useForm } from "react-hook-form"
 import ErrorAlert from "../UI/ErrorAlert"
 import { APIMethod, http, upload } from "../Utils/network"
 import { Typeahead } from "react-bootstrap-typeahead"
+import { useNavigate } from "react-router-dom"
 
 type ImportPageProps = {
     project: Project
@@ -19,6 +19,8 @@ type Inputs = {
 }
 
 const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
+
+    const navigate = useNavigate()
 
     const [error, setError] = useState<string>()
     const [tags, setTags] = useState<string[]>([])
@@ -111,7 +113,7 @@ const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
                         </Dropdown>
                         <Typeahead
                             allowNew
-                            newSelectionPrefix="Select pr create tag: "
+                            newSelectionPrefix="Select or create tag: "
                             id="basic-typeahead-multiple"
                             multiple
                             labelKey={"tag"}
