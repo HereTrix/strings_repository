@@ -1,5 +1,5 @@
 from api.file_processors.android_resources import AndroidResourceFileWriter, AndroidResourceFileReader
-from api.file_processors.dotnet_file import DotNetFileWriter
+from api.file_processors.dotnet_file import DotNetFileReader, DotNetFileWriter
 from api.file_processors.excel_file import ExcelFileWriter, ExcelSingleSheetFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.file_processors.import_file_type import ImportFile
@@ -49,6 +49,8 @@ class FileImporter:
                 self.reader = AndroidResourceFileReader()
             case ImportFile.json.name:
                 self.reader = JsonFileReader()
+            case ImportFile.resx.name:
+                self.reader = DotNetFileReader()
             case _:
                 raise FileImporter.UnsupportedFile(
                     f"'.{extension}' is not supported file extension",

@@ -142,7 +142,8 @@ class Translation(models.Model):
             token.project = project
 
         if tags:
-            token.tags.set(tags)
+            for tag in tags:
+                token.tags.add(tag.id)
 
         token.save()
 

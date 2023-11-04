@@ -4,6 +4,7 @@ import zipfile
 from django.http import HttpResponse
 
 from api.file_processors.export_file_type import ExportFile
+from api.transport_models import TranslationModel
 
 
 class DotNetFileWriter:
@@ -110,3 +111,30 @@ class DotNetFileWriter:
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
 '''
+
+
+class DotNetFileReader:
+
+    def read(self, file):
+        file.seek(0)
+        dom = minidom.parse(file=file)
+        result = []
+
+        resources = dom.getElementsByTagName('data')
+        for resource in resources:
+            token = resource.getAttribute('name')
+            translation = ''
+            if resource.childNodes:
+                value = resource.getElementsByTagName("value")[0]
+                if value.childNodes:
+                    text_node = value.childNodes[0]
+                    if text_node.nodeType == text_node.TEXT_NODE:
+                        translation = text_node.data
+
+            model = TranslationModel.create(
+                token=token,
+                translation=translation
+            )
+            result.append(model)
+
+        return result
