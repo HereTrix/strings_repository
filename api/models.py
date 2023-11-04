@@ -140,6 +140,7 @@ class Translation(models.Model):
             token = StringToken()
             token.token = record.token
             token.project = project
+            token.save()
 
         if tags:
             for tag in tags:

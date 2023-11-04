@@ -7,3 +7,4 @@ class ImportFile(enum.Enum):
     # excel = 'excel'
     json = 'json'
     resx = 'resx'
+    properties = 'properties'

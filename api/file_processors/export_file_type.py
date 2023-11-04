@@ -8,6 +8,7 @@ class ExportFile(enum.Enum):
     excel_single = 3
     json = 4
     resx = 5
+    properties = 6
 
     def file_extension(self):
         match self:
@@ -23,6 +24,8 @@ class ExportFile(enum.Enum):
                 return '.json'
             case ExportFile.resx:
                 return '.resx'
+            case ExportFile.properties:
+                return '.properties'
 
     def vendor(self):
         match self:
@@ -38,3 +41,5 @@ class ExportFile(enum.Enum):
                 return 'Key and Value'
             case ExportFile.resx:
                 return 'ASP.NET'
+            case ExportFile.properties:
+                return 'Java'

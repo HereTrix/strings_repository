@@ -18,7 +18,7 @@ class AppleStringsFileReader:
 
     def read(self, file):
         file.seek(0)
-        content = str(file.read())
+        content = file.read().decode()
         return self.read_string(content=content)
 
     def read_string(self, content):
