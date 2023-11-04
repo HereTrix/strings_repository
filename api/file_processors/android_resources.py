@@ -1,9 +1,11 @@
+import tempfile
 from xml.dom import minidom
 import zipfile
 
 from django.http import HttpResponse
 
 from api.file_processors.export_file_type import ExportFile
+from api.transport_models import TranslationModel
 
 
 class AndroidResourceFileWriter:
@@ -31,7 +33,7 @@ class AndroidResourceFileWriter:
                 item.appendChild(text)
             xml.appendChild(item)
 
-        data = root.toxml()
+        data = root.toprettyxml()
 
         self.zip_file.writestr(
             self.path(code=code),
@@ -42,3 +44,27 @@ class AndroidResourceFileWriter:
         self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
         self.zip_file.close()
         return self.response
+
+
+class AndroidResourceFileReader:
+
+    def read(self, file):
+        file.seek(0)
+        dom = minidom.parse(file=file)
+        strings = dom.getElementsByTagName('string')
+        result = []
+        for node in strings:
+            token = node.getAttribute('name')
+            translation = ''
+            if node.childNodes:
+                text_node = node.childNodes[0]
+                if text_node.nodeType == node.TEXT_NODE:
+                    translation = text_node.data
+
+            model = TranslationModel.create(
+                token=token,
+                translation=translation
+            )
+            result.append(model)
+
+        return result

@@ -1,4 +1,4 @@
-from api.file_processors.android_resources import AndroidResourceFileWriter
+from api.file_processors.android_resources import AndroidResourceFileWriter, AndroidResourceFileReader
 from api.file_processors.dotnet_file import DotNetFileWriter
 from api.file_processors.excel_file import ExcelFileWriter, ExcelSingleSheetFileWriter
 from api.file_processors.export_file_type import ExportFile
@@ -45,6 +45,8 @@ class FileImporter:
         match extension:
             case ImportFile.strings.name:
                 self.reader = AppleStringsFileReader()
+            case ImportFile.xml.name:
+                self.reader = AndroidResourceFileReader()
             case _:
                 raise FileImporter.UnsupportedFile(
                     f"'.{extension}' is not supported file extension",
@@ -55,7 +57,4 @@ class FileImporter:
             for chunk in self.file.chunks():
                 destination.write(chunk)
 
-            destination.seek(0)
-            content = str(destination.read())
-
-        return self.reader.read(content=content)
+            return self.reader.read(file=destination)

@@ -72,21 +72,28 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
 
         const codes = selectedLanguages.map((lang) => lang.code).join(",")
 
+        var params = new Map<string, any>()
+        params.set('codes', codes)
+        params.set('project_id', project.id)
+        if (selectedType) {
+            params.set('type', selectedType.type)
+        }
+
+        if (selectedTags) {
+            params.set('tags', selectedTags.join(","))
+        }
+
         const result = await download({
             method: APIMethod.get,
             path: '/api/export',
-            params: {
-                'codes': codes,
-                'project_id': project.id,
-                'type': selectedType?.type,
-                'tags': selectedTags?.join(",")
-            }
+            params: params
         })
 
         if (result.value) {
             fileDownload(result.value.content, result.value.name)
             onHide()
         } else {
+            setError(result.error)
         }
     }
 

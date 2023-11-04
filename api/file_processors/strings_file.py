@@ -16,7 +16,12 @@ class AppleStringsFileReader:
         single_line_comment = 4
         multi_line_comment = 5
 
-    def read(self, content):
+    def read(self, file):
+        file.seek(0)
+        content = str(file.read())
+        return self.read_string(content=content)
+
+    def read_string(self, content):
         state = AppleStringsFileReader.State.scan
         prev_symbol = None
         is_completed = False

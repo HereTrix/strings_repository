@@ -36,9 +36,6 @@ class ExportAPI(generics.GenericAPIView):
 
                 lang_codes = [lang.code for lang in languages]
 
-            if tags_query:
-                tags = tags_query.split(',')
-
             processor = FileProcessor(type=file_type)
 
             tokens = StringToken.objects.filter(
@@ -46,7 +43,8 @@ class ExportAPI(generics.GenericAPIView):
                 project__roles__user=user
             ).prefetch_related('translation', 'tags')
 
-            if tags:
+            if tags_query:
+                tags = tags_query.split(',')
                 tokens = tokens.filter(tags__tag__in=tags).distinct()
 
             for code in lang_codes:

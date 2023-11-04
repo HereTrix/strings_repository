@@ -62,7 +62,7 @@ class Tag(models.Model):
 
 class StringToken(models.Model):
     id = models.AutoField('id', primary_key=True)
-    token = models.CharField('Token', max_length=200, unique=True)
+    token = models.CharField('Token', max_length=200)
     comment = models.TextField('Comment', blank=True)
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='tokens')
