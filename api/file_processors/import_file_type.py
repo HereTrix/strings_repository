@@ -5,5 +5,5 @@ class ImportFile(enum.Enum):
     strings = 'strings'
     xml = 'xml'
     # excel = 'excel'
-    # json = 'json'
+    json = 'json'
     # resx = 'resx'

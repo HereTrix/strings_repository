@@ -4,6 +4,7 @@ from django.http import HttpResponse
 import json
 
 from api.file_processors.export_file_type import ExportFile
+from api.transport_models import TranslationModel
 
 
 class JsonFileWriter:
@@ -26,3 +27,19 @@ class JsonFileWriter:
         self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
         self.zip_file.close()
         return self.response
+
+
+class JsonFileReader:
+
+    def read(self, file):
+        file.seek(0)
+        data = json.load(file)
+
+        result = []
+        for key in data:
+            model = TranslationModel.create(
+                token=key,
+                translation=data[key]
+            )
+            result.append(model)
+        return result

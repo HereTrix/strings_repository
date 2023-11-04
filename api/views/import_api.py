@@ -52,9 +52,12 @@ class ImportAPI(views.APIView):
                     tag_model = Tag.objects.get(
                         tag=tag
                     )
-                    tag_models.append(tag_model)
                 except Tag.DoesNotExist:
-                    print(tag)
+                    tag_model = Tag()
+                    tag_model.tag = tag
+                    tag_model.save()
+
+                tag_models.append(tag_model)
 
         for record in records:
             try:

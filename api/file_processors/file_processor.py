@@ -3,7 +3,7 @@ from api.file_processors.dotnet_file import DotNetFileWriter
 from api.file_processors.excel_file import ExcelFileWriter, ExcelSingleSheetFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.file_processors.import_file_type import ImportFile
-from api.file_processors.json_file import JsonFileWriter
+from api.file_processors.json_file import JsonFileReader, JsonFileWriter
 from api.file_processors.strings_file import AppleStringsFileReader, AppleStringsFileWriter
 from api.transport_models import TranslationModel
 import tempfile
@@ -47,6 +47,8 @@ class FileImporter:
                 self.reader = AppleStringsFileReader()
             case ImportFile.xml.name:
                 self.reader = AndroidResourceFileReader()
+            case ImportFile.json.name:
+                self.reader = JsonFileReader()
             case _:
                 raise FileImporter.UnsupportedFile(
                     f"'.{extension}' is not supported file extension",

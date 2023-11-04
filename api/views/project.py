@@ -231,7 +231,7 @@ class ProjectTagsAPI(generics.GenericAPIView):
             tags = Tag.objects.filter(
                 tokens__project__pk=pk,
                 tokens__project__roles__user=user
-            )
+            ).distinct()
             data = [tag.tag for tag in tags]
             return JsonResponse(data, safe=False)
         except Exception as e:
