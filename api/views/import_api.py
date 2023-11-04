@@ -58,51 +58,20 @@ class ImportAPI(views.APIView):
 
         for record in records:
             try:
-                project = Project.objects.get(
-                    id=project_id
+                Translation.import_record(
+                    user=user,
+                    project_id=project_id,
+                    code=code,
+                    record=record,
+                    tags=tag_models
                 )
             except Project.DoesNotExist:
                 return JsonResponse({
                     'error': 'Unable to import'
                 }, status=status.HTTP_404_NOT_FOUND)
-
-            try:
-                token = StringToken.objects.get(
-                    token=record.token,
-                    project=project
-                )
-            except StringToken.DoesNotExist:
-                token = StringToken()
-                token.token = record.token
-                token.project = project
-
-            if tag_models:
-                token.tags.set(tag_models)
-
-            token.save()
-
-            try:
-                language = Language.objects.get(
-                    code=code,
-                    project=project
-                )
             except Language.DoesNotExist:
                 return JsonResponse({
                     'error': 'Unable to import'
                 }, status=status.HTTP_404_NOT_FOUND)
-
-            try:
-                translation = Translation.objects.get(
-                    language=language,
-                    token=token
-                )
-            except Translation.DoesNotExist:
-                translation = Translation()
-                translation.language = language
-                translation.token = token
-
-            translation.translation = record.translation
-            translation.updated_at = datetime.now()
-            translation.save()
 
         return JsonResponse({})

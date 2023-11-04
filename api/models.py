@@ -126,6 +126,57 @@ class Translation(models.Model):
             record.language = translation.language.code
             record.save()
 
+    def import_record(user, project_id, code, record, tags):
+        project = Project.objects.get(
+            id=project_id
+        )
+
+        try:
+            token = StringToken.objects.get(
+                token=record.token,
+                project=project
+            )
+        except StringToken.DoesNotExist:
+            token = StringToken()
+            token.token = record.token
+            token.project = project
+
+        if tags:
+            token.tags.set(tags)
+
+        token.save()
+
+        language = Language.objects.get(
+            code=code,
+            project=project
+        )
+
+        old_value = ''
+        try:
+            translation = Translation.objects.get(
+                language=language,
+                token=token
+            )
+            old_value = translation.translation
+        except Translation.DoesNotExist:
+            translation = Translation()
+            translation.language = language
+            translation.token = token
+
+        translation.translation = record.translation
+        translation.updated_at = datetime.now()
+        translation.save()
+        # Add history
+        if not old_value == record.translation:
+            history = HistoryRecord()
+            history.token = token
+            history.old_value = old_value
+            history.new_value = record.translation
+            history.updated_at = datetime.now()
+            history.editor = user
+            history.language = code
+            history.save()
+
 
 class HistoryRecord(models.Model):
     id = models.AutoField('id', primary_key=True)
