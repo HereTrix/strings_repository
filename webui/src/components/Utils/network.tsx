@@ -155,7 +155,7 @@ export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
         return {}
     }
     const json = await response.json()
-    console.log("Response:\n", json)
+
     const error = json["error"]
     if (error) {
         return { error: error }

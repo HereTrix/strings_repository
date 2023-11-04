@@ -5,6 +5,7 @@ import Language from "../model/Language"
 import Project, { ProjectRole } from "../model/Project"
 import { APIMethod, http } from "../Utils/network"
 import OptionalImage from "../UI/OptionalImage"
+import ErrorAlert from "../UI/ErrorAlert"
 
 type LanguagesProps = {
     project: Project
@@ -25,12 +26,17 @@ const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, onDe
             className="d-flex justify-content-between align-items-start">
             <OptionalImage src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code} />
             <label>{language.name}</label>
-            <Button onClick={onDelete}>Delete</Button>
+            <Button
+                onClick={onDelete}
+                className="btn-danger"
+            >Delete</Button>
         </ListGroup.Item>
     )
 }
 
 const LanguagesList: FC<LanguagesProps> = ({ project }) => {
+
+    const [error, setError] = useState<string>()
 
     const [languages, setLanguages] = useState<Language[]>()
     const [showDialog, setShowDialog] = useState(false)
@@ -43,7 +49,7 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
         })
 
         if (result.error) {
-
+            setError(result.error)
         } else {
             load()
         }
@@ -57,6 +63,8 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
 
         if (result.value) {
             setLanguages(result.value)
+        } else {
+            setError(result.error)
         }
     }
 
@@ -83,6 +91,10 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
                 project_id={project.id}
                 onHide={() => setShowDialog(false)}
                 onSuccess={load} />
+            <ErrorAlert
+                error={error}
+                onClose={() => setError(undefined)}
+            />
         </>
     )
 }
