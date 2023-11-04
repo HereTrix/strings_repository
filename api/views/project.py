@@ -37,8 +37,8 @@ class ProjectAPI(generics.GenericAPIView):
         try:
             project = Project.objects.filter(
                 pk=pk, roles__user=user, roles__role=ProjectRole.Role.admin)
-            serializer = ProjectSerializer(project)
-            return JsonResponse(serializer.data)
+            project.delete()
+            return JsonResponse({})
         except Project.DoesNotExist as e:
             return JsonResponse({
                 'error': str(e)
@@ -79,9 +79,20 @@ class ProjectListAPI(generics.GenericAPIView):
     def get(self, request):
         try:
             user = request.user
-            projects = Project.objects.filter(roles__user=user)
-            serializer = ProjectSerializer(projects, many=True)
-            return JsonResponse(serializer.data, safe=False)
+            projects = Project.objects.filter(
+                roles__user=user
+            ).prefetch_related('roles')
+
+            result = []
+            for project in projects:
+                role = project.roles.get(user=user)
+                result.append({
+                    'id': project.id,
+                    'name': project.name,
+                    'description': project.description,
+                    'role': role.role
+                })
+            return JsonResponse(result, safe=False)
         except Exception as e:
             return JsonResponse({
                 'error': str(e)
