@@ -90,6 +90,24 @@ class ProjectInvitationAPI(generics.GenericAPIView):
         role = request.data['role']
         try:
             project = Project.objects.get(pk=pk, roles__user=user)
+
+            user_role = project.roles.get(user=user)
+            if user_role.role == ProjectRole.Role.admin:
+                if not role in ProjectRole.common_roles:
+                    return JsonResponse({
+                        'error': 'Unable to generate code'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            elif user_role.role == ProjectRole.Role.translator:
+                if not role in ProjectRole.translator_roles:
+                    return JsonResponse({
+                        'error': 'Unable to generate code'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            elif user_role.role == ProjectRole.Role.editor:
+                return JsonResponse({
+                    'error': 'Unable to generate code'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             code = ''.join(random.choices(string.ascii_letters, k=16))
             invitation = Invitation()
             invitation.code = code

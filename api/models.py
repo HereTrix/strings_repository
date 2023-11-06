@@ -37,6 +37,7 @@ class ProjectRole(models.Model):
     change_token_roles = [Role.owner, Role.admin, Role.editor]
     change_participants_roles = [Role.owner, Role.admin]
     common_roles = [Role.admin, Role.editor, Role.translator]
+    translator_roles = [Role.editor, Role.translator]
 
 
 class Language(models.Model):
