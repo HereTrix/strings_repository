@@ -22,14 +22,14 @@ Configuration
 Befor installation please ensure all OS variables are set.
 
 List of variables:
-- APP_SECRET_KEY - secret key
-- ALLOWED_HOSTS - allowed hosts separated by comma
-- DB_ENGINE - engine name
-- DB_NAME - database name
-- DB_HOST - database host (can be skipped for sqlite3)
-- DB_PORT - database port (can be skipped for sqlite3)
-- DB_USER - database user (can be skipped for sqlite3)
-- DB_PASSWORD - password for database (can be skipped for sqlite3)
+- `APP_SECRET_KEY` - secret key
+- `ALLOWED_HOSTS` - allowed hosts separated by comma
+- `DB_ENGINE` - engine name
+- `DB_NAME` - database name
+- `DB_HOST` - database host (can be skipped for sqlite3)
+- `DB_PORT` - database port (can be skipped for sqlite3)
+- `DB_USER` - database user (can be skipped for sqlite3)
+- `DB_PASSWORD` - password for database (can be skipped for sqlite3)
 
 
 Installation
@@ -52,6 +52,10 @@ python manage.py migrate
 Do not forget to create superuser by `python manage.py createsuperuser`
 
 Docker file will be added in future updates
+
+How to use
+=======
+You can find instructions on [wiki page](https://github.com/HereTrix/strings_repository/wiki)
 
 License
 -------
