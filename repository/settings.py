@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-q=f+2(_o!60ljfy9s8jin)0kcz0hxugspykn_+_pvgv)coqd4r'
+SECRET_KEY = os.environ['APP_SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(',')
 
 CORS_ALLOWED_ORIGINS = [
     'null'
@@ -91,12 +92,25 @@ WSGI_APPLICATION = 'repository.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+engine = os.environ["DB_ENGINE"]
+if engine == 'sqlite3':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.' + engine,
+            'NAME': os.environ['DB_NAME'],
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.environ['DB_NAME'],  # BASE_DIR / 'db.sqlite3',
+            'HOST': os.environ['DB_HOST'],
+            'PORT': os.environ['DB_PORT'],
+            'USER': os.environ['DB_USER'],
+            'PASSWORD': os.environ['DB_PASSWORD'],
+        }
+    }
 
 
 # Password validation
@@ -137,6 +151,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "webui/static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

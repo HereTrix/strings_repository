@@ -16,6 +16,22 @@ Overview
 * Import translations from file
 * [Figma plugin support](https://github.com/HereTrix/strings_repository-figma-plugin)
 
+Configuration
+--------
+
+Befor installation please ensure all OS variables are set.
+
+List of variables:
+- APP_SECRET_KEY - secret key
+- ALLOWED_HOSTS - allowed hosts separated by comma
+- DB_ENGINE - engine name
+- DB_NAME - database name
+- DB_HOST - database host (can be skipped for sqlite3)
+- DB_PORT - database port (can be skipped for sqlite3)
+- DB_USER - database user (can be skipped for sqlite3)
+- DB_PASSWORD - password for database (can be skipped for sqlite3)
+
+
 Installation
 --------
 

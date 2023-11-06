@@ -21,6 +21,13 @@ module.exports = {
         options: {
           outputPath: "../fonts",
         }
+      },
+      {
+        test: /\.css$/i,
+        loader: "css-loader",
+        options: {
+          url: true,
+        },
       }
     ],
   },
