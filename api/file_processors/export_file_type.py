@@ -2,13 +2,20 @@ import enum
 
 
 class ExportFile(enum.Enum):
-    strings = 0
-    android = 1
-    excel = 2
-    excel_single = 3
-    json = 4
-    resx = 5
-    properties = 6
+    strings = 'strings'
+    android = 'xml'
+    excel = 'excel'
+    excel_single = 'xlsx'
+    json = 'json'
+    resx = 'resx'
+    properties = 'properties'
+    # strings = 0
+    # android = 1
+    # excel = 2
+    # excel_single = 3
+    # json = 4
+    # resx = 5
+    # properties = 6
 
     def file_extension(self):
         match self:

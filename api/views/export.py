@@ -25,7 +25,12 @@ class ExportAPI(generics.GenericAPIView):
             project_id = request.GET['project_id']
             type = request.GET['type']
             tags_query = request.GET.get('tags')
-            file_type = ExportFile(int(type))
+            file_type = ExportFile(type)
+
+            if not file_type:
+                return JsonResponse({
+                    'error': 'Unsupported file type'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             if codes:
                 lang_codes = codes.split(',')

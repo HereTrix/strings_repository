@@ -1,8 +1,12 @@
-from django.http import HttpResponse, JsonResponse
+import datetime
+from django.http import JsonResponse
 from rest_framework import generics, status, permissions
+from api.file_processors.export_file_type import ExportFile
+from api.file_processors.file_processor import FileProcessor
 
-from api.models import HistoryRecord, Language, ProjectAccessToken, StringToken, Translation
-from api.serializers import StringTokenModelSerializer, TranslationSerializer
+from api.models import Language, ProjectAccessToken, StringToken, Translation
+from api.serializers import StringTokenModelSerializer
+from api.transport_models import TranslationModel
 
 
 class PullAPI(generics.GenericAPIView):
@@ -127,3 +131,81 @@ class FetchLanguagesAPI(generics.GenericAPIView):
             return JsonResponse({
                 'error': 'No access'
             }, status=status.HTTP_403_FORBIDDEN)
+
+
+class PluginExportAPI(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        try:
+            token = request.META.get('HTTP_ACCESS_TOKEN')
+            access = ProjectAccessToken.objects.get(token=token)
+            if access.expiration and access.expiration < datetime.now():
+                try:
+                    access.delete()
+                except Exception:
+                    pass
+                return JsonResponse({
+                    'error': 'No access'
+                }, status=status.HTTP_403_FORBIDDEN)
+
+        except Exception:
+            return JsonResponse({
+                'error': 'No access'
+            })
+
+        try:
+            user = access.user
+            project_id = access.project.id
+
+            codes = request.POST.get('codes')
+            type = request.POST.get('type')
+            tags = request.POST.get('tags')
+            file_type = ExportFile(type)
+
+            if not file_type:
+                return JsonResponse({
+                    'error': 'Unsupported file type'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if not codes:
+                languages = Language.objects.filter(
+                    project__pk=project_id
+                )
+
+                codes = [lang.code for lang in languages]
+
+            processor = FileProcessor(type=file_type)
+
+            tokens = StringToken.objects.filter(
+                project__pk=project_id,
+                project__roles__user=user
+            ).prefetch_related('translation', 'tags')
+
+            if tags:
+                tokens = tokens.filter(tags__tag__in=tags).distinct()
+
+            print(codes)
+            if isinstance(codes, str):
+                try:
+                    records = [TranslationModel(token_model=token, code=codes)
+                               for token in tokens]
+
+                    processor.append(records=records, code=codes)
+                except Exception as e:
+                    pass
+            else:
+                print("Not string O_O")
+                for code in codes:
+                    try:
+                        records = [TranslationModel(token_model=token, code=code)
+                                   for token in tokens]
+
+                        processor.append(records=records, code=code)
+                    except Exception as e:
+                        pass
+            return processor.http_response()
+        except Exception as e:
+            return JsonResponse({
+                'error': e
+            }, status=status.HTTP_400_BAD_REQUEST)
