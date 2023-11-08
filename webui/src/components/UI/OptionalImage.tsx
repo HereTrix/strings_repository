@@ -1,4 +1,5 @@
 import { FC, useEffect, useState } from "react"
+import { PropsWithChildren } from 'react';
 
 type OptionalImageProps = {
     src: string
@@ -31,7 +32,7 @@ const useImageError = () => {
 };
 
 
-const OptionalImage: FC<OptionalImageProps> = ({ src, alt }) => {
+const OptionalImage: FC<PropsWithChildren<OptionalImageProps>> = ({ src, alt }) => {
 
     const [setImg, hasError, retry, imgRef] = useImageError();
 
