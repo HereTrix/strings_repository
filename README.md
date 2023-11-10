@@ -14,7 +14,8 @@ Overview
 * Export translations to file
 * Full history of changes
 * Import translations from file
-* [Figma plugin support](https://github.com/HereTrix/strings_repository-figma-plugin)
+* [Figma plugin](https://github.com/HereTrix/strings_repository-figma-plugin) support
+* [CLI application](https://github.com/HereTrix/strings_repository_cli) for CI/CD purposes
 
 Configuration
 --------
