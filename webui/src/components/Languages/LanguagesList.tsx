@@ -91,10 +91,10 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
                 project_id={project.id}
                 onHide={() => setShowDialog(false)}
                 onSuccess={load} />
-            <ErrorAlert
+            {error && <ErrorAlert
                 error={error}
                 onClose={() => setError(undefined)}
-            />
+            />}
         </>
     )
 }

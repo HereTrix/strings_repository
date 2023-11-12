@@ -3,6 +3,7 @@ import Project from "../model/Project"
 import { Button, Container, Form, Stack, Table } from "react-bootstrap"
 import { APIMethod, download, http } from "../Utils/network"
 import fileDownload from "js-file-download"
+import ErrorAlert from "../UI/ErrorAlert"
 
 type HistoryPageProps = {
     project: Project
@@ -17,10 +18,9 @@ interface HistoryData {
     new_value: string
 }
 
-interface HistoryRecord { }
-
 const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
 
+    const [error, setError] = useState<string>()
     const [data, setData] = useState<Map<string, HistoryData[]>>()
 
     const [dateFrom, setDateFrom] = useState<string>()
@@ -59,6 +59,8 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
                 grouped.set(obj.token, value);
             });
             setData(grouped)
+        } else {
+            setError(result.error)
         }
     }
 
@@ -72,6 +74,7 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
         if (result.value) {
             fileDownload(result.value.content, result.value.name)
         } else {
+            setError(result.error)
         }
     }
 
@@ -124,6 +127,7 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
                     </Table>
                 </Container>
             })}
+            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </>
     )
 }

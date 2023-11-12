@@ -85,7 +85,7 @@ const LoginPage = () => {
                     </Form.Group>
                 </Form >
             </Container>
-            <ErrorAlert error={error} onClose={() => setError(undefined)} />
+            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </>
     );
 }

@@ -5,6 +5,7 @@ import { APIMethod, http } from "../Utils/network"
 import Participant from "../model/Participant"
 import InviteUserPage from "./InviteUserPage"
 import AccessTokenPage from "./AccessToken"
+import ErrorAlert from "../UI/ErrorAlert"
 
 type ProjectInfoProps = {
     project: Project
@@ -12,6 +13,7 @@ type ProjectInfoProps = {
 
 const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
 
+    const [error, setError] = useState<string>()
     const [participants, setParticipants] = useState<Participant[]>()
     const [inviteUser, setInviteUser] = useState<boolean>(false)
     const [accessToken, setAccessToken] = useState<boolean>(false)
@@ -25,6 +27,8 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
 
         if (data.value) {
             setParticipants(data.value)
+        } else {
+            setError(data.error)
         }
     }
 
@@ -36,6 +40,8 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
 
         if (data.value) {
             setRoles(data.value)
+        } else {
+            setError(data.error)
         }
     }
 
@@ -48,6 +54,8 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
 
         if (data.value) {
             setParticipants(data.value)
+        } else {
+            setError(data.error)
         }
     }
 
@@ -120,6 +128,7 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
                     onHide={() => setAccessToken(false)}
                 />
             }
+            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </>
     )
 }

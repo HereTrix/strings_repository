@@ -165,7 +165,7 @@ const AccessTokenPage: FC<AccessTokenProps> = ({ project, show, onHide }) => {
                     <Button className="my-2" onClick={() => setGenerate(true)}>Generate access token</Button>
                 </Modal.Body>
             </Modal>
-            <ErrorAlert error={error} onClose={() => setError(undefined)} />
+            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
             {generate &&
                 <GenerateAccessTokenPage
                     show={generate}

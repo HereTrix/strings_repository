@@ -4,6 +4,7 @@ import { APIMethod, http } from "../Utils/network"
 import Language from "../model/Language"
 import { Typeahead } from "react-bootstrap-typeahead"
 import OptionalImage from "../UI/OptionalImage"
+import ErrorAlert from "../UI/ErrorAlert"
 
 type AddLaguagePageProps = {
     project_id: number
@@ -14,6 +15,7 @@ type AddLaguagePageProps = {
 
 const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onSuccess }) => {
 
+    const [error, setError] = useState<string>()
     const [available, setAvailable] = useState<Language[]>([])
 
     const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([])
@@ -32,7 +34,7 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
 
         console.log(result)
         if (result.error) {
-
+            setError(result.error)
         } else {
             onSuccess()
             onHide()
@@ -48,7 +50,7 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
         if (data.value) {
             setAvailable(data.value)
         } else {
-
+            setError(data.error)
         }
     }
 
@@ -85,6 +87,7 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
                 </Row>
                 <Button type="submit" className="my-2" onClick={submit}>Save</Button>
             </Modal.Body>
+            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </Modal>
     )
 }
