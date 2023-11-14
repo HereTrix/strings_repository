@@ -68,6 +68,7 @@ const TranslationPage = () => {
     const [selectedTag, setSelectedTag] = useState<string>()
     const [query, setQuery] = useState<string>("")
     const [tags, setTags] = useState<string[]>([])
+    const [filteredTags, setFilteredTags] = useState<string[]>([])
 
     const [error, setError] = useState<string>()
 
@@ -132,6 +133,7 @@ const TranslationPage = () => {
 
         if (result.value) {
             setTags(result.value)
+            setFilteredTags(result.value)
         } else {
             setError(result.error)
         }
@@ -147,6 +149,11 @@ const TranslationPage = () => {
         setOffset(0)
         setQuery(query)
         fetchData(selectedTag, query, 0)
+    }
+
+    const onFilterTags = (query: string) => {
+        const filtered = tags.filter((value) => value.includes(query))
+        setFilteredTags(filtered)
     }
 
     const saveTranslation = async (translation: Translation) => {
@@ -185,12 +192,13 @@ const TranslationPage = () => {
             </Container>
             <label>This is translation for {code}</label>
             <Stack direction="horizontal" gap={5}>
-                {tags && <>
+                {filteredTags && <>
                     <Dropdown className="my-2">
                         <Dropdown.Toggle variant="success" id="dropdown-basic">
                             {selectedTag ? selectedTag : "Filter by tag"}
                         </Dropdown.Toggle>
                         <Dropdown.Menu>
+                            <SearchBar onSearch={(query) => { }} onChange={onFilterTags} />
                             {selectedTag &&
                                 <Dropdown.Item
                                     onClick={() => selectTag(undefined)}
@@ -199,7 +207,7 @@ const TranslationPage = () => {
                                     Clear
                                 </Dropdown.Item>
                             }
-                            {tags.map((tag) =>
+                            {filteredTags.map((tag) =>
                                 <Dropdown.Item onClick={() => selectTag(tag)} key={tag}>{tag}</Dropdown.Item>
                             )}
                         </Dropdown.Menu>

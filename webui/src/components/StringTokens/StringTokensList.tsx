@@ -76,6 +76,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const [showDialog, setShowDialog] = useState(false)
     const [tokens, setTokens] = useState<StringToken[]>()
     const [tags, setTags] = useState<string[]>([])
+    const [filteredTags, setFilteredTags] = useState<string[]>([])
     const [selectedTag, setSelectedTag] = useState<string>()
     const [query, setQuery] = useState<string>("")
     const [selectedToken, setSelectedToken] = useState<StringToken>()
@@ -130,6 +131,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
 
         if (result.value) {
             setTags(result.value)
+            setFilteredTags(result.value)
         } else {
             setError(result.error)
         }
@@ -145,6 +147,11 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         setOffset(0)
         setQuery(query)
         fetchData(selectedTag, query, 0)
+    }
+
+    const onFilterTags = (query: string) => {
+        const filtered = tags.filter((value) => value.includes(query))
+        setFilteredTags(filtered)
     }
 
     const deleteToken = async (token: StringToken) => {
@@ -188,7 +195,8 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                                     Clear
                                 </Dropdown.Item>
                             }
-                            {tags.map((tag) =>
+                            <SearchBar onSearch={(query) => { }} onChange={onFilterTags} />
+                            {filteredTags.map((tag) =>
                                 <Dropdown.Item onClick={() => selectTag(tag)} key={tag}>{tag}</Dropdown.Item>
                             )}
                         </Dropdown.Menu>
