@@ -33,7 +33,18 @@ class PullAPI(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            token = ProjectAccessToken.objects.get(token=token)
+            access = ProjectAccessToken.objects.get(token=token)
+
+            if access.expiration and access.expiration < datetime.now():
+                try:
+                    access.delete()
+                except Exception:
+                    pass
+
+                return JsonResponse({
+                    'error': 'No access'
+                }, status=status.HTTP_403_FORBIDDEN)
+
             tokens = StringToken.objects.filter(
                 project=token.project
             ).prefetch_related('translation')
@@ -78,6 +89,17 @@ class PushAPI(generics.GenericAPIView):
 
         try:
             access = ProjectAccessToken.objects.get(token=token)
+
+            if access.expiration and access.expiration < datetime.now():
+                try:
+                    access.delete()
+                except Exception:
+                    pass
+
+                return JsonResponse({
+                    'error': 'No access'
+                }, status=status.HTTP_403_FORBIDDEN)
+
             project = access.project
 
             for item in data:
@@ -123,7 +145,18 @@ class FetchLanguagesAPI(generics.GenericAPIView):
             }, status=status.HTTP_403_FORBIDDEN)
 
         try:
-            token = ProjectAccessToken.objects.get(token=token)
+            access = ProjectAccessToken.objects.get(token=token)
+
+            if access.expiration and access.expiration < datetime.now():
+                try:
+                    access.delete()
+                except Exception:
+                    pass
+
+                return JsonResponse({
+                    'error': 'No access'
+                }, status=status.HTTP_403_FORBIDDEN)
+
             languages = token.project.languages.all()
             codes = [lang.code for lang in languages]
             return JsonResponse(codes, safe=False)
