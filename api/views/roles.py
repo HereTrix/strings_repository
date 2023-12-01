@@ -75,7 +75,45 @@ class ProjectParticipantsAPI(generics.GenericAPIView):
 
             return JsonResponse(ProjectParticipantsSerializer.serialize(all_roles, user), safe=False)
         except Project.DoesNotExist:
-            return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({
+                'error': 'Not allowed'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return JsonResponse({
+                'error': e
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        try:
+            user_id = request.data['user_id']
+            user = request.user
+            project = Project.objects.get(
+                pk=pk,
+                roles__user=user,
+                roles__role__in=ProjectRole.change_participants_roles
+            )
+
+            role = ProjectRole.objects.get(
+                project=project,
+                user__pk=user_id
+            )
+            role.delete()
+
+            try:
+                tokens = ProjectAccessToken.objects.filter(
+                    project=project,
+                    user__pk=user_id
+                )
+                for token in tokens:
+                    token.delete()
+            except Exception:
+                pass
+
+            return JsonResponse(ProjectParticipantsSerializer.serialize(project.roles.all(), user), safe=False)
+        except Project.DoesNotExist:
+            return JsonResponse({
+                'error': 'Not allowed'
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return JsonResponse({
                 'error': e

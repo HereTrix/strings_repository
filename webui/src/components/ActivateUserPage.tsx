@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Button, Container, Form, Toast, ToastContainer } from "react-bootstrap"
+import { Button, Container, Form, Row, Toast, ToastContainer } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom";
 import { APIMethod, http } from "./Utils/network";
@@ -115,7 +115,9 @@ const ActivateUserPage = () => {
                     </Toast.Header>
                     <Toast.Body>
                         <Container>
-                            <label className="my-2">Please go to login page</label>
+                            <Row>
+                                <label className="my-2">Please go to login page</label>
+                            </Row>
                             <Button onClick={onBackToLogin} className="my-2">Go To Login</Button>
                         </Container>
                     </Toast.Body>

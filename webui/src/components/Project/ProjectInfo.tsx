@@ -11,6 +11,10 @@ type ProjectInfoProps = {
     project: Project
 }
 
+type ParticipantItemProps = {
+
+}
+
 const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
 
     const [error, setError] = useState<string>()
@@ -59,8 +63,24 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
         }
     }
 
+    const removeParticipant = async (participant_id: string) => {
+        const data = await http<Participant[]>({
+            method: APIMethod.delete,
+            path: `/api/project/${project.id}/participants`,
+            data: { 'user_id': participant_id }
+        })
+
+        if (data.value) {
+            setParticipants(data.value)
+        } else {
+            setError(data.error)
+        }
+    }
+
     useEffect(() => {
-        loadParticipants()
+        if (project.role !== ProjectRole.editor) {
+            loadParticipants()
+        }
         loadRoles()
     }, [])
 
@@ -80,18 +100,17 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
             {participants &&
                 <ListGroup>
                     {participants.map(participant =>
-                        <ListGroupItem key={participant.email} className="d-flex">
-                            <Stack direction="horizontal" gap={5} className="justify-content-between align-items-end">
-
-                                <Row className="p-2">
-                                    <label>Name: {participant.first_name}</label>
-                                </Row>
-                                <Row className="p-2">
-                                    <label>Last name: {participant.last_name}</label>
-                                </Row>
-                                <Row className="p-2">
-                                    <label>Email: {participant.email}</label>
-                                </Row>
+                        <ListGroupItem key={participant.email} className="d-flex justify-content-between">
+                            <Col className="mx-2">
+                                <label>Name: {participant.first_name}</label>
+                            </Col>
+                            <Col className="mx-2">
+                                <label>Last name: {participant.last_name}</label>
+                            </Col>
+                            <Col className="mx-2">
+                                <label>Email: {participant.email}</label>
+                            </Col>
+                            <Col className="mx-2">
                                 <Stack direction="horizontal" gap={2}>
                                     <label>Role: </label>
                                     {participant.can_edit
@@ -107,7 +126,15 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
                                         </Dropdown>
                                         : <label>{participant.role}</label>}
                                 </Stack>
-                            </Stack>
+                            </Col>
+                            {participant.can_edit &&
+                                <Button
+                                    className="btn-danger"
+                                    onClick={() => removeParticipant(participant.id)}
+                                >
+                                    Delete
+                                </Button>
+                            }
                         </ListGroupItem>
                     )}
                 </ListGroup >
