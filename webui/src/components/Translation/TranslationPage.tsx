@@ -1,11 +1,8 @@
 import { ChangeEventHandler, FC, useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
 import { APIMethod, http } from "../Utils/network"
 import Translation, { TranslationModel } from "../model/Translation"
 import { Button, Container, Dropdown, ListGroup, Row, Stack } from "react-bootstrap"
-import { history } from "../Utils/history"
 import ExportPage from "./ExportPage"
-import Project from "../model/Project"
 import SearchBar from "../UI/SearchBar"
 import TagsContainer from "../UI/TagsContainer"
 import ErrorAlert from "../UI/ErrorAlert"
@@ -53,16 +50,18 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, onSave
     )
 }
 
-const TranslationPage = () => {
+type TranslationPageProps = {
+    untranslated: boolean,
+    project_id: string,
+    code: string
+}
+
+const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, untranslated }) => {
 
     const limit = 20
     const [hasMore, setHasMore] = useState<boolean>(true)
     const [offset, setOffset] = useState<number>(0)
 
-    const { project_id, code } = useParams()
-    const [showExport, setShowExport] = useState(false)
-
-    const [project, setProject] = useState<Project>()
     const [translations, setTranslations] = useState<TranslationModel[]>()
 
     const [selectedTag, setSelectedTag] = useState<string>()
@@ -71,19 +70,6 @@ const TranslationPage = () => {
     const [filteredTags, setFilteredTags] = useState<string[]>([])
 
     const [error, setError] = useState<string>()
-
-    const fetchProject = async () => {
-        const data = await http<Project>({
-            method: APIMethod.get,
-            path: `/api/project/${project_id}`
-        })
-
-        if (data.value) {
-            setProject(data.value)
-        } else {
-            setError(data.error)
-        }
-    }
 
     const fetch = async () => {
         fetchData(selectedTag, query, offset)
@@ -101,6 +87,7 @@ const TranslationPage = () => {
 
         params.set('offset', `${offset}`)
         params.set('limit', `${limit}`)
+        params.set('untranslated', `${untranslated}`)
 
         const result = await http<TranslationModel[]>({
             method: APIMethod.get,
@@ -170,27 +157,13 @@ const TranslationPage = () => {
         }
     }
 
-    const backToProject = () => {
-        history.navigate(`/project/${project_id}`, { replace: true })
-    }
-
-    const onExport = () => {
-        setShowExport(true)
-    }
-
     useEffect(() => {
-        fetchProject()
         fetch()
         fetchTags()
     }, [])
 
     return (
         <Container>
-            <Container className="d-flex justify-content-between align-items-start">
-                <Button onClick={backToProject}>Back to project</Button>
-                {project && <Button onClick={onExport}>Export</Button>}
-            </Container>
-            <label>This is translation for {code}</label>
             <Stack direction="horizontal" gap={5}>
                 {filteredTags && <>
                     <Dropdown className="my-2">
@@ -217,6 +190,7 @@ const TranslationPage = () => {
                 <SearchBar onSearch={onSearch} />
             </Stack>
             {translations &&
+                translations.length > 0 ?
                 <InfiniteScroll
                     dataLength={translations.length}
                     next={() => {
@@ -238,13 +212,7 @@ const TranslationPage = () => {
                         )}
                     </ListGroup>
                 </InfiniteScroll>
-            }
-            {project &&
-                <ExportPage
-                    project={project}
-                    code={code}
-                    show={showExport}
-                    onHide={() => setShowExport(false)} />
+                : <label>All keys translated</label>
             }
             {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </Container>

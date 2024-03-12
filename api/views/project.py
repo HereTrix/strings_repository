@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 import django.core.exceptions as exception
+from django.db.models import Q
 from rest_framework import generics, permissions, status
 from api.languages.langcoder import LANGUAGE_CODE_KEY, Langcoder
 from api.models import Language, Project, ProjectRole, StringToken, Tag
@@ -193,6 +194,7 @@ class TranslationsListAPI(generics.GenericAPIView):
         query = request.GET.get('q')
         offset = request.GET.get('offset')
         limit = request.GET.get('limit')
+        untranslated = request.GET.get('untranslated')
 
         if not offset:
             offset = 0
@@ -216,6 +218,14 @@ class TranslationsListAPI(generics.GenericAPIView):
                 tokens = tokens.filter(
                     tags__tag=tags
                 )
+
+            if untranslated and untranslated == 'true':
+                print(untranslated)
+                tokens = tokens.filter(
+                    Q(translation__translation__exact='') | Q(
+                        translation__translation__isnull=True)
+                )
+                print(tokens)
 
             if limit:
                 limit = int(limit)
