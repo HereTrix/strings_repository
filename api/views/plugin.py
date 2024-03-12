@@ -46,7 +46,7 @@ class PullAPI(generics.GenericAPIView):
                 }, status=status.HTTP_403_FORBIDDEN)
 
             tokens = StringToken.objects.filter(
-                project=token.project
+                project=access.project
             ).prefetch_related('translation')
 
             if string_tokens:
@@ -157,7 +157,7 @@ class FetchLanguagesAPI(generics.GenericAPIView):
                     'error': 'No access'
                 }, status=status.HTTP_403_FORBIDDEN)
 
-            languages = token.project.languages.all()
+            languages = access.project.languages.all()
             codes = [lang.code for lang in languages]
             return JsonResponse(codes, safe=False)
         except ProjectAccessToken.DoesNotExist:
@@ -193,7 +193,7 @@ class PluginExportAPI(generics.GenericAPIView):
 
             codes = request.POST.get('codes')
             type = request.POST.get('type')
-            tags = request.POST.get('tags')
+            tags = request.POST.getlist('tags')
             file_type = ExportFile(type)
 
             if not file_type:
@@ -218,7 +218,6 @@ class PluginExportAPI(generics.GenericAPIView):
             if tags:
                 tokens = tokens.filter(tags__tag__in=tags).distinct()
 
-            print(codes)
             if isinstance(codes, str):
                 try:
                     records = [TranslationModel(token_model=token, code=codes)

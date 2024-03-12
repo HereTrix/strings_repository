@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ['APP_SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(',')
 
@@ -103,7 +103,7 @@ if engine == 'sqlite3':
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
+            'ENGINE': 'django.db.backends.' + engine,
             'NAME': os.environ['DB_NAME'],  # BASE_DIR / 'db.sqlite3',
             'HOST': os.environ['DB_HOST'],
             'PORT': os.environ['DB_PORT'],
