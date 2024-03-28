@@ -26,8 +26,6 @@ SECRET_KEY = os.environ['APP_SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(',')
-
 CORS_ALLOWED_ORIGINS = [
     'null'
 ]
