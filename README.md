@@ -23,13 +23,16 @@ Configuration
 Befor installation please ensure all OS variables are set.
 
 List of variables:
-- `APP_SECRET_KEY` - secret key
-- `DB_ENGINE` - engine name
+- `APP_SECRET_KEY` - secret key (any random string)
+- `DB_ENGINE` - engine name (mysql, postgresql, sqlite3, [etc.](https://docs.djangoproject.com/en/5.0/ref/databases/)
 - `DB_NAME` - database name
 - `DB_HOST` - database host (can be skipped for sqlite3)
 - `DB_PORT` - database port (can be skipped for sqlite3)
 - `DB_USER` - database user (can be skipped for sqlite3)
 - `DB_PASSWORD` - password for database (can be skipped for sqlite3)
+- `DJANGO_SUPERUSER_USERNAME` - the superuser login name
+- `DJANGO_SUPERUSER_EMAIL` - the superuser email
+- `DJANGO_SUPERUSER_PASSWORD` - the superuser password
 
 
 Installation
@@ -37,7 +40,7 @@ Installation
 
 The application require `npm` to be installed.
 
-The application uses SQLite storage. If you want to use own database update `DATABASES` section in `settings.py`
+The application uses SQLite storage by default. If you want to use own database update `DATABASES` section in `settings.py`
 
 ```
 cd ./webui
