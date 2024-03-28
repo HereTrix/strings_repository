@@ -23,13 +23,22 @@ Configuration
 Befor installation please ensure all OS variables are set.
 
 List of variables:
+<<<<<<< HEAD
 - `APP_SECRET_KEY` - secret key
 - `DB_ENGINE` - engine name
+=======
+- `APP_SECRET_KEY` - secret key (any random string)
+- `ALLOWED_HOSTS` - allowed net hosts separated by comma
+- `DB_ENGINE` - engine name (mysql, postgresql, sqlite3, [etc.](https://docs.djangoproject.com/en/5.0/ref/databases/)
+>>>>>>> 4f7605d (Added build-files for Docker image, updated documentation)
 - `DB_NAME` - database name
 - `DB_HOST` - database host (can be skipped for sqlite3)
 - `DB_PORT` - database port (can be skipped for sqlite3)
 - `DB_USER` - database user (can be skipped for sqlite3)
 - `DB_PASSWORD` - password for database (can be skipped for sqlite3)
+- `DJANGO_SUPERUSER_USERNAME` - the superuser login name
+- `DJANGO_SUPERUSER_EMAIL` - the superuser email
+- `DJANGO_SUPERUSER_PASSWORD` - the superuser password
 
 
 Installation
