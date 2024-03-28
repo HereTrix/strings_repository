@@ -5,10 +5,19 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   push_to_registry:
     name: Build, test and push Docker image to GitHub Packages
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -35,7 +44,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Docker container test-run
-        id: check
+        id: smoke-test
         run: |
           docker run \
           -e DJANGO_SUPERUSER_EMAIL=test@test.com \
@@ -50,6 +59,14 @@ jobs:
             if [ "$(docker inspect --format='{{.State.Health.Status}}' testct)" != "healthy" ]; then
               exit 1
             fi
+
+      - name: Docker image згыр
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
