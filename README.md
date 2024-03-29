@@ -24,6 +24,7 @@ Befor installation please ensure all OS variables are set.
 
 List of variables:
 - `APP_SECRET_KEY` - secret key (any random string)
+- `ALLOWED_HOSTS` - allowed hosts separated by comma or empty to allow all
 - `DB_ENGINE` - engine name (mysql, postgresql, sqlite3, [etc.](https://docs.djangoproject.com/en/5.0/ref/databases/)
 - `DB_NAME` - database name
 - `DB_HOST` - database host (can be skipped for sqlite3)
