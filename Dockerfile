@@ -27,13 +27,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 COPY --from=fronend /app/webui/ /app/webui/
 
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
 RUN chown -R 1000:1000 /app
 USER 1000:1000
 
 CMD python manage.py makemigrations api \
-&& python manage.py migrate \
-&& (python manage.py createsuperuser --noinput || true) \
-&& python manage.py runserver 0.0.0.0:8080
+    && python manage.py migrate \
+    && (python manage.py createsuperuser --noinput || true) \
+    && python manage.py runserver 0.0.0.0:8080
 
 HEALTHCHECK --interval=30s --timeout=3s \
     CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
