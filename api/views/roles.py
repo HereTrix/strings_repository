@@ -60,6 +60,7 @@ class ProjectParticipantsAPI(generics.GenericAPIView):
             user_id = request.data['user_id']
             new_role = request.data['role']
             user = request.user
+
             project = Project.objects.get(
                 pk=pk,
                 roles__user=user,
@@ -70,6 +71,15 @@ class ProjectParticipantsAPI(generics.GenericAPIView):
 
             user_role = [
                 role for role in all_roles if role.user.id == user_id][0]
+
+            if user_role.role == ProjectRole.Role.owner:
+                role = [
+                    role for role in all_roles if role.user.id == user.id][0]
+                if not role.role == ProjectRole.Role.owner:
+                    return JsonResponse({
+                        'error': 'Not allowed'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
             user_role.role = new_role
             user_role.save()
 

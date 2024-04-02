@@ -16,7 +16,7 @@ class SignInAPI(generics.GenericAPIView):
             serializer.is_valid(raise_exception=True)
             user = serializer.validated_data
             token = AuthToken.objects.create(user)
-            print(token)
+
             return JsonResponse({
                 "user": UserSerializer(user, context=self.get_serializer_context()).data,
                 "token": token[1],
@@ -95,8 +95,6 @@ class ActivateProjectAPI(generics.GenericAPIView):
                 role for role in invite.project.roles.all() if role.user == user]
 
             ids = [role.user.id for role in invite.project.roles.all()]
-
-            print("role ", existing_role, ids)
 
             if existing_role:
                 return JsonResponse({

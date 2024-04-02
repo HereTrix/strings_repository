@@ -1,5 +1,4 @@
 from django.http import JsonResponse
-import django.core.exceptions as exception
 from django.db.models import Q
 from rest_framework import generics, permissions, status
 from api.languages.langcoder import LANGUAGE_CODE_KEY, Langcoder
@@ -63,7 +62,7 @@ class CreateProjectAPI(generics.GenericAPIView):
             project.save()
             role = ProjectRole()
             role.user = user
-            role.role = ProjectRole.Role.admin
+            role.role = ProjectRole.Role.owner
             role.project = project
             role.save()
             serializer = ProjectSerializer(project)
@@ -220,12 +219,10 @@ class TranslationsListAPI(generics.GenericAPIView):
                 )
 
             if untranslated and untranslated == 'true':
-                print(untranslated)
                 tokens = tokens.filter(
                     Q(translation__translation__exact='') | Q(
                         translation__translation__isnull=True)
                 )
-                print(tokens)
 
             if limit:
                 limit = int(limit)

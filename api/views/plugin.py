@@ -90,6 +90,11 @@ class PushAPI(generics.GenericAPIView):
         try:
             access = ProjectAccessToken.objects.get(token=token)
 
+            if access.permission == ProjectAccessToken.AccessTokenPermissions.read:
+                return JsonResponse({
+                    'error': 'You do not have permissions to perform this action'
+                }, status=status.HTTP_403_FORBIDDEN)
+
             if access.expiration and access.expiration < datetime.now():
                 try:
                     access.delete()
@@ -123,7 +128,6 @@ class PushAPI(generics.GenericAPIView):
                         text=item['translation']
                     )
                 except Exception as e:
-                    print(e)
                     pass
 
             return JsonResponse({})
@@ -191,7 +195,7 @@ class PluginExportAPI(generics.GenericAPIView):
             user = access.user
             project_id = access.project.id
 
-            codes = request.POST.get('codes')
+            codes = request.POST.getlist('codes')
             type = request.POST.get('type')
             tags = request.POST.getlist('tags')
             file_type = ExportFile(type)
@@ -227,7 +231,6 @@ class PluginExportAPI(generics.GenericAPIView):
                 except Exception as e:
                     pass
             else:
-                print("Not string O_O")
                 for code in codes:
                     try:
                         records = [TranslationModel(token_model=token, code=code)

@@ -105,8 +105,6 @@ class PropertiesFileReader:
                     break
             prev = char
 
-        print(f"TK {token}|{value}")
-
         model = TranslationModel.create(
             token=token,
             translation=value,

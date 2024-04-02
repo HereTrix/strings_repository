@@ -1,6 +1,5 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from rest_framework import generics, permissions, status
-import zipfile
 
 from api.file_processors.file_processor import ExportFile, FileProcessor
 from api.models import Language, StringToken
@@ -59,7 +58,7 @@ class ExportAPI(generics.GenericAPIView):
 
                     processor.append(records=records, code=code)
                 except Exception as e:
-                    print(e)
+                    pass
 
             return processor.http_response()
         except Exception as e:

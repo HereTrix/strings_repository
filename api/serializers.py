@@ -42,12 +42,12 @@ class APIProjectSerializer(serializers.ModelSerializer):
 class ProjectParticipantsSerializer:
 
     def serialize(roles, user):
-        role = [role for role in roles if role.user == user][0]
-        can_edit = role.role == ProjectRole.Role.admin or role.role == ProjectRole.Role.owner
+        user_role = [role for role in roles if role.user == user][0]
+        can_edit = user_role.role == ProjectRole.Role.admin or user_role.role == ProjectRole.Role.owner
 
         users = [
             {
-                'can_edit': can_edit and not role.user.id == user.id,
+                'can_edit': can_edit and (user_role.role == ProjectRole.Role.owner or (not role.user.id == user.id and not role.role == ProjectRole.Role.owner)),
                 'id': role.user.id,
                 'first_name': role.user.first_name,
                 'last_name': role.user.last_name,
