@@ -1,4 +1,4 @@
-name: Build and push the Docker image from main branch
+name: image build
 
 on:
   push:
@@ -60,7 +60,7 @@ jobs:
               exit 1
             fi
 
-      - name: Docker image згыр
+      - name: Docker image push
         uses: docker/build-push-action@v2
         with:
           context: .

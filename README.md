@@ -1,3 +1,5 @@
+![build status](https://github.com/HereTrix/strings_repository/actions/workflows/main-build.yml/badge.svg)
+
 StringsRepository
 ========
 
