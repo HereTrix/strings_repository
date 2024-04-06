@@ -3,7 +3,7 @@
 StringsRepository
 ========
 
-**StringsRepository** is an self-hosted solution that simplifies localization management between different platforms. 
+**StringsRepository** is self-hosted web-service that simplifies software localization management between different platforms. 
 
 Overview
 --------
