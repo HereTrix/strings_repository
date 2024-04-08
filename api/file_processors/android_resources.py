@@ -1,4 +1,5 @@
 import tempfile
+import re
 from xml.dom import minidom
 import zipfile
 
@@ -29,7 +30,12 @@ class AndroidResourceFileWriter:
             item = root.createElement('string')
             item.setAttribute('name', record.token)
             if record.translation:
-                text = root.createTextNode(record.translation)
+                res = re.search(
+                    '</?\s*[a-z-][^>]*\s*>|(\&(?:[\w\d]+|#\d+|#x[a-f\d]+);)', record.translation)
+                if res:
+                    text = root.createCDATASection(record.translation)
+                else:
+                    text = root.createTextNode(record.translation)
                 item.appendChild(text)
             xml.appendChild(item)
 
@@ -58,7 +64,7 @@ class AndroidResourceFileReader:
             translation = ''
             if node.childNodes:
                 text_node = node.childNodes[0]
-                if text_node.nodeType == node.TEXT_NODE:
+                if text_node.nodeType == node.TEXT_NODE or text_node.nodeType == node.CDATA_SECTION_NODE:
                     translation = text_node.data
 
             model = TranslationModel.create(
