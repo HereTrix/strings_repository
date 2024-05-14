@@ -10,6 +10,7 @@ import TokenTranslationsPage from "./TokenTranslationsPage"
 import ErrorAlert from "../UI/ErrorAlert"
 import TagsContainer from "../UI/TagsContainer"
 import InfiniteScroll from "react-infinite-scroll-component"
+import ConfirmationAlert from "../UI/ConfirmationAlert"
 
 type StringTokenProps = {
     project: Project
@@ -81,6 +82,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const [query, setQuery] = useState<string>("")
     const [selectedToken, setSelectedToken] = useState<StringToken>()
     const [error, setError] = useState<string>()
+    const [deletionItem, setDeletionItem] = useState<StringToken>()
 
     const fetch = async () => {
         fetchData(selectedTag, query, offset)
@@ -155,6 +157,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     }
 
     const deleteToken = async (token: StringToken) => {
+        setDeletionItem(undefined)
         const result = await http({
             method: APIMethod.delete,
             path: "/api/string_token",
@@ -223,7 +226,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                                 token={token}
                                 project_id={project.id}
                                 onAddTag={() => setSelectedToken(token)}
-                                onDelete={() => deleteToken(token)}
+                                onDelete={() => setDeletionItem(token)}
                                 onTagClick={(tag => selectTag(tag))}
                             />
                         )}
@@ -233,6 +236,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
             {showDialog && <AddTokenPage
                 project_id={project.id}
                 show={showDialog}
+                tags={tags}
                 onHide={() => setShowDialog(false)}
                 onSuccess={() => {
                     fetch()
@@ -253,6 +257,11 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                 />
             }
             {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
+            {deletionItem && <ConfirmationAlert
+                message={`You are going to remove item ${deletionItem?.token}`}
+                onDismiss={() => setDeletionItem(undefined)}
+                onConfirm={() => deleteToken(deletionItem)}
+            />}
         </>
     )
 }

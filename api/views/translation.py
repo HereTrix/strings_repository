@@ -14,6 +14,7 @@ class StringTokenAPI(generics.GenericAPIView):
         user = request.user
         project_id = request.data['project']
         key = request.data['token']
+        tags = request.data.get('tags')
         if key is None:
             return JsonResponse({
                 'error': 'Token is not defined'
@@ -37,6 +38,15 @@ class StringTokenAPI(generics.GenericAPIView):
         token.comment = request.data['comment']
         token.project = project
         token.save()
+
+        if tags:
+            for tag in tags:
+                token_tag, _ = Tag.objects.get_or_create(
+                    tag=tag
+                )
+                token.tags.add(token_tag)
+            token.save()
+
         serializer = StringTokenSerializer(token)
         return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 

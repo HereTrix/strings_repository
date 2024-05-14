@@ -3,6 +3,7 @@ import { Button, Modal } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
 import { Typeahead } from "react-bootstrap-typeahead"
 import StringToken from "../model/StringToken"
+import ErrorAlert from "../UI/ErrorAlert"
 
 type AddTokenTagPageProps = {
     token: StringToken
@@ -14,6 +15,8 @@ type AddTokenTagPageProps = {
 const AddTokenTagPage: FC<AddTokenTagPageProps> = ({ token, tags, onHide, onSuccess }) => {
 
     const [selectedTags, setSelectedTags] = useState<string[]>(token.tags ? token.tags : [])
+
+    const [error, setError] = useState<string>()
 
     const onSubmit = async () => {
 
@@ -28,7 +31,7 @@ const AddTokenTagPage: FC<AddTokenTagPageProps> = ({ token, tags, onHide, onSucc
         })
 
         if (result.error) {
-
+            setError(result.error)
         } else {
             onSuccess()
         }
@@ -58,6 +61,10 @@ const AddTokenTagPage: FC<AddTokenTagPageProps> = ({ token, tags, onHide, onSucc
                 />
                 <Button onClick={onSubmit} className="my-2">Add</Button>
             </Modal.Body>
+            {error && <ErrorAlert
+                error={error}
+                onClose={() => setError(undefined)}
+            />}
         </Modal>
     )
 }

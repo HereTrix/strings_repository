@@ -6,6 +6,7 @@ import Project, { ProjectRole } from "../model/Project"
 import { APIMethod, http } from "../Utils/network"
 import OptionalImage from "../UI/OptionalImage"
 import ErrorAlert from "../UI/ErrorAlert"
+import ConfirmationAlert from "../UI/ConfirmationAlert"
 
 type LanguagesProps = {
     project: Project
@@ -27,7 +28,12 @@ const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, onDe
             <OptionalImage src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code} />
             <label>{language.name}</label>
             <Button
-                onClick={onDelete}
+                onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    e.nativeEvent.stopImmediatePropagation()
+                    onDelete()
+                }}
                 className="btn-danger"
             >Delete</Button>
         </ListGroup.Item>
@@ -41,7 +47,10 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
     const [languages, setLanguages] = useState<Language[]>()
     const [showDialog, setShowDialog] = useState(false)
 
+    const [deletionItem, setDeletionItem] = useState<Language>()
+
     const deleteLanguage = async (language: Language) => {
+        setDeletionItem(undefined)
         const result = await http({
             method: APIMethod.delete,
             path: "/api/language",
@@ -82,7 +91,7 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
                     <LanguageListItem
                         language={language}
                         project_id={project.id}
-                        onDelete={() => deleteLanguage(language)}
+                        onDelete={() => setDeletionItem(language)}
                         key={language.code}
                     />)}
             </ListGroup>
@@ -94,6 +103,11 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
             {error && <ErrorAlert
                 error={error}
                 onClose={() => setError(undefined)}
+            />}
+            {deletionItem && <ConfirmationAlert
+                message={`You are going to remove ${deletionItem?.name}`}
+                onDismiss={() => setDeletionItem(undefined)}
+                onConfirm={() => deleteLanguage(deletionItem)}
             />}
         </>
     )
