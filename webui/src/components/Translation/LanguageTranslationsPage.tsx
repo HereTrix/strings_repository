@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Button, Container, Stack, Tab, Tabs } from "react-bootstrap"
+import { Button, Container, OverlayTrigger, Popover, PopoverBody, Stack, Tab, Tabs } from "react-bootstrap"
 import { useParams } from "react-router-dom"
 import { history } from "../Utils/history"
 import { APIMethod, http } from "../Utils/network"
@@ -8,6 +8,7 @@ import ErrorAlert from "../UI/ErrorAlert"
 import ExportPage from "./ExportPage"
 import OptionalImage from "../UI/OptionalImage"
 import TranslationPage from "./TranslationPage"
+import HelpPopover from "../UI/HelpPopover"
 
 const LanguageTranslationsPage = () => {
 
@@ -60,6 +61,15 @@ const LanguageTranslationsPage = () => {
             <Stack direction="horizontal" gap={1} className="my-1">
                 {code && <OptionalImage src={`/static/flags/${code.toLocaleLowerCase()}.png`} alt={code} />}
                 <label>This is translation for {code}</label>
+                <OverlayTrigger
+                    trigger="click"
+                    placement="left"
+                    overlay={HelpPopover}
+                >
+                    <Button className="ms-auto" variant="outline-primary">
+                        i
+                    </Button>
+                </OverlayTrigger>
             </Stack>
             {project_id && code &&
                 <Tabs

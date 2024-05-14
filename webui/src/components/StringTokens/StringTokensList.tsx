@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from "react"
 import StringToken from "../model/StringToken"
 import Project from "../model/Project"
-import { Button, Collapse, Container, Dropdown, ListGroup, Stack } from "react-bootstrap"
+import { Button, Collapse, Container, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
 import AddTokenPage from "./AddTokenPage"
 import SearchBar from "../UI/SearchBar"
@@ -11,6 +11,7 @@ import ErrorAlert from "../UI/ErrorAlert"
 import TagsContainer from "../UI/TagsContainer"
 import InfiniteScroll from "react-infinite-scroll-component"
 import ConfirmationAlert from "../UI/ConfirmationAlert"
+import HelpPopover from "../UI/HelpPopover"
 
 type StringTokenProps = {
     project: Project
@@ -207,6 +208,15 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                 </>
                 }
                 <SearchBar onSearch={onSearch} />
+                <OverlayTrigger
+                    trigger="click"
+                    placement="left"
+                    overlay={HelpPopover}
+                >
+                    <Button className="ms-auto" variant="outline-primary">
+                        i
+                    </Button>
+                </OverlayTrigger>
             </Stack>
             {tokens &&
                 <InfiniteScroll

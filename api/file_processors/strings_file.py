@@ -126,7 +126,7 @@ class AppleStringsFileWriter:
 
     def convert_item(self, item):
         translation = item.translation if item.translation else ''
-        translation = translation.replace('\"', '\\"')
+        translation = translation.replace('"', '\"').replace('%s', '%@')
         if item.comment:
             return f'/*{item.comment}*/\n"{item.token}" = "{translation}";'
         else:

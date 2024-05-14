@@ -19,3 +19,14 @@ form {
     color: red;
     text-align: center;
 }
+
+.bordered {
+    border-width: 1px;
+    border-style: solid;
+    border-color: black;
+}
+
+.scroll {
+    max-height: 400px;
+    overflow-y: scroll;
+}
