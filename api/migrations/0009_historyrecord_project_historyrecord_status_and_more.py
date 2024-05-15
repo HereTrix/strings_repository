@@ -36,9 +36,15 @@ class Migration(migrations.Migration):
             model_name='historyrecord',
             name='project',
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name='history', to='api.project'),
+                null=True, on_delete=django.db.models.deletion.CASCADE, related_name='history', to='api.project'),
         ),
         migrations.RunPython(update_history_project_field),
+        migrations.AlterField(
+            model_name='historyrecord',
+            name='project',
+            field=models.ForeignKey(
+                null=False, on_delete=django.db.models.deletion.CASCADE, related_name='history', to='api.project'),
+        ),
         migrations.AddField(
             model_name='historyrecord',
             name='status',
@@ -48,14 +54,14 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='historyrecord',
             name='token_name',
-            field=models.CharField(max_length=200),
+            field=models.CharField(max_length=200, blank=True),
         ),
+        migrations.RunPython(update_history_token_name_field),
         migrations.AlterField(
             model_name='historyrecord',
             name='token',
             field=models.CharField(max_length=200),
         ),
-        migrations.RunPython(update_history_token_name_field),
         migrations.RemoveField(
             model_name='historyrecord',
             name='token_name',
