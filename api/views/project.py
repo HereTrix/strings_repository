@@ -36,7 +36,7 @@ class ProjectAPI(generics.GenericAPIView):
         user = request.user
         try:
             project = Project.objects.filter(
-                pk=pk, roles__user=user, roles__role=ProjectRole.Role.admin)
+                pk=pk, roles__user=user, roles__role__in=ProjectRole.change_participants_roles)
             project.delete()
             return JsonResponse({})
         except Project.DoesNotExist as e:

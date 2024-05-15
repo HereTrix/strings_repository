@@ -159,17 +159,12 @@ class EditorFieldSerializer(serializers.RelatedField):
 
 
 class HistorySerializer(serializers.ModelSerializer):
-    token = serializers.SlugRelatedField(
-        many=False,
-        read_only=True,
-        slug_field='token'
-    )
     editor = EditorFieldSerializer(read_only=True)
 
     class Meta:
         model = HistoryRecord
-        fields = ['updated_at', 'language',
-                  'token', 'editor', 'old_value', 'new_value']
+        fields = ['updated_at', 'language', 'token',
+                  'status', 'editor', 'old_value', 'new_value']
 
 
 class ProjectAccessTokenSerializer(serializers.ModelSerializer):

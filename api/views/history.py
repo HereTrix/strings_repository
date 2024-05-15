@@ -22,9 +22,9 @@ class ProjectHistoryAPI(generics.GenericAPIView):
 
         try:
             records = HistoryRecord.objects.filter(
-                token__project__pk=pk,
-                token__project__roles__user=user
-            ).prefetch_related('token')
+                project__pk=pk,
+                project__roles__user=user
+            )
 
             if time_from:
                 date = datetime.strptime(time_from, '%Y-%m-%d')
@@ -37,12 +37,12 @@ class ProjectHistoryAPI(generics.GenericAPIView):
                 records = records.filter(
                     updated_at__lte=date
                 )
-            records = records.select_related(
-                'token').order_by('updated_at')
+            records = records.order_by('updated_at')
 
             serializer = HistorySerializer(records, many=True)
             return JsonResponse(serializer.data, safe=False)
         except Exception as e:
+            print(e)
             return JsonResponse({
                 'error': e
             }, status=status.HTTP_400_BAD_REQUEST)

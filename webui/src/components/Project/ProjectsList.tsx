@@ -3,6 +3,8 @@ import { Container, ListGroup, Tabs, Tab, Button, Stack, Modal } from "react-boo
 import { http, APIMethod } from "../Utils/network";
 import AddProjectPage from "./AddProjectPage";
 import ErrorAlert from "../UI/ErrorAlert";
+import ConfirmationAlert from "../UI/ConfirmationAlert";
+import { log } from "console";
 
 type BaseProject = {
     id: number,
@@ -28,6 +30,7 @@ const ProjectListItem: FC<ProjectProps> = ({ project, onDelete }): JSX.Element =
                     className="ms-auto btn-danger"
                     onClick={(e) => {
                         e.preventDefault()
+                        e.stopPropagation()
                         onDelete()
                     }}
                 >Delete</Button>
@@ -97,23 +100,11 @@ const AllProjects = () => {
                 onHide={() => setShowDialog(false)}
                 onSuccess={() => fetch()} />
             {deleteDialog &&
-                <Modal>
-                    <Modal.Header>Delete project</Modal.Header>
-                    <Modal.Body>
-                        <Stack>
-                            <label>Do you want to delete {deleteDialog.name}?</label>
-                            <Stack direction="horizontal">
-                                <Button
-                                    onClick={() => setDeleteDialog(undefined)}
-                                >Cancel</Button>
-                                <Button
-                                    onClick={() => deleteProject(deleteDialog)}
-                                    className="btn-danger"
-                                >Delete</Button>
-                            </Stack>
-                        </Stack>
-                    </Modal.Body>
-                </Modal>
+                <ConfirmationAlert
+                    message={`Do you want to delete ${deleteDialog.name}?`}
+                    onDismiss={() => setDeleteDialog(undefined)}
+                    onConfirm={() => deleteProject(deleteDialog)}
+                />
             }
             <ErrorAlert
                 error={error}

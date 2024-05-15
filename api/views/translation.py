@@ -39,6 +39,14 @@ class StringTokenAPI(generics.GenericAPIView):
         token.project = project
         token.save()
 
+        history = HistoryRecord()
+        history.project = token.project
+        history.token = token.token
+        history.status = HistoryRecord.Status.created
+        history.updated_at = datetime.now()
+        history.editor = user
+        history.save()
+
         if tags:
             for tag in tags:
                 token_tag, _ = Tag.objects.get_or_create(
@@ -61,7 +69,16 @@ class StringTokenAPI(generics.GenericAPIView):
         try:
             object = StringToken.objects.get(
                 pk=token, project__roles__user=user, project__roles__role__in=ProjectRole.change_token_roles)
+            token_name = object.token
+            project = object.project
             object.delete()
+            record = HistoryRecord()
+            record.project = project
+            record.token = token_name
+            record.status = HistoryRecord.Status.deleted
+            record.updated_at = datetime.now()
+            record.editor = user
+            record.save()
             return JsonResponse({}, status=status.HTTP_200_OK)
         except Exception as e:
             return JsonResponse({

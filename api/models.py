@@ -119,7 +119,9 @@ class Translation(models.Model):
         # Add history
         if old_value != text:
             record = HistoryRecord()
-            record.token = token
+            record.project = token.project
+            record.token = token.token
+            record.status = HistoryRecord.Status.updated
             record.old_value = old_value
             record.new_value = text
             record.updated_at = datetime.now()
@@ -172,7 +174,9 @@ class Translation(models.Model):
         # Add history
         if not old_value == record.translation:
             history = HistoryRecord()
-            history.token = token
+            history.project = token.project
+            history.token = token.token
+            history.status = HistoryRecord.Status.updated
             history.old_value = old_value
             history.new_value = record.translation
             history.updated_at = datetime.now()
@@ -182,9 +186,17 @@ class Translation(models.Model):
 
 
 class HistoryRecord(models.Model):
+    class Status(models.TextChoices):
+        created = 'created'
+        updated = 'updated'
+        deleted = 'deleted'
+
     id = models.AutoField('id', primary_key=True)
-    token = models.ForeignKey(
-        StringToken, on_delete=models.CASCADE, related_name='history')
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name='history')
+    token = models.CharField(max_length=200)
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.updated)
     language = models.CharField(max_length=2)
     updated_at = models.DateTimeField('updated_at', auto_now_add=True)
     editor = models.ForeignKey(

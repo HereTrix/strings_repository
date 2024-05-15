@@ -14,6 +14,7 @@ interface HistoryData {
     language: string
     token: string
     editor: string
+    status: string
     old_value: string | undefined
     new_value: string
 }
@@ -111,6 +112,7 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
                                 <th>Old translation</th>
                                 <th>New translation</th>
                                 <th>Editor</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -121,6 +123,7 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
                                     <td>{item.old_value}</td>
                                     <td>{item.new_value}</td>
                                     <td>{item.editor}</td>
+                                    <td>{item.status}</td>
                                 </tr>
                             )}
                         </tbody>
