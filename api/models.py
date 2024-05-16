@@ -193,7 +193,7 @@ class HistoryRecord(models.Model):
 
     id = models.AutoField('id', primary_key=True)
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name='history')
+        Project, on_delete=models.CASCADE, null=True, related_name='history')
     token = models.CharField(max_length=200)
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.updated)
