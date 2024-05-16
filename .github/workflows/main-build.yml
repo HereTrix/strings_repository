@@ -55,10 +55,14 @@ jobs:
           -e DB_NAME=test \
           -e APP_SECRET_KEY=y9Sag4UWWLHyp \
           --name testct -d -p 8080:8080 ${{ steps.meta.outputs.tags }}
-          sleep 120
-            if [ "$(docker inspect --format='{{.State.Health.Status}}' testct)" != "healthy" ]; then
+
+          sleep 45
+
+          docker inspect --format='{{.State.Health.Status}}' testct
+
+          if [ "$(docker inspect --format='{{.State.Health.Status}}' testct)" != "healthy" ]; then
               exit 1
-            fi
+          fi
 
 #          -e APP_SECRET_KEY=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo 2>/dev/null) \
 
