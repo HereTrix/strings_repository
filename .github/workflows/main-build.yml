@@ -53,12 +53,14 @@ jobs:
           -e SUPERUSER_EMAIL=test@test.com \
           -e DB_ENGINE=sqlite3 \
           -e DB_NAME=test \
-          -e APP_SECRET_KEY=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo 2>/dev/null) \
+          -e APP_SECRET_KEY=y9Sag4UWWLHyp \
           --name testct -d -p 8080:8080 ${{ steps.meta.outputs.tags }}
           sleep 45
             if [ "$(docker inspect --format='{{.State.Health.Status}}' testct)" != "healthy" ]; then
               exit 1
             fi
+
+#          -e APP_SECRET_KEY=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo 2>/dev/null) \
 
       - name: Docker image push
         uses: docker/build-push-action@v2
