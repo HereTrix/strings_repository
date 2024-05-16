@@ -58,7 +58,12 @@ jobs:
 
           sleep 45
 
-          docker inspect --format='{{.State.Health.Status}}' testct
+          while $(seq 1 10) ; do
+          echo -e "CT is $(docker inspect --format='{{.State.Health.Status}}' testct) \n"
+          docker logs testct
+          echo ""
+          sleep 30
+          done
 
           if [ "$(docker inspect --format='{{.State.Health.Status}}' testct)" != "healthy" ]; then
               exit 1
