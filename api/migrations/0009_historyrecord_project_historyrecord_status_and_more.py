@@ -27,6 +27,8 @@ def restore_history_tokens(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
+    atomic = False
+
     dependencies = [
         ('api', '0008_alter_stringtoken_token'),
     ]
@@ -38,7 +40,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 null=True, on_delete=django.db.models.deletion.CASCADE, related_name='history', to='api.project'),
         ),
-        migrations.RunPython(update_history_project_field),
+        migrations.RunPython(update_history_project_field, atomic=True),
         migrations.AddField(
             model_name='historyrecord',
             name='status',
@@ -50,7 +52,7 @@ class Migration(migrations.Migration):
             name='token_name',
             field=models.CharField(max_length=200, blank=True),
         ),
-        migrations.RunPython(update_history_token_name_field),
+        migrations.RunPython(update_history_token_name_field, atomic=True),
         migrations.AlterField(
             model_name='historyrecord',
             name='token',
