@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from "react"
 import StringToken from "../model/StringToken"
 import Project from "../model/Project"
-import { Button, Collapse, Container, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
+import { Button, ButtonGroup, Collapse, Container, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
 import AddTokenPage from "./AddTokenPage"
 import SearchBar from "../UI/SearchBar"
@@ -12,6 +12,7 @@ import TagsContainer from "../UI/TagsContainer"
 import InfiniteScroll from "react-infinite-scroll-component"
 import ConfirmationAlert from "../UI/ConfirmationAlert"
 import HelpPopover from "../UI/HelpPopover"
+import { Typeahead } from "react-bootstrap-typeahead"
 
 type StringTokenProps = {
     project: Project
@@ -52,7 +53,7 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, onAd
                                 onAddTag()
                             }}
                             className="text-nowrap"
-                        >Add tag</Button>
+                        >Edit tags</Button>
                         <Button onClick={(e) => {
                             e.stopPropagation()
                             onDelete()
@@ -78,25 +79,37 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const [showDialog, setShowDialog] = useState(false)
     const [tokens, setTokens] = useState<StringToken[]>()
     const [tags, setTags] = useState<string[]>([])
-    const [filteredTags, setFilteredTags] = useState<string[]>([])
-    const [selectedTag, setSelectedTag] = useState<string>()
+    const [selectedTags, setSelectedTags] = useState<string[]>([])
+    const [untranslatedOnly, setUntranslatedOnly] = useState<boolean>(false)
     const [query, setQuery] = useState<string>("")
     const [selectedToken, setSelectedToken] = useState<StringToken>()
     const [error, setError] = useState<string>()
     const [deletionItem, setDeletionItem] = useState<StringToken>()
 
     const fetch = async () => {
-        fetchData(selectedTag, query, offset)
+        fetchData(selectedTags, query, offset, untranslatedOnly)
     }
 
-    const fetchData = async (tag: string | undefined, term: string, offset: number) => {
-        var params = new Map<string, string>()
-        if (tag) {
-            params.set('tags', tag)
+    const fetchData = async (
+        tags: string[],
+        term: string,
+        offset: number,
+        untranslated: boolean
+    ) => {
+        if (offset === 0) {
+            setHasMore(true)
+        }
+        var params = new Map<string, any>()
+        if (tags.length > 0) {
+            params.set('tags', tags)
         }
 
         if (term) {
             params.set('q', term)
+        }
+
+        if (untranslated) {
+            params.set('new', true)
         }
 
         params.set('offset', `${offset}`)
@@ -117,7 +130,6 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
             if (offset === 0) {
                 setTokens(result.value)
             } else {
-                console.log('append')
                 setTokens(tokens?.concat(result.value))
             }
         } else {
@@ -134,27 +146,33 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
 
         if (result.value) {
             setTags(result.value)
-            setFilteredTags(result.value)
         } else {
             setError(result.error)
         }
     }
 
-    const selectTag = async (tag: string | undefined) => {
+    const selectTags = async (tags: string[]) => {
         setOffset(0)
-        setSelectedTag(tag)
-        fetchData(tag, query, 0)
+        setSelectedTags(tags)
+        fetchData(tags, query, 0, untranslatedOnly)
+    }
+
+    const udateTagSelection = async (tag: string) => {
+        const idx = selectedTags.indexOf(tag)
+        if (idx >= 0) {
+            selectedTags.splice(idx, 1)
+            selectTags(selectedTags)
+        } else {
+            var tags = selectedTags
+            tags.push(tag)
+            selectTags(tags)
+        }
     }
 
     const onSearch = async (query: string) => {
         setOffset(0)
         setQuery(query)
-        fetchData(selectedTag, query, 0)
-    }
-
-    const onFilterTags = (query: string) => {
-        const filtered = tags.filter((value) => value.includes(query))
-        setFilteredTags(filtered)
+        fetchData(selectedTags, query, 0, untranslatedOnly)
     }
 
     const deleteToken = async (token: StringToken) => {
@@ -172,6 +190,16 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         }
     }
 
+    const toggleAll = () => {
+        setUntranslatedOnly(false)
+        fetchData(selectedTags, query, 0, false)
+    }
+
+    const toggleUntranslated = () => {
+        setUntranslatedOnly(true)
+        fetchData(selectedTags, query, 0, true)
+    }
+
     useEffect(() => {
         fetch()
         fetchTags()
@@ -179,52 +207,65 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
 
     return (
         <>
-            <Stack direction="horizontal" gap={5}>
-                <Button
-                    onClick={() => setShowDialog(true)
-                    } className="my-2" >
-                    Add localization key
-                </Button>
-                {tags && <>
-                    <Dropdown className="my-2">
-                        <Dropdown.Toggle variant="success" id="dropdown-basic">
-                            {selectedTag ? selectedTag : "Filter by tag"}
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu>
-                            {selectedTag &&
-                                <Dropdown.Item
-                                    onClick={() => selectTag(undefined)}
-                                    style={{ backgroundColor: "red", color: "white" }}
-                                >
-                                    Clear
-                                </Dropdown.Item>
-                            }
-                            <SearchBar onSearch={(query) => { }} onChange={onFilterTags} />
-                            {filteredTags.map((tag) =>
-                                <Dropdown.Item onClick={() => selectTag(tag)} key={tag}>{tag}</Dropdown.Item>
-                            )}
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </>
-                }
-                <SearchBar onSearch={onSearch} />
-                <OverlayTrigger
-                    trigger="click"
-                    placement="left"
-                    overlay={HelpPopover}
-                >
-                    <Button className="ms-auto" variant="outline-primary">
-                        i
+            <Stack direction="vertical" gap={2} className="my-3">
+                <Stack direction="horizontal" gap={5}>
+                    <Button
+                        onClick={() => setShowDialog(true)
+                        } className="my-2" >
+                        Add localization key
                     </Button>
-                </OverlayTrigger>
-            </Stack>
+                    {tags && <>
+                        <Typeahead
+                            id="basic-typeahead-multiple"
+                            multiple
+                            labelKey="tags"
+                            options={tags}
+                            placeholder="Tags filter"
+                            onChange={(data) => { selectTags(data as string[]) }}
+                            selected={selectedTags}
+                            renderMenuItemChildren={(item) => {
+                                return (
+                                    <Stack direction="horizontal" gap={3}>
+                                        <label className="align-items-center display-linebreak">{item as string}</label>
+                                    </Stack>
+                                )
+                            }}
+                        />
+                    </>
+                    }
+                    <SearchBar onSearch={onSearch} />
+                    <OverlayTrigger
+                        trigger="click"
+                        placement="left"
+                        overlay={HelpPopover}
+                    >
+                        <Button className="ms-auto" variant="outline-primary">
+                            i
+                        </Button>
+                    </OverlayTrigger>
+                </Stack>
+                <ButtonGroup>
+                    <Button
+                        className={untranslatedOnly ? "btn-secondary" : "btn-primary"}
+                        onClick={() => toggleAll()}
+                    >
+                        All
+                    </Button>
+                    <Button
+                        className={untranslatedOnly ? "btn-primary" : "btn-secondary"}
+                        onClick={() => toggleUntranslated()}
+                    >
+                        New
+                    </Button>
+                </ButtonGroup>
+            </Stack >
             {tokens &&
                 <InfiniteScroll
                     dataLength={tokens.length}
                     next={() => {
                         const newOffset = offset + limit
                         setOffset(newOffset)
-                        fetchData(selectedTag, query, newOffset)
+                        fetchData(selectedTags, query, newOffset, untranslatedOnly)
                     }}
                     hasMore={hasMore}
                     loader={<p>Loading...</p>}
@@ -237,24 +278,26 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                                 project_id={project.id}
                                 onAddTag={() => setSelectedToken(token)}
                                 onDelete={() => setDeletionItem(token)}
-                                onTagClick={(tag => selectTag(tag))}
+                                onTagClick={(tag => udateTagSelection(tag))}
                             />
                         )}
                     </ListGroup>
                 </InfiniteScroll>
             }
-            {showDialog && <AddTokenPage
-                project_id={project.id}
-                show={showDialog}
-                tags={tags}
-                onHide={() => setShowDialog(false)}
-                onSuccess={() => {
-                    fetch()
-                    setShowDialog(false)
-                }
-                } />
+            {
+                showDialog && <AddTokenPage
+                    project_id={project.id}
+                    show={showDialog}
+                    tags={tags}
+                    onHide={() => setShowDialog(false)}
+                    onSuccess={() => {
+                        fetch()
+                        setShowDialog(false)
+                    }
+                    } />
             }
-            {selectedToken &&
+            {
+                selectedToken &&
                 <AddTokenTagPage
                     token={selectedToken}
                     tags={tags}
@@ -267,11 +310,13 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                 />
             }
             {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
-            {deletionItem && <ConfirmationAlert
-                message={`You are going to remove item ${deletionItem?.token}`}
-                onDismiss={() => setDeletionItem(undefined)}
-                onConfirm={() => deleteToken(deletionItem)}
-            />}
+            {
+                deletionItem && <ConfirmationAlert
+                    message={`You are going to remove item ${deletionItem?.token}`}
+                    onDismiss={() => setDeletionItem(undefined)}
+                    onConfirm={() => deleteToken(deletionItem)}
+                />
+            }
         </>
     )
 }

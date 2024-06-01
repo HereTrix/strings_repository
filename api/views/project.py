@@ -151,6 +151,7 @@ class StringTokenListAPI(generics.GenericAPIView):
         tags = request.GET.get('tags')
         offset = request.GET.get('offset')
         limit = request.GET.get('limit')
+        isNew = request.GET.get('new')
 
         if not offset:
             offset = 0
@@ -167,7 +168,17 @@ class StringTokenListAPI(generics.GenericAPIView):
                 tokens = tokens.filter(token__icontains=query)
 
             if tags:
-                tokens = tokens.filter(tags__tag=tags)
+                items = tags.split(',')
+                tokens = tokens.filter(
+                    tags__tag__in=items
+                ).distinct()
+
+            if isNew:
+                tokens = tokens.filter(
+                    Q(translation__translation__exact='') | Q(
+                        translation__translation__isnull=True
+                    )
+                )
 
             if limit:
                 limit = int(limit)

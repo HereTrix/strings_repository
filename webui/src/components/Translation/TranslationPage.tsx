@@ -1,12 +1,13 @@
 import { ChangeEventHandler, FC, useEffect, useState } from "react"
 import { APIMethod, http } from "../Utils/network"
 import Translation, { TranslationModel } from "../model/Translation"
-import { Button, Container, Dropdown, ListGroup, Row, Stack } from "react-bootstrap"
+import { Button, ButtonGroup, Container, Dropdown, ListGroup, Row, Stack } from "react-bootstrap"
 import ExportPage from "./ExportPage"
 import SearchBar from "../UI/SearchBar"
 import TagsContainer from "../UI/TagsContainer"
 import ErrorAlert from "../UI/ErrorAlert"
 import InfiniteScroll from "react-infinite-scroll-component"
+import { Typeahead } from "react-bootstrap-typeahead"
 
 type TranslationListItemProps = {
     translation: TranslationModel,
@@ -56,29 +57,37 @@ type TranslationPageProps = {
     code: string
 }
 
-const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, untranslated }) => {
+const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
 
+    // Request modifiers
     const limit = 20
     const [hasMore, setHasMore] = useState<boolean>(true)
     const [offset, setOffset] = useState<number>(0)
+    const [query, setQuery] = useState<string>("")
+    const [untranslatedOnly, setUntranslatedOnly] = useState<boolean>(false)
 
+    // Data
     const [translations, setTranslations] = useState<TranslationModel[]>()
 
-    const [selectedTag, setSelectedTag] = useState<string>()
-    const [query, setQuery] = useState<string>("")
+    // Tags
     const [tags, setTags] = useState<string[]>([])
     const [filteredTags, setFilteredTags] = useState<string[]>([])
 
     const [error, setError] = useState<string>()
 
     const fetch = async () => {
-        fetchData(selectedTag, query, offset)
+        fetchData(filteredTags, query, offset, untranslatedOnly)
     }
 
-    const fetchData = async (tag: string | undefined, term: string, offset: number) => {
-        var params = new Map<string, string>()
-        if (tag) {
-            params.set('tags', tag)
+    const fetchData = async (
+        tags: string[],
+        term: string,
+        offset: number,
+        untranslated: boolean
+    ) => {
+        var params = new Map<string, any>()
+        if (tags) {
+            params.set('tags', tags)
         }
 
         if (term) {
@@ -86,8 +95,14 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, untransla
         }
 
         params.set('offset', `${offset}`)
+        if (offset === 0) {
+            setHasMore(true)
+        }
+
         params.set('limit', `${limit}`)
-        params.set('untranslated', `${untranslated}`)
+        if (untranslated) {
+            params.set('untranslated', true)
+        }
 
         const result = await http<TranslationModel[]>({
             method: APIMethod.get,
@@ -120,27 +135,41 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, untransla
 
         if (result.value) {
             setTags(result.value)
-            setFilteredTags(result.value)
         } else {
             setError(result.error)
         }
     }
 
-    const selectTag = async (tag: string | undefined) => {
-        setOffset(0)
-        setSelectedTag(tag)
-        fetchData(tag, query, 0)
-    }
-
     const onSearch = async (query: string) => {
         setOffset(0)
         setQuery(query)
-        fetchData(selectedTag, query, 0)
+        fetchData(filteredTags, query, 0, untranslatedOnly)
     }
 
-    const onFilterTags = (query: string) => {
-        const filtered = tags.filter((value) => value.includes(query))
-        setFilteredTags(filtered)
+    const filterTags = (tags: string[]) => {
+        setFilteredTags(tags)
+        fetchData(tags, query, 0, untranslatedOnly)
+    }
+
+    const udateTagSelection = async (tag: string) => {
+        const idx = filteredTags.indexOf(tag)
+        if (idx >= 0) {
+            filterTags(filteredTags.splice(idx, 1))
+        } else {
+            var tags = filteredTags
+            tags.push(tag)
+            filterTags(tags)
+        }
+    }
+
+    const toggleAll = () => {
+        setUntranslatedOnly(false)
+        fetchData(filteredTags, query, 0, false)
+    }
+
+    const toggleUntranslated = () => {
+        setUntranslatedOnly(true)
+        fetchData(filteredTags, query, 0, true)
     }
 
     const saveTranslation = async (translation: Translation) => {
@@ -164,30 +193,42 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, untransla
 
     return (
         <Container>
-            <Stack direction="horizontal" gap={5}>
-                {filteredTags && <>
-                    <Dropdown className="my-2">
-                        <Dropdown.Toggle variant="success" id="dropdown-basic">
-                            {selectedTag ? selectedTag : "Filter by tag"}
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu>
-                            <SearchBar onSearch={(query) => { }} onChange={onFilterTags} />
-                            {selectedTag &&
-                                <Dropdown.Item
-                                    onClick={() => selectTag(undefined)}
-                                    style={{ backgroundColor: "red", color: "white" }}
-                                >
-                                    Clear
-                                </Dropdown.Item>
-                            }
-                            {filteredTags.map((tag) =>
-                                <Dropdown.Item onClick={() => selectTag(tag)} key={tag}>{tag}</Dropdown.Item>
-                            )}
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </>
-                }
-                <SearchBar onSearch={onSearch} />
+            <Stack direction="vertical" gap={2}>
+                <Stack direction="horizontal" gap={5}>
+                    {filteredTags &&
+                        <Typeahead
+                            id="basic-typeahead-multiple"
+                            multiple
+                            labelKey="tags"
+                            options={tags}
+                            placeholder="Tags filter"
+                            onChange={(data) => { filterTags(data as string[]) }}
+                            selected={filteredTags}
+                            renderMenuItemChildren={(item) => {
+                                return (
+                                    <Stack direction="horizontal" gap={3}>
+                                        <label className="align-items-center display-linebreak">{item as string}</label>
+                                    </Stack>
+                                )
+                            }}
+                        />
+                    }
+                    <SearchBar onSearch={onSearch} />
+                </Stack>
+                <ButtonGroup>
+                    <Button
+                        className={untranslatedOnly ? "btn-secondary" : "btn-primary"}
+                        onClick={() => toggleAll()}
+                    >
+                        All
+                    </Button>
+                    <Button
+                        className={untranslatedOnly ? "btn-primary" : "btn-secondary"}
+                        onClick={() => toggleUntranslated()}
+                    >
+                        Untranslated
+                    </Button>
+                </ButtonGroup>
             </Stack>
             {translations &&
                 translations.length > 0 ?
@@ -196,7 +237,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, untransla
                     next={() => {
                         const newOffset = offset + limit
                         setOffset(newOffset)
-                        fetchData(selectedTag, query, newOffset)
+                        fetchData(filteredTags, query, newOffset, untranslatedOnly)
                     }}
                     hasMore={hasMore}
                     loader={<p>Loading...</p>}
@@ -206,7 +247,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, untransla
                             (translation) => <TranslationListItem
                                 translation={translation}
                                 onSave={saveTranslation}
-                                onTagClick={tag => setSelectedTag(tag)}
+                                onTagClick={tag => udateTagSelection(tag)}
                                 key={translation.token}
                             />
                         )}

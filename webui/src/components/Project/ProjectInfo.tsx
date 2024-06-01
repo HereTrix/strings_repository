@@ -100,7 +100,10 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
             {participants &&
                 <ListGroup>
                     {participants.map(participant =>
-                        <ListGroupItem key={participant.email} className="d-flex justify-content-between">
+                        <ListGroupItem
+                            key={participant.email}
+                            className="d-flex justify-content-between"
+                        >
                             <Col className="mx-2">
                                 <label>Name: {participant.first_name}</label>
                             </Col>
@@ -120,7 +123,7 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
                                             </Dropdown.Toggle>
                                             <Dropdown.Menu>
                                                 {roles && roles.map((role) =>
-                                                    <Dropdown.Item onClick={() => updateRole(participant.id, role)}>{role}</Dropdown.Item>
+                                                    <Dropdown.Item onClick={() => updateRole(participant.id, role)} key={role}>{role}</Dropdown.Item>
                                                 )}
                                             </Dropdown.Menu>
                                         </Dropdown>

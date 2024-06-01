@@ -72,27 +72,11 @@ const LanguageTranslationsPage = () => {
                 </OverlayTrigger>
             </Stack>
             {project_id && code &&
-                <Tabs
-                    activeKey={activeTab}
-                    onSelect={(e) => activateTab(e)}
-                    mountOnEnter
-                    unmountOnExit
-                >
-                    <Tab title="All" eventKey="all">
-                        <TranslationPage
-                            untranslated={false}
-                            project_id={project_id}
-                            code={code}
-                        />
-                    </Tab>
-                    <Tab title="Untranslated" eventKey="untranslated">
-                        <TranslationPage
-                            untranslated={true}
-                            project_id={project_id}
-                            code={code}
-                        />
-                    </Tab>
-                </Tabs>
+                <TranslationPage
+                    untranslated={false}
+                    project_id={project_id}
+                    code={code}
+                />
             }
             {project &&
                 <ExportPage
