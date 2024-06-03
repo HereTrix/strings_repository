@@ -82,9 +82,10 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
     const fetchData = async (
         tags: string[],
         term: string,
-        offset: number,
+        newOffset: number,
         untranslated: boolean
     ) => {
+        setOffset(newOffset)
         var params = new Map<string, any>()
         if (tags) {
             params.set('tags', tags)
@@ -94,8 +95,8 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
             params.set('q', term)
         }
 
-        params.set('offset', `${offset}`)
-        if (offset === 0) {
+        params.set('offset', `${newOffset}`)
+        if (newOffset === 0) {
             setHasMore(true)
         }
 
@@ -116,7 +117,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
             } else {
                 setHasMore(true)
             }
-            if (offset === 0) {
+            if (newOffset === 0) {
                 setTranslations(result.value)
             } else {
                 setTranslations(translations?.concat(result.value))
@@ -141,7 +142,6 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
     }
 
     const onSearch = async (query: string) => {
-        setOffset(0)
         setQuery(query)
         fetchData(filteredTags, query, 0, untranslatedOnly)
     }
@@ -153,8 +153,10 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
 
     const udateTagSelection = async (tag: string) => {
         const idx = filteredTags.indexOf(tag)
+
         if (idx >= 0) {
-            filterTags(filteredTags.splice(idx, 1))
+            filteredTags.splice(idx, 1)
+            filterTags(filteredTags)
         } else {
             var tags = filteredTags
             tags.push(tag)
@@ -236,7 +238,6 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
                     dataLength={translations.length}
                     next={() => {
                         const newOffset = offset + limit
-                        setOffset(newOffset)
                         fetchData(filteredTags, query, newOffset, untranslatedOnly)
                     }}
                     hasMore={hasMore}

@@ -77,7 +77,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const [offset, setOffset] = useState<number>(0)
 
     const [showDialog, setShowDialog] = useState(false)
-    const [tokens, setTokens] = useState<StringToken[]>()
+    const [tokens, setTokens] = useState<StringToken[]>([])
     const [tags, setTags] = useState<string[]>([])
     const [selectedTags, setSelectedTags] = useState<string[]>([])
     const [untranslatedOnly, setUntranslatedOnly] = useState<boolean>(false)
@@ -93,10 +93,11 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const fetchData = async (
         tags: string[],
         term: string,
-        offset: number,
+        newOffset: number,
         untranslated: boolean
     ) => {
-        if (offset === 0) {
+        setOffset(newOffset)
+        if (newOffset === 0) {
             setHasMore(true)
         }
         var params = new Map<string, any>()
@@ -112,7 +113,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
             params.set('new', true)
         }
 
-        params.set('offset', `${offset}`)
+        params.set('offset', `${newOffset}`)
         params.set('limit', `${limit}`)
 
         const result = await http<StringToken[]>({
@@ -127,10 +128,11 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
             } else {
                 setHasMore(true)
             }
-            if (offset === 0) {
+
+            if (newOffset === 0) {
                 setTokens(result.value)
             } else {
-                setTokens(tokens?.concat(result.value))
+                setTokens(tokens.concat(result.value))
             }
         } else {
             setHasMore(false)
@@ -152,7 +154,6 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     }
 
     const selectTags = async (tags: string[]) => {
-        setOffset(0)
         setSelectedTags(tags)
         fetchData(tags, query, 0, untranslatedOnly)
     }
@@ -170,7 +171,6 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     }
 
     const onSearch = async (query: string) => {
-        setOffset(0)
         setQuery(query)
         fetchData(selectedTags, query, 0, untranslatedOnly)
     }
@@ -264,7 +264,6 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                     dataLength={tokens.length}
                     next={() => {
                         const newOffset = offset + limit
-                        setOffset(newOffset)
                         fetchData(selectedTags, query, newOffset, untranslatedOnly)
                     }}
                     hasMore={hasMore}
