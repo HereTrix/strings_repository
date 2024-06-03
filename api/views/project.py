@@ -226,7 +226,7 @@ class TranslationsListAPI(generics.GenericAPIView):
 
             if tags:
                 tokens = tokens.filter(
-                    tags__tag=tags
+                    tags__tag__in=tags.split(',')
                 )
 
             if untranslated and untranslated == 'true':

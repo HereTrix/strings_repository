@@ -10,12 +10,13 @@ import InfiniteScroll from "react-infinite-scroll-component"
 import { Typeahead } from "react-bootstrap-typeahead"
 
 type TranslationListItemProps = {
-    translation: TranslationModel,
+    translation: TranslationModel
+    selectedTags: string[]
     onSave: (translation: Translation) => void
     onTagClick: (tag: string) => void
 }
 
-const TranslationListItem: FC<TranslationListItemProps> = ({ translation, onSave, onTagClick }) => {
+const TranslationListItem: FC<TranslationListItemProps> = ({ translation, selectedTags, onSave, onTagClick }) => {
 
     const [canSave, setCanSave] = useState<boolean>(false)
     const [text, setText] = useState<string | undefined>(translation.translation)
@@ -39,6 +40,7 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, onSave
                     {translation.tags &&
                         <TagsContainer
                             tags={translation.tags}
+                            selectedTags={selectedTags}
                             onTagClick={onTagClick}
                         />}
                 </Stack>
@@ -247,6 +249,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
                         {translations.map(
                             (translation) => <TranslationListItem
                                 translation={translation}
+                                selectedTags={filteredTags}
                                 onSave={saveTranslation}
                                 onTagClick={tag => udateTagSelection(tag)}
                                 key={translation.token}

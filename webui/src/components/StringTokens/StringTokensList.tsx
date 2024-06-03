@@ -21,12 +21,13 @@ type StringTokenProps = {
 type StringTokenItemProps = {
     project_id: number
     token: StringToken
+    selectedTags: string[]
     onAddTag: () => void
     onDelete: () => void
     onTagClick: (tag: string) => void
 }
 
-const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, onAddTag, onDelete, onTagClick }) => {
+const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, selectedTags, onAddTag, onDelete, onTagClick }) => {
 
     const [open, setOpen] = useState<boolean>(false)
 
@@ -41,6 +42,7 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, onAd
                     {token.tags &&
                         <TagsContainer
                             tags={token.tags}
+                            selectedTags={selectedTags}
                             onTagClick={onTagClick}
                         />}
                     <Stack
@@ -275,6 +277,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                                 key={token.id}
                                 token={token}
                                 project_id={project.id}
+                                selectedTags={selectedTags}
                                 onAddTag={() => setSelectedToken(token)}
                                 onDelete={() => setDeletionItem(token)}
                                 onTagClick={(tag => udateTagSelection(tag))}
