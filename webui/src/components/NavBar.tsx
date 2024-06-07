@@ -64,6 +64,9 @@ const NavBar = () => {
                                 <Dropdown.Item href='/profile'>
                                     Profile
                                 </Dropdown.Item>
+                                <Dropdown.Item href='https://github.com/HereTrix/strings_repository/wiki'>
+                                    Help
+                                </Dropdown.Item>
                                 <Dropdown.Item>
                                     <LogoutButton />
                                 </Dropdown.Item>
