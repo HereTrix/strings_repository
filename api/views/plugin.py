@@ -220,7 +220,8 @@ class PluginExportAPI(generics.GenericAPIView):
             ).prefetch_related('translation', 'tags')
 
             if tags:
-                tokens = tokens.filter(tags__tag__in=tags).distinct()
+                for tag in tags:
+                    tokens = tokens.filter(tags__tag=tag)
 
             if isinstance(codes, str):
                 try:

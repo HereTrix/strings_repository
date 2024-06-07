@@ -169,9 +169,10 @@ class StringTokenListAPI(generics.GenericAPIView):
 
             if tags:
                 items = tags.split(',')
-                tokens = tokens.filter(
-                    tags__tag__in=items
-                ).distinct()
+                for tag in items:
+                    tokens = tokens.filter(
+                        tags__tag=tag
+                    )
 
             if isNew:
                 tokens = tokens.filter(
@@ -225,9 +226,8 @@ class TranslationsListAPI(generics.GenericAPIView):
                 )
 
             if tags:
-                tokens = tokens.filter(
-                    tags__tag__in=tags.split(',')
-                )
+                for tag in tags.split(','):
+                    tokens = tokens.filter(tags__tag=tag)
 
             if untranslated and untranslated == 'true':
                 tokens = tokens.filter(

@@ -49,7 +49,8 @@ class ExportAPI(generics.GenericAPIView):
 
             if tags_query:
                 tags = tags_query.split(',')
-                tokens = tokens.filter(tags__tag__in=tags).distinct()
+                for tag in tags:
+                    tokens = tokens.filter(tags__tag=tag)
 
             for code in lang_codes:
                 try:
