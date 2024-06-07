@@ -41,6 +41,12 @@ List of variables:
 Installation
 --------
 
+### Docker
+
+`docker pull ghcr.io/heretrix/strings_repository:main`
+
+### Manual installation
+
 The application require `npm` to be installed.
 
 The application uses SQLite storage by default. If you want to use own database update `DATABASES` section in `settings.py`
