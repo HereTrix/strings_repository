@@ -6,6 +6,8 @@ import { APIMethod, http } from "./Utils/network";
 
 type Inputs = {
     login: string
+    name: string
+    surname: string
     activationCode: string
     password: string
     confirmPassword: string
@@ -38,7 +40,13 @@ const ActivateUserPage = () => {
         const result = await http({
             method: APIMethod.post,
             path: "/api/signup",
-            data: { "code": data.activationCode, "login": data.login, "password": data.password }
+            data: {
+                "code": data.activationCode,
+                "login": data.login,
+                "name": data.name,
+                "surname": data.surname,
+                "password": data.password
+            }
         })
 
         if (result.error) {
@@ -76,6 +84,24 @@ const ActivateUserPage = () => {
                                 type="text"
                                 placeholder="Enter login"
                                 {...register("login")}
+                            />
+                        </Form.Group>
+                        <Form.Group className="my-2">
+                            <Form.Label>Name</Form.Label>
+                            <Form.Control
+                                required
+                                type="text"
+                                placeholder="Enter name"
+                                {...register("name")}
+                            />
+                        </Form.Group>
+                        <Form.Group className="my-2">
+                            <Form.Label>Surname</Form.Label>
+                            <Form.Control
+                                required
+                                type="text"
+                                placeholder="Enter surname"
+                                {...register("surname")}
                             />
                         </Form.Group>
                         <Form.Group className="my-2">

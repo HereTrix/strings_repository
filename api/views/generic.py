@@ -144,6 +144,18 @@ class SignUpAPI(generics.GenericAPIView):
                 'error': 'Invitation code should not be empty'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        name = request.data.get('name')
+        if not name:
+            return JsonResponse({
+                'error': 'Please provide name'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        surname = request.data.get('surname')
+        if not surname:
+            return JsonResponse({
+                'error': 'Please provide last name'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             invitation = Invitation.objects.get(code=code)
         except Invitation.DoesNotExist:
@@ -159,6 +171,8 @@ class SignUpAPI(generics.GenericAPIView):
         except User.DoesNotExist:
             user = User()
             user.username = login
+            user.first_name = name
+            user.last_name = surname
             user.set_password(password)
             user.save()
 
