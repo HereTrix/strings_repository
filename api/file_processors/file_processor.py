@@ -4,6 +4,8 @@ from api.file_processors.excel_file import ExcelFileWriter, ExcelSingleSheetFile
 from api.file_processors.export_file_type import ExportFile
 from api.file_processors.import_file_type import ImportFile
 from api.file_processors.json_file import JsonFileReader, JsonFileWriter
+from api.file_processors.mo_file import MOFileReader, MOFileWriter
+from api.file_processors.po_file import POFileReader, POFileWriter
 from api.file_processors.properties_file import PropertiesFileReader, PropertiesFileWriter
 from api.file_processors.strings_file import AppleStringsFileReader, AppleStringsFileWriter
 from api.transport_models import TranslationModel
@@ -29,6 +31,10 @@ class FileProcessor():
                 self.writer = DotNetFileWriter()
             case ExportFile.properties:
                 self.writer = PropertiesFileWriter()
+            case ExportFile.po:
+                self.writer = POFileWriter()
+            case ExportFile.mo:
+                self.writer = MOFileWriter()
 
     def append(self, records, code):
         self.writer.append(records=records, code=code)
@@ -56,6 +62,10 @@ class FileImporter:
                 self.reader = DotNetFileReader()
             case ImportFile.properties.name:
                 self.reader = PropertiesFileReader()
+            case ImportFile.po.name:
+                self.reader = POFileReader()
+            case ImportFile.mo.name:
+                self.reader = MOFileReader()
             case _:
                 raise FileImporter.UnsupportedFile(
                     f"'.{extension}' is not supported file extension",

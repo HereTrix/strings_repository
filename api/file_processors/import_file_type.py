@@ -8,3 +8,5 @@ class ImportFile(enum.Enum):
     json = 'json'
     resx = 'resx'
     properties = 'properties'
+    po = 'po'
+    mo = 'mo'

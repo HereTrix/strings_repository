@@ -9,13 +9,8 @@ class ExportFile(enum.Enum):
     json = 'json'
     resx = 'resx'
     properties = 'properties'
-    # strings = 0
-    # android = 1
-    # excel = 2
-    # excel_single = 3
-    # json = 4
-    # resx = 5
-    # properties = 6
+    po = 'po'
+    mo = 'mo'
 
     def file_extension(self):
         match self:
@@ -33,6 +28,10 @@ class ExportFile(enum.Enum):
                 return '.resx'
             case ExportFile.properties:
                 return '.properties'
+            case ExportFile.po:
+                return '.po'
+            case ExportFile.mo:
+                return '.mo'
 
     def vendor(self):
         match self:
@@ -50,3 +49,7 @@ class ExportFile(enum.Enum):
                 return 'ASP.NET'
             case ExportFile.properties:
                 return 'Java'
+            case ExportFile.po:
+                return 'Portable Object'
+            case ExportFile.mo:
+                return 'Binary MO'
