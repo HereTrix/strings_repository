@@ -63,6 +63,7 @@ const ProjectPage = () => {
                     <Tab
                         eventKey="languages"
                         title="Languages"
+                        key="Languages"
                     >
                         <LanguagesList project={project} />
                     </Tab>
@@ -70,6 +71,7 @@ const ProjectPage = () => {
                         <Tab
                             eventKey="tokens"
                             title="Localization keys"
+                            key="tokens"
                         >
                             {activeTab === "tokens" && <StringTokensList project={project} />}
                         </Tab>
@@ -77,6 +79,7 @@ const ProjectPage = () => {
                     <Tab
                         eventKey="history"
                         title="History"
+                        key="history"
                     >
                         <HistoryPage project={project} />
                     </Tab>

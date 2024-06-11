@@ -101,7 +101,7 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
                 <ListGroup>
                     {participants.map(participant =>
                         <ListGroupItem
-                            key={participant.email}
+                            key={participant.id}
                             className="d-flex justify-content-between"
                         >
                             <Col className="mx-2">

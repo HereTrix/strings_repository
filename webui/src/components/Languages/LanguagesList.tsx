@@ -24,7 +24,8 @@ const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, onDe
         <ListGroup.Item
             href={"/project/" + project_id + "/language/" + language.code.toLocaleLowerCase()}
             action
-            className="d-flex justify-content-between align-items-start">
+            className="d-flex justify-content-between align-items-start"
+            key={language.code}>
             <OptionalImage src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code} />
             <label>{language.name}</label>
             <Button
