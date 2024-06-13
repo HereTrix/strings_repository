@@ -165,7 +165,8 @@ class StringTokenListAPI(generics.GenericAPIView):
             )
 
             if query:
-                tokens = tokens.filter(token__icontains=query)
+                tokens = tokens.filter(Q(token__icontains=query) | Q(
+                    translation__translation__icontains=query))
 
             if tags:
                 items = tags.split(',')
