@@ -72,3 +72,4 @@ venv/
 *.sqlite3
 node_modules/
 webui/static/site
+.env

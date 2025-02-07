@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, JSX, useEffect, useState } from "react";
 import { Container, ListGroup, Tabs, Tab, Button, Stack, Modal } from "react-bootstrap";
 import { http, APIMethod } from "../Utils/network";
 import AddProjectPage from "./AddProjectPage";

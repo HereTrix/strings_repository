@@ -1,5 +1,5 @@
 import fileDownload from "js-file-download";
-import { FC, useEffect, useState } from "react";
+import { FC, JSX, useEffect, useState } from "react";
 import { Button, Col, Dropdown, DropdownButton, Modal, Row, Stack } from "react-bootstrap";
 import { download, APIMethod, http } from "../Utils/network";
 import Project from "../model/Project";

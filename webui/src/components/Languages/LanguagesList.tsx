@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react"
+import { FC, JSX, useEffect, useState } from "react"
 import { Button, Container, ListGroup, Row } from "react-bootstrap"
 import AddLaguagePage from "./AddLaguagePage"
 import Language from "../model/Language"
