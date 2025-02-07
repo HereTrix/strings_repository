@@ -5,6 +5,7 @@ import zipfile
 
 from django.http import HttpResponse
 
+from api.file_processors.common import escape_quotes
 from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
 
@@ -29,13 +30,14 @@ class AndroidResourceFileWriter:
                 xml.appendChild(comment)
             item = root.createElement('string')
             item.setAttribute('name', record.token)
+            text = escape_quotes(record.translation)
             if record.translation:
                 res = re.search(
                     '</?\s*[a-z-][^>]*\s*>|(\&(?:[\w\d]+|#\d+|#x[a-f\d]+);)', record.translation)
                 if res:
-                    text = root.createCDATASection(record.translation)
+                    text = root.createCDATASection(text)
                 else:
-                    text = root.createTextNode(record.translation)
+                    text = root.createTextNode(text)
                 item.appendChild(text)
             xml.appendChild(item)
 

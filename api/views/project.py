@@ -182,6 +182,7 @@ class StringTokenListAPI(generics.GenericAPIView):
                     )
                 )
 
+            tokens.distinct()
             if limit:
                 limit = int(limit)
                 tokens = tokens.prefetch_related('tags')[offset:offset+limit]
@@ -191,7 +192,6 @@ class StringTokenListAPI(generics.GenericAPIView):
             serializer = StringTokenSerializer(tokens, many=True)
             return JsonResponse(serializer.data, safe=False)
         except Exception as e:
-            # except StringToken.DoesNotExist as e:
             return JsonResponse({
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
