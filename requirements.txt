@@ -6,3 +6,4 @@ djangorestframework==3.15.2
 openpyxl==3.1.5
 polib==1.2.0
 whitenoise==6.9.0
+setuptools=75.8.0
