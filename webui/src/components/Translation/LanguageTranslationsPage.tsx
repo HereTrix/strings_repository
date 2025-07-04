@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
-import { Button, Container, OverlayTrigger, Popover, PopoverBody, Stack, Tab, Tabs } from "react-bootstrap"
-import { useParams } from "react-router-dom"
-import { history } from "../Utils/history"
+import { Button, Container, OverlayTrigger, Stack } from "react-bootstrap"
+import { useNavigate, useParams } from "react-router-dom"
 import { APIMethod, http } from "../Utils/network"
 import Project from "../model/Project"
 import ErrorAlert from "../UI/ErrorAlert"
@@ -11,6 +10,7 @@ import TranslationPage from "./TranslationPage"
 import HelpPopover from "../UI/HelpPopover"
 
 const LanguageTranslationsPage = () => {
+    const navigate = useNavigate()
 
     const [activeTab, setActiveTab] = useState('all')
 
@@ -39,7 +39,7 @@ const LanguageTranslationsPage = () => {
     }
 
     const backToProject = () => {
-        history.navigate(`/project/${project_id}`, { replace: true })
+        navigate(`/project/${project_id}`, { replace: true })
     }
 
     const onExport = () => {

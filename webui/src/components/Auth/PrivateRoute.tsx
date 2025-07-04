@@ -4,11 +4,6 @@ import NavBar from "../NavBar";
 import { JSX } from "react";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
-    // Store hooks to have possibility to navigate outside of component
-    if (!history.navigate) {
-        history.navigate = useNavigate()
-        history.location = useLocation()
-    }
 
     const auth = localStorage.getItem("auth")
 

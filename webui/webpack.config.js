@@ -1,12 +1,14 @@
 const path = require("path");
 const webpack = require("webpack")
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: "./src/index.tsx",
   devtool: 'inline-source-map',
   output: {
     path: path.resolve(__dirname, "./static/site"),
-    filename: "[name].js",
+    filename: '[name].[contenthash].js',
+    publicPath: '/static/site/',
   },
   module: {
     rules: [
@@ -35,14 +37,27 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js'],
   },
   optimization: {
-    minimize: false,
+    moduleIds: 'deterministic',
+    minimize: true,
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name(module) {
+            const pkg = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
+            return `vendor.${pkg.replace('@', '')}`;
+          },
+          chunks: 'all',
+          enforce: true
+        },
+      },
+    },
   },
   plugins: [
-    new webpack.DefinePlugin({
-      "process.env": {
-        // This has effect on the react lib size
-        NODE_ENV: JSON.stringify("development"),
-      },
+    new HtmlWebpackPlugin({
+      template: 'public/index.html',
+      filename: path.resolve(__dirname, 'templates/site/index.html'),
     }),
   ],
 };

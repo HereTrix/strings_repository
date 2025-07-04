@@ -1,14 +1,22 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import LoginPage from "./LoginPage"
-import HomePage from "./HomePage"
-import RequireAuth from "./Auth/PrivateRoute";
-import PageNotFound from "./PageNotFound";
-import ProjectPage from "./Project/ProjectPage";
-import ProfilePage from './Profile/ProfilePage';
-import ActivateUserPage from './ActivateUserPage';
-import LanguageTranslationsPage from './Translation/LanguageTranslationsPage';
+import React from 'react';
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { history } from './Utils/history'
+const LoginPage = React.lazy(() => import("./LoginPage"))
+const HomePage = React.lazy(() => import("./HomePage"))
+const RequireAuth = React.lazy(() => import("./Auth/PrivateRoute"))
+const PageNotFound = React.lazy(() => import("./PageNotFound"))
+const ProjectPage = React.lazy(() => import("./Project/ProjectPage"))
+const ProfilePage = React.lazy(() => import('./Profile/ProfilePage'))
+const ActivateUserPage = React.lazy(() => import('./ActivateUserPage'))
+const LanguageTranslationsPage = React.lazy(() => import('./Translation/LanguageTranslationsPage'))
 
 function App() {
+  // Store hooks to have possibility to navigate outside of component
+  if (!history.navigate) {
+    history.navigate = useNavigate()
+    history.location = useLocation()
+  }
+
   return (
     <BrowserRouter>
       <Routes>
