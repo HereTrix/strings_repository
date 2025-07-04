@@ -10,15 +10,20 @@ const ProfilePage = React.lazy(() => import('./Profile/ProfilePage'))
 const ActivateUserPage = React.lazy(() => import('./ActivateUserPage'))
 const LanguageTranslationsPage = React.lazy(() => import('./Translation/LanguageTranslationsPage'))
 
-function App() {
-  // Store hooks to have possibility to navigate outside of component
+// Set up the history object to be used in the app
+function HistorySetter() {
   if (!history.navigate) {
-    history.navigate = useNavigate()
-    history.location = useLocation()
+    history.navigate = useNavigate();
+    history.location = useLocation();
   }
+  return null;
+}
+
+function App() {
 
   return (
     <BrowserRouter>
+      <HistorySetter />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/activate" element={<ActivateUserPage />} />

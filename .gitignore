@@ -73,3 +73,4 @@ venv/
 node_modules/
 webui/static/site
 .env
+webui/templates/site/index.html
