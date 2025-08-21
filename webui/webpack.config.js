@@ -1,20 +1,23 @@
 const path = require("path");
-const webpack = require("webpack")
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require("webpack");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+
+const isDev = process.env.NODE_ENV !== "production";
 
 module.exports = {
   entry: "./src/index.tsx",
-  devtool: 'inline-source-map',
+  devtool: isDev ? "inline-source-map" : false,
+  mode: isDev ? "development" : "production",
   output: {
     path: path.resolve(__dirname, "./static/site"),
-    filename: '[name].[contenthash].js',
-    publicPath: '/static/site/',
+    filename: isDev ? "bundle.js" : "[name].[contenthash].js",
+    publicPath: "/static/site/",
   },
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        use: "ts-loader",
         exclude: /node_modules/,
       },
       {
@@ -22,25 +25,21 @@ module.exports = {
         loader: "file-loader",
         options: {
           outputPath: "../fonts",
-        }
+        },
       },
       {
         test: /\.css$/i,
-        loader: "css-loader",
-        options: {
-          url: true,
-        },
-      }
+        use: ["style-loader", "css-loader"],
+      },
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: [".tsx", ".ts", ".js"],
   },
   optimization: {
-    moduleIds: 'deterministic',
-    minimize: true,
-    splitChunks: {
-      chunks: 'all',
+    minimize: !isDev,
+    splitChunks: isDev ? false : {
+      chunks: "all",
       cacheGroups: {
         vendor: {
           test: /[\\/]node_modules[\\/]/,
@@ -48,16 +47,19 @@ module.exports = {
             const pkg = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
             return `vendor.${pkg.replace('@', '')}`;
           },
-          chunks: 'all',
-          enforce: true
+          chunks: "all",
+          enforce: true,
         },
       },
     },
+    runtimeChunk: isDev ? false : "single",
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: 'public/index.html',
-      filename: path.resolve(__dirname, 'templates/site/index.html'),
+      template: "public/index.html",
+      filename: path.resolve(__dirname, "templates/site/index.html"),
     }),
+    new webpack.HotModuleReplacementPlugin(), // у деві
   ],
+  watch: isDev,
 };

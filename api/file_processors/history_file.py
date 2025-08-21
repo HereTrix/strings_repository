@@ -20,7 +20,7 @@ class HistoryFileWriter:
         update_item = 'Updated at'
 
         header = [key_item, language_item,
-                  translation_item, tags_item, comment_item, update_item]
+                  translation_item, update_item]
 
         indexes = {k: v + 1 for v, k in enumerate(header)}
 
@@ -34,7 +34,7 @@ class HistoryFileWriter:
             ws.cell(
                 row=row,
                 column=indexes[key_item],
-                value=item.token.token
+                value=item.token
             )
             ws.cell(
                 row=row,
@@ -45,16 +45,6 @@ class HistoryFileWriter:
                 row=row,
                 column=indexes[translation_item],
                 value=item.new_value
-            )
-            ws.cell(
-                row=row,
-                column=indexes[tags_item],
-                value=','.join([tag.tag for tag in item.token.tags.all()])
-            )
-            ws.cell(
-                row=row,
-                column=indexes[comment_item],
-                value=item.token.comment
             )
             ws.cell(
                 row=row,

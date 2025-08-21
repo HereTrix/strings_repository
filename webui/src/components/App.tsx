@@ -28,7 +28,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/activate" element={<ActivateUserPage />} />
         <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
-        <Route path="/project/:id" element={<RequireAuth><ProjectPage /></RequireAuth>} />
+        <Route path="/project/:id/:tab?" element={<RequireAuth><ProjectPage /></RequireAuth>} />
         <Route path="/project/:project_id/language/:code" element={<RequireAuth><LanguageTranslationsPage /></RequireAuth>} />
         <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
         <Route path="*" element={<PageNotFound />} />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { APIMethod, http } from "../Utils/network"
 import { Button, Container, Stack, Tab, Tabs } from "react-bootstrap"
 import Project, { ProjectRole } from "../model/Project"
@@ -12,14 +12,17 @@ import ImportPage from "../Translation/ImportPage"
 
 const ProjectPage = () => {
 
-    const [activeTab, setActiveTab] = useState('languages')
+    const { id, tab } = useParams()
+    const navigate = useNavigate()
+    const allowedTabs = ['languages', 'tokens', 'history', 'info']
+    const getValidTab = (t: string | undefined | null) =>
+        t && allowedTabs.includes(t) ? t : 'languages'
+    const [activeTab, setActiveTab] = useState(getValidTab(tab))
 
     const [error, setError] = useState<string | null>()
     const [project, setProject] = useState<Project>()
     const [showExport, setShowExport] = useState(false)
     const [showImport, setShowImport] = useState(false)
-
-    const { id } = useParams()
 
     const fetch = async () => {
 
@@ -38,12 +41,17 @@ const ProjectPage = () => {
     const activateTab = (tab: string | null) => {
         if (tab) {
             setActiveTab(tab)
+            navigate(`/project/${id}/${tab}`)
         }
     }
 
     useEffect(() => {
         fetch()
-    }, [])
+    }, [id])
+
+    useEffect(() => {
+        setActiveTab(getValidTab(tab))
+    }, [tab])
 
     return (
         <Container>

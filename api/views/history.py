@@ -63,9 +63,9 @@ class ProjectHistoryExportAPI(generics.GenericAPIView):
 
         try:
             records = HistoryRecord.objects.filter(
-                token__project__pk=pk,
-                token__project__roles__user=user
-            ).prefetch_related('token')
+                project__pk=pk,
+                project__roles__user=user
+            )
 
             if time_from:
                 date = datetime.strptime(time_from, '%Y-%m-%d')
@@ -78,8 +78,7 @@ class ProjectHistoryExportAPI(generics.GenericAPIView):
                 records = records.filter(
                     updated_at__lte=date
                 )
-            records = records.select_related(
-                'token').order_by('updated_at')
+            records = records.order_by('updated_at')
 
             response = HttpResponse(
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

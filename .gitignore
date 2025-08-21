@@ -66,6 +66,7 @@ target/
 .iml
 # virtualenv
 venv/
+.venv/
 
 .vscode
 

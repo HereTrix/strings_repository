@@ -4,7 +4,6 @@ import { http, APIMethod } from "../Utils/network";
 import AddProjectPage from "./AddProjectPage";
 import ErrorAlert from "../UI/ErrorAlert";
 import ConfirmationAlert from "../UI/ConfirmationAlert";
-import { log } from "console";
 
 type BaseProject = {
     id: number,
