@@ -1,5 +1,6 @@
+import io
 from django.http import HttpResponse
-import openpyxl
+import xlsxwriter
 import tempfile
 
 
@@ -13,60 +14,43 @@ class FileConstants:
 class ExcelFileWriter:
 
     def __init__(self):
-        self.wb = openpyxl.Workbook()
+        self.output = io.BytesIO()
+        self.wb = xlsxwriter.Workbook(self.output, {'in_memory': True})
         self.has_data = False
 
     def append(self, records, code):
         if self.has_data:
-            ws = self.wb.create_sheet(code)
+            ws = self.wb.get_worksheet_by_name(code)
         else:
-            ws = self.wb.active
-            ws.title = code
+            ws = self.wb.add_worksheet(code)
             self.has_data = True
 
         header = [FileConstants.key_item,
                   FileConstants.translation_item,
                   FileConstants.tags_item,
                   FileConstants.comment_item]
-        indexes = {k: v + 1 for v, k in enumerate(header)}
+        indexes = {k: v for v, k in enumerate(header)}
 
         for idx in range(len(header)):
-            cell = ws.cell(row=1, column=idx+1)
-            cell.value = header[idx]
+            ws.write(0, idx, header[idx])
 
-        row = 2
+        row = 1
 
         for record in records:
-            ws.cell(
-                row=row,
-                column=indexes[FileConstants.key_item],
-                value=record.token
-            )
-            ws.cell(
-                row=row,
-                column=indexes[FileConstants.translation_item],
-                value=record.translation
-            )
-            ws.cell(
-                row=row,
-                column=indexes[FileConstants.comment_item],
-                value=record.comment
-            )
-            ws.cell(
-                row=row,
-                column=indexes[FileConstants.tags_item],
-                value=','.join(record.tags)
-            )
+            ws.write(row, indexes[FileConstants.key_item], record.token)
+            ws.write(
+                row, indexes[FileConstants.translation_item], record.translation)
+            ws.write(row, indexes[FileConstants.comment_item], record.comment)
+            ws.write(row, indexes[FileConstants.tags_item],
+                     ','.join(record.tags))
             row += 1
 
     def http_response(self):
-        with tempfile.NamedTemporaryFile(delete=True) as tmp:
-            self.wb.save(tmp.name)
-            tmp.seek(0)
-            stream = tmp.read()
+        self.wb.close()
+        self.output.seek(0)
 
         response = HttpResponse(
-            content=stream,
+            content=self.output.read(),
             content_type='application/ms-excel'
         )
         response['Content-Disposition'] = 'attachment; filename=translations.xlsx'
@@ -93,54 +77,48 @@ class ExcelSingleSheetFileWriter:
         self.languages.append(code)
 
     def http_response(self):
-        wb = openpyxl.Workbook()
-        ws = wb.active
+        output = io.BytesIO()
+        wb = xlsxwriter.Workbook(output, {'in_memory': True})
+        ws = wb.add_worksheet()
 
         header = [FileConstants.key_item] + \
             self.languages + \
             [FileConstants.tags_item, FileConstants.comment_item]
-        indexes = {k: v + 1 for v, k in enumerate(header)}
+        indexes = {k: v for v, k in enumerate(header)}
 
         for idx in range(len(header)):
-            cell = ws.cell(row=1, column=idx+1)
-            cell.value = header[idx]
+            ws.write(0, idx, header[idx])
 
-        row = 2
-
+        row = 1
         for key in self.records.keys():
             record = self.records[key]
-            ws.cell(
-                row=row,
-                column=indexes[FileConstants.key_item],
-                value=key
+            ws.write(
+                row,
+                indexes[FileConstants.key_item],
+                key
             )
-            ws.cell(
-                row=row,
-                column=indexes[FileConstants.comment_item],
-                value=record[FileConstants.comment_item]
+            ws.write(
+                row,
+                indexes[FileConstants.comment_item],
+                record[FileConstants.comment_item]
             )
-            ws.cell(
-                row=row,
-                column=indexes[FileConstants.tags_item],
-                value=record[FileConstants.tags_item]
-            )
+            ws.write(row, indexes[FileConstants.tags_item],
+                     record[FileConstants.tags_item])
 
             for code in self.languages:
-                ws.cell(
-                    row=row,
-                    column=indexes[code],
-                    value=record[code]
+                ws.write(
+                    row,
+                    indexes[code],
+                    record[code]
                 )
 
             row += 1
 
-        with tempfile.NamedTemporaryFile() as tmp:
-            wb.save(tmp.name)
-            tmp.seek(0)
-            stream = tmp.read()
+        wb.close()
+        output.seek(0)
 
         response = HttpResponse(
-            content=stream,
+            content=output.read(),
             content_type='application/ms-excel'
         )
         response['Content-Disposition'] = 'attachment; filename=translations.xlsx'

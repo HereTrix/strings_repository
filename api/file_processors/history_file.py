@@ -1,4 +1,5 @@
-import openpyxl
+import xlsxwriter
+import io
 from datetime import datetime
 
 
@@ -8,9 +9,9 @@ class HistoryFileWriter:
         self.data = data
 
     def write(self, response):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = 'Report'
+        output = io.BytesIO()
+        wb = xlsxwriter.Workbook(output, {'in_memory': True})
+        ws = wb.add_worksheet('Report')
 
         key_item = 'Localization key'
         tags_item = 'Tags'
@@ -22,35 +23,21 @@ class HistoryFileWriter:
         header = [key_item, language_item,
                   translation_item, update_item]
 
-        indexes = {k: v + 1 for v, k in enumerate(header)}
+        indexes = {k: v for v, k in enumerate(header)}
 
         for idx in range(len(header)):
-            cell = ws.cell(row=1, column=idx+1)
-            cell.value = header[idx]
+            ws.write(0, idx, header[idx])
 
-        row = 2
-
+        row = 1
         for item in self.data:
-            ws.cell(
-                row=row,
-                column=indexes[key_item],
-                value=item.token
-            )
-            ws.cell(
-                row=row,
-                column=indexes[language_item],
-                value=item.language
-            )
-            ws.cell(
-                row=row,
-                column=indexes[translation_item],
-                value=item.new_value
-            )
-            ws.cell(
-                row=row,
-                column=indexes[update_item],
-                value=item.updated_at.strftime('%Y-%m-%d %H:%M')
-            )
+            ws.write(row, indexes[key_item], item.token)
+            ws.write(row, indexes[language_item], item.language)
+            ws.write(row, indexes[translation_item], item.new_value)
+            ws.write(row, indexes[update_item],
+                     item.updated_at.strftime('%Y-%m-%d %H:%M'))
             row += 1
 
-        wb.save(response)
+        wb.close()
+        output.seek(0)
+        response.headers['Content-Disposition'] = 'attachment; filename=history.xlsx'
+        response.write(output.read())
