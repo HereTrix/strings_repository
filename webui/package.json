@@ -5,7 +5,7 @@
   "main": "index.tsx",
   "scripts": {
     "dev": "webpack --mode development --watch --stats-error-details",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production --env production"
   },
   "keywords": [],
   "author": "heretrix",
