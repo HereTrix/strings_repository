@@ -3,6 +3,8 @@ from django.http import HttpResponse
 import xlsxwriter
 import tempfile
 
+from api.file_processors.common import TranslationFileWriter
+
 
 class FileConstants:
     key_item = 'Localization key'
@@ -11,7 +13,7 @@ class FileConstants:
     translation_item = 'Translation'
 
 
-class ExcelFileWriter:
+class ExcelFileWriter(TranslationFileWriter):
 
     def __init__(self):
         self.output = io.BytesIO()

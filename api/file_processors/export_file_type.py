@@ -3,6 +3,7 @@ import enum
 
 class ExportFile(enum.Enum):
     strings = 'strings'
+    xcstrings = 'xcstrings'
     android = 'xml'
     excel = 'excel'
     excel_single = 'xlsx'
@@ -16,6 +17,8 @@ class ExportFile(enum.Enum):
         match self:
             case ExportFile.strings:
                 return '.strings'
+            case ExportFile.xcstrings:
+                return '.xcstrings'
             case ExportFile.android:
                 return '.xml'
             case ExportFile.excel:
@@ -37,6 +40,8 @@ class ExportFile(enum.Enum):
         match self:
             case ExportFile.strings:
                 return 'Apple'
+            case ExportFile.xcstrings:
+                return 'Apple Xcode'
             case ExportFile.android:
                 return 'Android'
             case ExportFile.excel:

@@ -1,11 +1,12 @@
 class TranslationModel:
 
-    def create(token, translation, comment=None, tags=None):
+    def create(token, translation, comment=None, tags=None, code=None):
         model = TranslationModel()
         model.token = token
         model.translation = translation
         model.comment = comment
         model.tags = tags
+        model.code = code
         return model
 
     def __init__(self, token_model=None, code=None):
@@ -22,6 +23,7 @@ class TranslationModel:
 
             self.translation = text
             self.comment = token_model.comment
+            self.code = code
 
     def __eq__(self, other):
         if not isinstance(other, TranslationModel):

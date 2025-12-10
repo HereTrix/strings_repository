@@ -1,9 +1,10 @@
 autopep8==2.3.2
-Django==5.2.4
-django-cors-headers==4.7.0
+Django==6.0
+django-cors-headers==4.9.0
 django-rest-knox==5.0.2
 djangorestframework==3.16.0
 xlsxwriter==3.2.5
 polib==1.2.0
-whitenoise==6.9.0
+whitenoise==6.11.0
 setuptools==80.9.0
+django-environ==0.12.0

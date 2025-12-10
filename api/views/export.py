@@ -39,6 +39,7 @@ class ExportAPI(generics.GenericAPIView):
                 )
 
                 lang_codes = [lang.code for lang in languages]
+                print(lang_codes)
 
             processor = FileProcessor(type=file_type)
 

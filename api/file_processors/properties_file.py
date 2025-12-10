@@ -2,11 +2,12 @@ from configparser import ConfigParser
 import tempfile
 import zipfile
 from django.http import HttpResponse
+from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
 
 
-class PropertiesFileWriter:
+class PropertiesFileWriter(TranslationFileWriter):
 
     def __init__(self):
         self.response = HttpResponse(content_type='application/zip')
@@ -33,12 +34,25 @@ class PropertiesFileWriter:
             return f'{token}={translation}'
 
     def prepare(self, text):
-        text = text.replace('!', '\!')
-        text = text.replace('=', '\=')
-        text = text.replace(':', '\:')
-        text = text.replace('#', '\#')
-        text = text.replace('\"', '\\"')
-        text = text.replace(' ', '\ ')
+        text = text.replace('!', r'\!')
+        text = text.replace('=', r'\=')
+        text = text.replace(':', r'\:')
+        text = text.replace('#', r'\#')
+        text = text.replace(r'\"', r'\\"')
+        text = text.replace(' ', r'\ ')
+
+        return text
+
+    def clear(self, text):
+        if not text:
+            return ''
+        text = text.rstrip()
+        text = text.replace(r'\!', '!')
+        text = text.replace(r'\=', '=')
+        text = text.replace(r'\:', ':')
+        text = text.replace(r'\#', '#')
+        text = text.replace(r'\\"', r'\"')
+        text = text.replace(r'\ ', ' ')
 
         return text
 
@@ -48,7 +62,7 @@ class PropertiesFileWriter:
         return self.response
 
 
-class PropertiesFileReader:
+class PropertiesFileReader(TranslationFileReader):
     def read(self, file):
         file.seek(0)
 
@@ -114,12 +128,14 @@ class PropertiesFileReader:
         return model
 
     def clear(self, text):
+        if not text:
+            return ''
         text = text.rstrip()
-        text = text.replace('\!', '!')
-        text = text.replace('\=', '=')
-        text = text.replace('\:', ':')
-        text = text.replace('\#', '#')
-        text = text.replace('\\"', '\"')
-        text = text.replace('\ ', ' ')
+        text = text.replace(r'\!', '!')
+        text = text.replace(r'\=', '=')
+        text = text.replace(r'\:', ':')
+        text = text.replace(r'\#', '#')
+        text = text.replace(r'\\"', r'\"')
+        text = text.replace(r'\ ', ' ')
 
         return text

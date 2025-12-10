@@ -2,11 +2,12 @@ import zipfile
 from django.http import HttpResponse
 import polib
 
+from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
 
 
-class MOFileWriter:
+class MOFileWriter(TranslationFileWriter):
 
     def __init__(self):
         self.response = HttpResponse(content_type='application/zip')
@@ -40,7 +41,7 @@ class MOFileWriter:
         return self.response
 
 
-class MOFileReader:
+class MOFileReader(TranslationFileReader):
 
     def read(self, file):
         file.seek(0)

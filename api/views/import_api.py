@@ -29,15 +29,15 @@ class ImportAPI(views.APIView):
                 'error': 'No project_id'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        if not code:
-            return JsonResponse({
-                'error': 'No language code'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             importer = FileImporter(
                 file=file
             )
+
+            if importer.needs_language_code() and not code:
+                return JsonResponse({
+                    'error': 'No language code'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             records = importer.parse()
         except FileImporter.UnsupportedFile as e:
@@ -61,20 +61,29 @@ class ImportAPI(views.APIView):
 
         for record in records:
             try:
-                Translation.import_record(
-                    user=user,
-                    project_id=project_id,
-                    code=code,
-                    record=record,
-                    tags=tag_models
-                )
+                if importer.needs_language_code():
+                    Translation.import_record(
+                        user=user,
+                        project_id=project_id,
+                        code=code,
+                        record=record,
+                        tags=tag_models
+                    )
+                else:
+                    Translation.import_record(
+                        user=user,
+                        project_id=project_id,
+                        code=record.code,
+                        record=record,
+                        tags=tag_models
+                    )
             except Project.DoesNotExist:
                 return JsonResponse({
-                    'error': 'Unable to import'
+                    'error': 'Unable to import into project'
                 }, status=status.HTTP_404_NOT_FOUND)
             except Language.DoesNotExist:
                 return JsonResponse({
-                    'error': 'Unable to import'
+                    'error': 'Unable to import with language code'
                 }, status=status.HTTP_404_NOT_FOUND)
 
         return JsonResponse({})

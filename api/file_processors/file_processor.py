@@ -8,39 +8,54 @@ from api.file_processors.mo_file import MOFileReader, MOFileWriter
 from api.file_processors.po_file import POFileReader, POFileWriter
 from api.file_processors.properties_file import PropertiesFileReader, PropertiesFileWriter
 from api.file_processors.strings_file import AppleStringsFileReader, AppleStringsFileWriter
+from api.file_processors.xcstrings_file import XCStringsFileReader, XCStringsFileWriter
 from api.transport_models import TranslationModel
 import tempfile
+
+WRITER_MAP = {
+    ExportFile.strings: AppleStringsFileWriter,
+    ExportFile.xcstrings: XCStringsFileWriter,
+    ExportFile.android: AndroidResourceFileWriter,
+    ExportFile.excel: ExcelFileWriter,
+    ExportFile.excel_single: ExcelSingleSheetFileWriter,
+    ExportFile.json: JsonFileWriter,
+    ExportFile.resx: DotNetFileWriter,
+    ExportFile.properties: PropertiesFileWriter,
+    ExportFile.po: POFileWriter,
+    ExportFile.mo: MOFileWriter,
+}
 
 
 class FileProcessor():
 
-    def __init__(self, type):
+    class UnsupportedFile(Exception):
+        pass
+
+    def __init__(self, type: ExportFile):
         self.type = type
-        match type:
-            case ExportFile.strings:
-                self.writer = AppleStringsFileWriter()
-            case ExportFile.android:
-                self.writer = AndroidResourceFileWriter()
-            case ExportFile.excel:
-                self.writer = ExcelFileWriter()
-            case ExportFile.excel_single:
-                self.writer = ExcelSingleSheetFileWriter()
-            case ExportFile.json:
-                self.writer = JsonFileWriter()
-            case ExportFile.resx:
-                self.writer = DotNetFileWriter()
-            case ExportFile.properties:
-                self.writer = PropertiesFileWriter()
-            case ExportFile.po:
-                self.writer = POFileWriter()
-            case ExportFile.mo:
-                self.writer = MOFileWriter()
+        try:
+            self.writer = WRITER_MAP[type]()
+        except KeyError:
+            raise FileProcessor.UnsupportedFile(
+                f"Export file type '{type}' is not supported")
 
     def append(self, records, code):
         self.writer.append(records=records, code=code)
 
     def http_response(self):
         return self.writer.http_response()
+
+
+READER_MAP = {
+    ImportFile.strings.name: AppleStringsFileReader,
+    ImportFile.xcstrings.name: XCStringsFileReader,
+    ImportFile.xml.name: AndroidResourceFileReader,
+    ImportFile.json.name: JsonFileReader,
+    ImportFile.resx.name: DotNetFileReader,
+    ImportFile.properties.name: PropertiesFileReader,
+    ImportFile.po.name: POFileReader,
+    ImportFile.mo.name: MOFileReader,
+}
 
 
 class FileImporter:
@@ -51,29 +66,18 @@ class FileImporter:
     def __init__(self, file):
         self.file = file
         extension = file.name.split('.')[-1]
-        match extension:
-            case ImportFile.strings.name:
-                self.reader = AppleStringsFileReader()
-            case ImportFile.xml.name:
-                self.reader = AndroidResourceFileReader()
-            case ImportFile.json.name:
-                self.reader = JsonFileReader()
-            case ImportFile.resx.name:
-                self.reader = DotNetFileReader()
-            case ImportFile.properties.name:
-                self.reader = PropertiesFileReader()
-            case ImportFile.po.name:
-                self.reader = POFileReader()
-            case ImportFile.mo.name:
-                self.reader = MOFileReader()
-            case _:
-                raise FileImporter.UnsupportedFile(
-                    f"'.{extension}' is not supported file extension",
-                )
+        try:
+            self.reader = READER_MAP[extension]()
+        except KeyError:
+            raise FileImporter.UnsupportedFile(
+                f"'.{extension}' is not supported file extension")
 
-    def parse(self) -> [TranslationModel]:
+    def parse(self) -> list[TranslationModel]:
         with tempfile.NamedTemporaryFile(delete=True) as destination:
             for chunk in self.file.chunks():
                 destination.write(chunk)
 
             return self.reader.read(file=destination)
+
+    def needs_language_code(self) -> bool:
+        return self.reader.needs_language_code()

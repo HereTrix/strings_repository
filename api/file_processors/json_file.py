@@ -3,11 +3,12 @@ import zipfile
 from django.http import HttpResponse
 import json
 
+from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
 
 
-class JsonFileWriter:
+class JsonFileWriter(TranslationFileWriter):
 
     def __init__(self) -> None:
         self.response = HttpResponse(content_type='application/zip')
@@ -29,7 +30,7 @@ class JsonFileWriter:
         return self.response
 
 
-class JsonFileReader:
+class JsonFileReader(TranslationFileReader):
 
     def read(self, file):
         file.seek(0)

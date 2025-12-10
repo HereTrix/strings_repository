@@ -33,7 +33,7 @@ class AndroidResourceFileWriter:
             text = escape_quotes(record.translation)
             if record.translation:
                 res = re.search(
-                    '</?\s*[a-z-][^>]*\s*>|(\&(?:[\w\d]+|#\d+|#x[a-f\d]+);)', record.translation)
+                    r'</?\s*[a-z-][^>]*\s*>|(\&(?:[\w\d]+|#\d+|#x[a-f\d]+);)', record.translation)
                 if res:
                     text = root.createCDATASection(text)
                 else:

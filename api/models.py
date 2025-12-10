@@ -150,27 +150,27 @@ class Translation(models.Model):
                 token.tags.add(tag.id)
 
         token.save()
-
-        language = Language.objects.get(
-            code=code,
-            project=project
-        )
-
         old_value = ''
-        try:
-            translation = Translation.objects.get(
-                language=language,
-                token=token
+        if code:  # No code means no translation
+            language = Language.objects.get(
+                code=code.upper(),
+                project=project
             )
-            old_value = translation.translation
-        except Translation.DoesNotExist:
-            translation = Translation()
-            translation.language = language
-            translation.token = token
+            try:
+                translation = Translation.objects.get(
+                    language=language,
+                    token=token
+                )
+                old_value = translation.translation
+            except Translation.DoesNotExist:
+                translation = Translation()
+                translation.language = language
+                translation.token = token
 
-        translation.translation = record.translation
-        translation.updated_at = datetime.now()
-        translation.save()
+            if record.translation:
+                translation.translation = record.translation
+            translation.updated_at = datetime.now()
+            translation.save()
         # Add history
         if not old_value == record.translation:
             history = HistoryRecord()
@@ -181,7 +181,8 @@ class Translation(models.Model):
             history.new_value = record.translation
             history.updated_at = datetime.now()
             history.editor = user
-            history.language = code
+            if code:
+                history.language = code
             history.save()
 
 

@@ -2,11 +2,12 @@ import enum
 import zipfile
 
 from django.http import HttpResponse
+from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
 
 
-class AppleStringsFileReader:
+class AppleStringsFileReader(TranslationFileReader):
 
     class State(enum.Enum):
         scan = 0
@@ -107,7 +108,7 @@ class AppleStringsFileReader:
         return records
 
 
-class AppleStringsFileWriter:
+class AppleStringsFileWriter(TranslationFileWriter):
 
     def __init__(self):
         self.response = HttpResponse(content_type='application/zip')

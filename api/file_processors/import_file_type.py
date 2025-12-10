@@ -10,3 +10,4 @@ class ImportFile(enum.Enum):
     properties = 'properties'
     po = 'po'
     mo = 'mo'
+    xcstrings = 'xcstrings'

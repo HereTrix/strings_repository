@@ -5,7 +5,7 @@ from api.languages.langcoder import LANGUAGE_CODE_KEY, Langcoder
 from api.models import Language, Project, ProjectRole, StringToken, Tag
 from api.serializers import ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer
 from api.transport_models import APIProject
-from repository.settings import LANGUAGE_CODE
+from .helper import error_response
 
 
 class ProjectAPI(generics.GenericAPIView):
@@ -28,9 +28,7 @@ class ProjectAPI(generics.GenericAPIView):
 
             return JsonResponse(api_project.__dict__, safe=False)
         except Project.DoesNotExist as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_404_NOT_FOUND)
+            return error_response(e, status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, pk):
         user = request.user
@@ -40,9 +38,7 @@ class ProjectAPI(generics.GenericAPIView):
             project.delete()
             return JsonResponse({})
         except Project.DoesNotExist as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_404_NOT_FOUND)
+            return error_response(e, status.HTTP_404_NOT_FOUND)
 
 
 class CreateProjectAPI(generics.GenericAPIView):
@@ -51,26 +47,27 @@ class CreateProjectAPI(generics.GenericAPIView):
     def post(self, request):
         try:
             user = request.user
-            project = Project()
             name = request.data['name']
+            description = request.data.get('description')
             if name is None:
                 return JsonResponse({
                     "error": "Name is required"
                 }, status=status.HTTP_400_BAD_REQUEST)
-            project.name = name
-            project.description = request.data['description']
+            project = Project(
+                name=name,
+                description=description
+            )
             project.save()
-            role = ProjectRole()
-            role.user = user
-            role.role = ProjectRole.Role.owner
-            role.project = project
+            role = ProjectRole(
+                user=user,
+                role=ProjectRole.Role.owner,
+                project=project
+            )
             role.save()
             serializer = ProjectSerializer(project)
             return JsonResponse(serializer.data)
         except Exception as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_403_FORBIDDEN)
+            return error_response(e, status.HTTP_403_FORBIDDEN)
 
 
 class ProjectListAPI(generics.GenericAPIView):
@@ -82,21 +79,10 @@ class ProjectListAPI(generics.GenericAPIView):
             projects = Project.objects.filter(
                 roles__user=user
             ).prefetch_related('roles')
-
-            result = []
-            for project in projects:
-                role = project.roles.get(user=user)
-                result.append({
-                    'id': project.id,
-                    'name': project.name,
-                    'description': project.description,
-                    'role': role.role
-                })
-            return JsonResponse(result, safe=False)
+            serializer = ProjectSerializer(projects, many=True)
+            return JsonResponse(serializer.data, safe=False)
         except Exception as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_404_NOT_FOUND)
+            return error_response(e, status.HTTP_404_NOT_FOUND)
 
 
 class ProjectAvailableLanguagesAPI(generics.GenericAPIView):
@@ -117,9 +103,7 @@ class ProjectAvailableLanguagesAPI(generics.GenericAPIView):
             unused = Langcoder.all_languages()
             return JsonResponse(unused, safe=False)
         except Exception as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_404_NOT_FOUND)
+            return error_response(e, status.HTTP_404_NOT_FOUND)
 
 
 class LanguageListAPI(generics.GenericAPIView):
@@ -135,11 +119,9 @@ class LanguageListAPI(generics.GenericAPIView):
 
             result = [{"code": lang.code, "name": Langcoder.language(lang.code)}
                       for lang in languages]
-            return JsonResponse(result, safe=False, status=status.HTTP_200_OK)
+            return JsonResponse(result, safe=False)
         except Exception as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(e, status.HTTP_400_BAD_REQUEST)
 
 
 class StringTokenListAPI(generics.GenericAPIView):
@@ -153,10 +135,7 @@ class StringTokenListAPI(generics.GenericAPIView):
         limit = request.GET.get('limit')
         isNew = request.GET.get('new')
 
-        if not offset:
-            offset = 0
-        else:
-            offset = int(offset)
+        offset = int(offset) if offset else 0
 
         try:
             tokens = StringToken.objects.filter(
@@ -182,7 +161,7 @@ class StringTokenListAPI(generics.GenericAPIView):
                     )
                 )
 
-            tokens.distinct()
+            tokens = tokens.distinct()
             if limit:
                 limit = int(limit)
                 tokens = tokens.prefetch_related('tags')[offset:offset+limit]
@@ -192,9 +171,7 @@ class StringTokenListAPI(generics.GenericAPIView):
             serializer = StringTokenSerializer(tokens, many=True)
             return JsonResponse(serializer.data, safe=False)
         except Exception as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(e, status.HTTP_400_BAD_REQUEST)
 
 
 class TranslationsListAPI(generics.GenericAPIView):
@@ -208,10 +185,7 @@ class TranslationsListAPI(generics.GenericAPIView):
         limit = request.GET.get('limit')
         untranslated = request.GET.get('untranslated')
 
-        if not offset:
-            offset = 0
-        else:
-            offset = int(offset)
+        offset = int(offset) if offset else 0
 
         try:
             tokens = StringToken.objects.filter(
@@ -236,6 +210,7 @@ class TranslationsListAPI(generics.GenericAPIView):
                         translation__translation__isnull=True)
                 )
 
+            tokens = tokens.distinct()
             if limit:
                 limit = int(limit)
                 tokens = tokens.prefetch_related('tags')[offset:offset+limit]
@@ -247,9 +222,7 @@ class TranslationsListAPI(generics.GenericAPIView):
 
             return JsonResponse(result, safe=False)
         except Exception as e:
-            return JsonResponse({
-                'error': e
-            }, status.HTTP_404_NOT_FOUND)
+            return error_response(e, status.HTTP_404_NOT_FOUND)
 
 
 class ProjectTagsAPI(generics.GenericAPIView):
@@ -265,6 +238,4 @@ class ProjectTagsAPI(generics.GenericAPIView):
             data = [tag.tag for tag in tags]
             return JsonResponse(data, safe=False)
         except Exception as e:
-            return JsonResponse({
-                'error': e
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(e, status.HTTP_400_BAD_REQUEST)

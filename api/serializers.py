@@ -59,9 +59,19 @@ class ProjectParticipantsSerializer:
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = Project
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'description', 'role']
+
+    def get_role(self, obj):
+        user = self.context.get('user')
+        print(user)
+        if not user:
+            return None
+        role_obj = obj.roles.filter(user=user).first()
+        return role_obj.role if role_obj else None
 
 
 class LanguageSerializer(serializers.ModelSerializer):
