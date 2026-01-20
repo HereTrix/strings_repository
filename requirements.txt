@@ -6,5 +6,4 @@ djangorestframework==3.16.1
 xlsxwriter==3.2.9
 polib==1.2.0
 whitenoise==6.11.0
-setuptools==80.9.0
 django-environ==0.12.0
