@@ -1,241 +1,129 @@
+from django.db import transaction
 from django.http import JsonResponse
-from django.db.models import Q
 from rest_framework import generics, permissions, status
+from api.filters.string_token_filter import StringTokenFilter
+from api.filters.translation_filter import TranslationTokenFilter
 from api.languages.langcoder import LANGUAGE_CODE_KEY, Langcoder
 from api.models import Language, Project, ProjectRole, StringToken, Tag
-from api.serializers import ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer
-from api.transport_models import APIProject
-from .helper import error_response
+from api.paginators.string_token_paginator import TranslationsPagination
+from api.serializers import AvailableLanguageSerializer, ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer, TagSerializer, LanguageSerializer, CreateProjectSerializer, ProjectDetailSerializer
 
 
-class ProjectAPI(generics.GenericAPIView):
-
+class ProjectAPI(generics.RetrieveDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ProjectDetailSerializer
 
-    def get(self, request, pk):
-        try:
-            user = request.user
-            project = Project.objects.get(
-                pk=pk, roles__user=user)
+    def get_queryset(self):
+        return Project.objects.filter(
+            roles__user=self.request.user
+        ).prefetch_related('languages', 'roles')
 
-            api_languages = [{'code': lang.code, 'name': Langcoder.language(
-                lang.code)} for lang in project.languages.all()]
-
-            role = project.roles.get(user=user)
-
-            api_project = APIProject(
-                project=project, languages=api_languages, role=role.role)
-
-            return JsonResponse(api_project.__dict__, safe=False)
-        except Project.DoesNotExist as e:
-            return error_response(e, status.HTTP_404_NOT_FOUND)
-
-    def delete(self, request, pk):
-        user = request.user
-        try:
-            project = Project.objects.filter(
-                pk=pk, roles__user=user, roles__role__in=ProjectRole.change_participants_roles)
-            project.delete()
-            return JsonResponse({})
-        except Project.DoesNotExist as e:
-            return error_response(e, status.HTTP_404_NOT_FOUND)
+    def destroy(self, request, *args, **kwargs):
+        project = Project.objects.filter(
+            pk=self.kwargs['pk'],
+            roles__user=request.user,
+            roles__role__in=ProjectRole.change_participants_roles
+        )
+        project.delete()
+        return JsonResponse(status=status.HTTP_204_NO_CONTENT)
 
 
-class CreateProjectAPI(generics.GenericAPIView):
+class CreateProjectAPI(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = CreateProjectSerializer
 
-    def post(self, request):
-        try:
-            user = request.user
-            name = request.data['name']
-            description = request.data.get('description')
-            if name is None:
-                return JsonResponse({
-                    "error": "Name is required"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            project = Project(
-                name=name,
-                description=description
-            )
-            project.save()
-            role = ProjectRole(
-                user=user,
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            project = serializer.save()
+            ProjectRole.objects.create(
+                user=self.request.user,
                 role=ProjectRole.Role.owner,
                 project=project
             )
-            role.save()
-            serializer = ProjectSerializer(project)
-            return JsonResponse(serializer.data)
-        except Exception as e:
-            return error_response(e, status.HTTP_403_FORBIDDEN)
 
 
-class ProjectListAPI(generics.GenericAPIView):
+class ProjectListAPI(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ProjectSerializer
 
-    def get(self, request):
-        try:
-            user = request.user
-            projects = Project.objects.filter(
-                roles__user=user
-            ).prefetch_related('roles')
-            serializer = ProjectSerializer(projects, many=True)
-            return JsonResponse(serializer.data, safe=False)
-        except Exception as e:
-            return error_response(e, status.HTTP_404_NOT_FOUND)
+    def get_queryset(self):
+        return Project.objects.filter(
+            roles__user=self.request.user
+        ).prefetch_related('roles')
 
 
-class ProjectAvailableLanguagesAPI(generics.GenericAPIView):
+class ProjectAvailableLanguagesAPI(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AvailableLanguageSerializer
 
-    def get(self, request, pk):
-        try:
-            user = request.user
-            languages = Language.objects.filter(project__id=pk,
-                                                project__roles__user=user,
-                                                project__roles__role__in=ProjectRole.change_language_roles)
+    def get_queryset(self):
+        return Language.objects.filter(
+            project__id=self.kwargs['pk'],
+            project__roles__user=self.request.user,
+            project__roles__role__in=ProjectRole.change_language_roles
+        )
 
-            unused = list(filter(lambda val: not any(
-                used.code == val[LANGUAGE_CODE_KEY] for used in languages), Langcoder.all_languages()))
+    def get_used_codes(self):
+        return set(self.get_queryset().values_list('code', flat=True))
 
-            return JsonResponse(unused, safe=False)
-        except Language.DoesNotExist:
-            unused = Langcoder.all_languages()
-            return JsonResponse(unused, safe=False)
-        except Exception as e:
-            return error_response(e, status.HTTP_404_NOT_FOUND)
+    def list(self, request, *args, **kwargs):
+        used_codes = self.get_used_codes()
+        unused = [
+            lang for lang in Langcoder.all_languages()
+            if lang[LANGUAGE_CODE_KEY] not in used_codes
+        ]
+        serializer = self.get_serializer(unused, many=True)
+        return JsonResponse(serializer.data)
 
 
-class LanguageListAPI(generics.GenericAPIView):
+class LanguageListAPI(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = LanguageSerializer
 
-    def get(self, request, pk):
-        user = request.user
-        try:
-            languages = Language.objects.filter(
-                project__id=pk,
-                project__roles__user=user
-            )
-
-            result = [{"code": lang.code, "name": Langcoder.language(lang.code)}
-                      for lang in languages]
-            return JsonResponse(result, safe=False)
-        except Exception as e:
-            return error_response(e, status.HTTP_400_BAD_REQUEST)
+    def get_queryset(self):
+        return Language.objects.filter(
+            project__id=self.kwargs['pk'],
+            project__roles__user=self.request.user
+        ).distinct()
 
 
-class StringTokenListAPI(generics.GenericAPIView):
+class StringTokenListAPI(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = StringTokenSerializer
+    pagination_class = TranslationsPagination
+    filterset_class = StringTokenFilter
 
-    def get(self, request, pk):
-        user = request.user
-        query = request.GET.get('q')
-        tags = request.GET.get('tags')
-        offset = request.GET.get('offset')
-        limit = request.GET.get('limit')
-        isNew = request.GET.get('new')
-
-        offset = int(offset) if offset else 0
-
-        try:
-            tokens = StringToken.objects.filter(
-                project__id=pk,
-                project__roles__user=user
-            )
-
-            if query:
-                tokens = tokens.filter(Q(token__icontains=query) | Q(
-                    translation__translation__icontains=query))
-
-            if tags:
-                items = tags.split(',')
-                for tag in items:
-                    tokens = tokens.filter(
-                        tags__tag=tag
-                    )
-
-            if isNew:
-                tokens = tokens.filter(
-                    Q(translation__translation__exact='') | Q(
-                        translation__translation__isnull=True
-                    )
-                )
-
-            tokens = tokens.distinct()
-            if limit:
-                limit = int(limit)
-                tokens = tokens.prefetch_related('tags')[offset:offset+limit]
-            else:
-                tokens = tokens.prefetch_related('tags')
-
-            serializer = StringTokenSerializer(tokens, many=True)
-            return JsonResponse(serializer.data, safe=False)
-        except Exception as e:
-            return error_response(e, status.HTTP_400_BAD_REQUEST)
+    def get_queryset(self):
+        return StringToken.objects.filter(
+            project__id=self.kwargs['pk'],
+            project__roles__user=self.request.user
+        ).prefetch_related('tags', 'translation').distinct()
 
 
-class TranslationsListAPI(generics.GenericAPIView):
+class TranslationsListAPI(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = StringTokenModelSerializer
+    pagination_class = TranslationsPagination
+    filterset_class = TranslationTokenFilter
 
-    def get(self, request, pk, code):
-        user = request.user
-        tags = request.GET.get('tags')
-        query = request.GET.get('q')
-        offset = request.GET.get('offset')
-        limit = request.GET.get('limit')
-        untranslated = request.GET.get('untranslated')
+    def get_queryset(self):
+        return StringToken.objects.filter(
+            project__pk=self.kwargs['pk'],
+            project__roles__user=self.request.user
+        ).prefetch_related('translation', 'tags').distinct()
 
-        offset = int(offset) if offset else 0
-
-        try:
-            tokens = StringToken.objects.filter(
-                project__pk=pk,
-                project__roles__user=user
-            ).prefetch_related('translation', 'tags').distinct()
-
-            if query:
-                tokens = tokens.filter(
-                    translation__translation__icontains=query
-                ) | tokens.filter(
-                    token__icontains=query
-                )
-
-            if tags:
-                for tag in tags.split(','):
-                    tokens = tokens.filter(tags__tag=tag)
-
-            if untranslated and untranslated == 'true':
-                tokens = tokens.filter(
-                    Q(translation__translation__exact='') | Q(
-                        translation__translation__isnull=True)
-                )
-
-            tokens = tokens.distinct()
-            if limit:
-                limit = int(limit)
-                tokens = tokens.prefetch_related('tags')[offset:offset+limit]
-            else:
-                tokens = tokens.prefetch_related('tags')
-
-            result = [StringTokenModelSerializer(token=token, code=code).toJson()
-                      for token in tokens]
-
-            return JsonResponse(result, safe=False)
-        except Exception as e:
-            return error_response(e, status.HTTP_404_NOT_FOUND)
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['code'] = self.kwargs.get('code')
+        return context
 
 
-class ProjectTagsAPI(generics.GenericAPIView):
+class ProjectTagsAPI(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TagSerializer
 
-    def get(self, request, pk):
-        user = request.user
-        try:
-            tags = Tag.objects.filter(
-                tokens__project__pk=pk,
-                tokens__project__roles__user=user
-            ).distinct()
-            data = [tag.tag for tag in tags]
-            return JsonResponse(data, safe=False)
-        except Exception as e:
-            return error_response(e, status.HTTP_400_BAD_REQUEST)
+    def get_queryset(self):
+        return Tag.objects.filter(
+            tokens__project__pk=self.kwargs['pk'],
+            tokens__project__roles__user=self.request.user
+        ).distinct()

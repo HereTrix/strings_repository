@@ -35,8 +35,9 @@ const OptionalImage: FC<OptionalImageProps> = ({ src, alt }) => {
 
     const [setImg, hasError, retry, imgRef] = useImageError();
 
-    if (hasError)
+    if (hasError || (!src && src === '')) {
         return <label className="text-white bg-dark rounded-circle p-2 align-middle" style={{ height: '40px', width: '40px' }}>{alt}</label>
+    }
     return <img className="shadow-sm" ref={setImg} src={src} alt={alt} />
 }
 

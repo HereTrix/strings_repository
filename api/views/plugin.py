@@ -54,10 +54,9 @@ class PullAPI(generics.GenericAPIView):
                     token__in=string_tokens
                 ).distinct()
 
-            result = [StringTokenModelSerializer(token=token, code=code).toSimplifiedJson()
-                      for token in tokens]
+            serializer = StringTokenModelSerializer(tokens, many=True)
 
-            return JsonResponse(result, safe=False)
+            return JsonResponse(serializer.data, safe=False)
         except ProjectAccessToken.DoesNotExist:
             return JsonResponse({
                 'error': 'No access'

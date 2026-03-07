@@ -98,47 +98,34 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         newOffset: number,
         untranslated: boolean
     ) => {
-        setOffset(newOffset)
-        if (newOffset === 0) {
-            setHasMore(true)
-        }
-        var params = new Map<string, any>()
-        if (tags.length > 0) {
-            params.set('tags', tags)
-        }
+        setOffset(newOffset);
 
-        if (term) {
-            params.set('q', term)
-        }
+        const params: Record<string, any> = {};
 
-        if (untranslated) {
-            params.set('new', true)
-        }
+        if (tags?.length) params.tags = tags;
+        if (term) params.q = term;
+        if (untranslated) params.new = true;
 
-        params.set('offset', `${newOffset}`)
-        params.set('limit', `${limit}`)
+        params.offset = `${newOffset}`;
+        params.limit = `${limit}`;
 
-        const result = await http<StringToken[]>({
+        const result = await http<PaginatedResponse<StringToken>>({
             method: APIMethod.get,
             path: `/api/project/${project.id}/tokens`,
-            params: params
-        })
+            params,
+        });
 
         if (result.value) {
-            if (result.value.length < limit) {
-                setHasMore(false)
-            } else {
-                setHasMore(true)
-            }
+            setHasMore(result.value.results.length >= limit);
 
             if (newOffset === 0) {
-                setTokens(result.value)
+                setTokens(result.value.results);
             } else {
-                setTokens(tokens.concat(result.value))
+                setTokens(prev => [...(prev ?? []), ...result.value!.results]);
             }
         } else {
-            setHasMore(false)
-            setError(result.error)
+            setHasMore(false);
+            setError(result.error);
         }
     }
 

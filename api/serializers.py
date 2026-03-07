@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from .models import *
 from .transport_models import *
+from api.languages.langcoder import Langcoder
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -89,7 +90,7 @@ class StringTokenSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StringToken
-        fields = ['id', 'token', 'comment', 'tags']
+        fields = ['id', 'token', 'comment', 'tags', 'status']
 
 
 class StringTranslationSerializer(serializers.ModelSerializer):
@@ -122,39 +123,37 @@ class TranslationSerializer(serializers.ModelSerializer):
         fields = ['token', 'translation']
 
 
-class StringTokenModelSerializer:
+class StringTokenModelSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    translation = serializers.SerializerMethodField()
+    comment = serializers.CharField()
+    tags = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
-    def __init__(self, token, code) -> None:
-        self.token = token
-        self.code = code
+    def _get_translation_obj(self, obj):
+        code = self.context.get('code', '').upper()
+        return obj.translation.filter(language__code=code).first()
 
-    def toJson(self):
+    def get_translation(self, obj):
+        t = self._get_translation_obj(obj)
+        return t.translation if t else ''
 
-        translation = self.token.translation.filter(
-            language__code=self.code.upper()).first()
-        if translation:
-            text = translation.translation
-        else:
-            text = ''
+    def get_tags(self, obj):
+        return [tag.tag for tag in obj.tags.all()]
 
-        return {
-            'token': self.token.token,
-            'translation': text,
-            'comment': self.token.comment,
-            'tags': [tag.tag for tag in self.token.tags.all()]
-        }
+    def get_status(self, obj):
+        t = self._get_translation_obj(obj)
+        return t.status if t else Translation.Status.new
 
-    def toSimplifiedJson(self):
-        translation = self.token.translation.filter(
-            language__code=self.code.upper()).first()
-        if translation:
-            text = translation.translation
-        else:
-            text = ''
-        return {
-            'token': self.token.token,
-            'translation': text,
-        }
+
+class SimplifiedStringTokenSerializer(serializers.Serializer):
+    token = serializers.CharField(source='token')
+    translation = serializers.SerializerMethodField()
+
+    def get_translation(self, obj):
+        code = self.context.get('code', '').upper()
+        translation = obj.translation.filter(language__code=code).first()
+        return translation.translation if translation else ''
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -181,3 +180,50 @@ class ProjectAccessTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectAccessToken
         fields = ['token', 'permission', 'expiration']
+
+
+class TranslationBundleSerializer(serializers.ModelSerializer):
+    created_by = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TranslationBundle
+        fields = ['id', 'name', 'description', 'created_at', 'created_by']
+
+    def get_created_by(self, obj):
+        return f'{obj.created_by.first_name} {obj.created_by.last_name}'
+
+
+class LanguageSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
+    def get_name(self, obj):
+        return Langcoder.language(obj.code)
+
+    class Meta:
+        model = Language
+        fields = ['code', 'name']
+
+
+class AvailableLanguageSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    name = serializers.CharField()
+
+
+class CreateProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = ['name', 'description']
+
+
+class ProjectDetailSerializer(serializers.ModelSerializer):
+    languages = LanguageSerializer(many=True, read_only=True)
+    role = serializers.SerializerMethodField()
+
+    def get_role(self, obj):
+        user = self.context['request'].user
+        role = obj.roles.get(user=user)
+        return role.role
+
+    class Meta:
+        model = Project
+        fields = ['id', 'name', 'description', 'languages', 'role']

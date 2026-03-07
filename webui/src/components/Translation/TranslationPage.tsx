@@ -87,48 +87,37 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
         newOffset: number,
         untranslated: boolean
     ) => {
-        setOffset(newOffset)
-        var params = new Map<string, any>()
-        if (tags) {
-            params.set('tags', tags)
-        }
+        setOffset(newOffset);
 
-        if (term) {
-            params.set('q', term)
-        }
+        const params: Record<string, any> = {};
 
-        params.set('offset', `${newOffset}`)
-        if (newOffset === 0) {
-            setHasMore(true)
-        }
+        if (tags?.length) params.tags = tags;
+        if (term) params.q = term;
+        if (untranslated) params.untranslated = true;
 
-        params.set('limit', `${limit}`)
-        if (untranslated) {
-            params.set('untranslated', true)
-        }
+        params.offset = `${newOffset}`;
+        params.limit = `${limit}`;
 
-        const result = await http<TranslationModel[]>({
+        const result = await http<PaginatedResponse<TranslationModel>>({
             method: APIMethod.get,
             path: `/api/project/${project_id}/translations/${code}`,
-            params: params
-        })
+            params,
+        });
 
         if (result.value) {
-            if (result.value.length < limit) {
-                setHasMore(false)
-            } else {
-                setHasMore(true)
-            }
+            const hasMore = result.value.results.length >= limit;
+            setHasMore(hasMore);
+
             if (newOffset === 0) {
-                setTranslations(result.value)
+                setTranslations(result.value.results);
             } else {
-                setTranslations(translations?.concat(result.value))
+                setTranslations(prev => [...(prev ?? []), ...result.value!.results]);
             }
         } else {
-            setHasMore(false)
-            setError(result.error)
+            setHasMore(false);
+            setError(result.error);
         }
-    }
+    };
 
     const fetchTags = async () => {
         const result = await http<[string]>({

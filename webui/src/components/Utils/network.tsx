@@ -1,4 +1,5 @@
 import { history } from "./history"
+import { navigate } from "./navigation"
 
 export enum APIMethod {
     get = "GET",
@@ -55,7 +56,7 @@ export async function download(request: APIRequest): Promise<APIResponse<File>> 
     const response = await fetch(path, requestOptions)
     if (response.status == 401) {
         localStorage.removeItem("auth")
-        history.navigate("/login", { replace: true })
+        navigate("/login", { replace: true })
         return { error: "Not authorized" }
     } else if (response.status == 200) {
         const blob = await response.blob()
@@ -99,7 +100,7 @@ export async function upload<T>(request: APIRequest): Promise<APIResponse<T>> {
     if (response.status == 401) {
         if (!request.isAuth) {
             localStorage.removeItem("auth")
-            history.navigate("/login", { replace: true })
+            navigate("/login", { replace: true })
         }
         return { error: "Not authorized" }
     } else if (response.status == 204) { // No content
@@ -148,7 +149,7 @@ export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
     if (response.status == 401) {
         if (!request.isAuth) {
             localStorage.removeItem("auth")
-            history.navigate("/login", { replace: true })
+            navigate("/login", { replace: true })
         }
         return { error: "Not authorized" }
     } else if (response.status == 204) { // No content
