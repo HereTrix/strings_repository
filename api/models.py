@@ -62,12 +62,18 @@ class Tag(models.Model):
 
 
 class StringToken(models.Model):
+    class Status(models.TextChoices):
+        active = 'active'
+        deprecated = 'deprecated'
+
     id = models.AutoField('id', primary_key=True)
     token = models.CharField('Token', max_length=200)
     comment = models.TextField('Comment', blank=True)
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='tokens')
     tags = models.ManyToManyField(Tag, related_name="tokens")
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.active)
 
     class Meta:
         unique_together = ['token', 'project']
@@ -77,6 +83,12 @@ class StringToken(models.Model):
 
 
 class Translation(models.Model):
+    class Status(models.TextChoices):
+        new = 'new'
+        in_review = 'in_review'
+        approved = 'approved'
+        deprecated = 'deprecated'
+
     id = models.AutoField('id', primary_key=True)
     translation = models.TextField('translation', blank=True)
     language = models.ForeignKey(
@@ -84,6 +96,8 @@ class Translation(models.Model):
     token = models.ForeignKey(
         StringToken, on_delete=models.CASCADE, related_name='translation')
     updated_at = models.DateTimeField('updated_at', auto_now_add=True)
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.new)
 
     class Meta:
         unique_together = ['token', 'language']
@@ -227,3 +241,21 @@ class ProjectAccessToken(models.Model):
         User, on_delete=models.CASCADE, related_name='access')
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='access_tokens')
+
+
+class TranslationBundle(models.Model):
+    id = models.AutoField('id', primary_key=True)
+    version_name = models.CharField(max_length=50, unique=True, null=True)
+    created_at = models.DateTimeField('created_at', auto_now_add=True)
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name='bundles')
+
+
+class TranslationBundleMap(models.Model):
+    bundle = models.ForeignKey(
+        TranslationBundle, on_delete=models.CASCADE, related_name='maps')
+    translation = models.ForeignKey(
+        Translation, on_delete=models.CASCADE, related_name='bundles')
+    language = models.ForeignKey(
+        Language, on_delete=models.CASCADE, related_name='bundles')
+    value = models.TextField('value', blank=True)
