@@ -1,6 +1,7 @@
-from datetime import datetime
 import random
 import string
+from datetime import datetime
+
 from django.http import JsonResponse
 from rest_framework import generics, permissions, status
 
@@ -8,126 +9,129 @@ from api.models import Invitation, Project, ProjectAccessToken, ProjectRole
 from api.serializers import ProjectAccessTokenSerializer, ProjectParticipantsSerializer
 
 
+def generate_token(length=16):
+    return ''.join(random.choices(string.ascii_letters, k=length))
+
+
+def delete_expired_tokens(tokens):
+    now = datetime.now()
+    return [token for token in tokens if not (token.expiration and token.expiration < now)]
+
+
 class RolesAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
-        try:
-            user = request.user
+        user = request.user
 
-            role = ProjectRole.objects.filter(
-                project__pk=pk,
-                user=user,
-            ).first()
+        role = ProjectRole.objects.filter(
+            project__pk=pk,
+            user=user,
+        ).first()
 
-            if role.role == ProjectRole.Role.admin:
-                data = ProjectRole.common_roles
-            elif role.role == ProjectRole.Role.owner:
-                data = [role.value for role in ProjectRole.Role]
-            elif role.role == ProjectRole.Role.editor:
-                data = [ProjectRole.Role.translator, ProjectRole.Role.editor]
-            else:
-                return JsonResponse({
-                    'error': 'User is not allowed to set roles'
-                }, status=status.HTTP_403_FORBIDDEN)
-            return JsonResponse(data, safe=False)
-        except Exception as e:
+        if role is None:
             return JsonResponse({
-                'error': e
-            }, status=status.HTTP_400_BAD_REQUEST)
+                'error': 'User is not a member of this project'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        if role.role == ProjectRole.Role.admin:
+            data = ProjectRole.common_roles
+        elif role.role == ProjectRole.Role.owner:
+            data = [r.value for r in ProjectRole.Role]
+        elif role.role == ProjectRole.Role.editor:
+            data = [ProjectRole.Role.translator, ProjectRole.Role.editor]
+        else:
+            return JsonResponse({
+                'error': 'User is not allowed to set roles'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        return JsonResponse(data, safe=False)
 
 
 class ProjectParticipantsAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
+        user = request.user
+
         try:
-            user = request.user
             project = Project.objects.get(
                 pk=pk,
                 roles__user=user,
                 roles__role__in=ProjectRole.change_participants_roles
             )
-
-            return JsonResponse(ProjectParticipantsSerializer.serialize(project.roles.all(), user), safe=False)
         except Project.DoesNotExist:
             return JsonResponse({
                 'error': 'Participants can not be viewed'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        return JsonResponse(ProjectParticipantsSerializer.serialize(project.roles.all(), user), safe=False)
 
     def post(self, request, pk):
-        try:
-            user_id = request.data['user_id']
-            new_role = request.data['role']
-            user = request.user
+        user = request.user
+        user_id = request.data['user_id']
+        new_role = request.data['role']
 
+        try:
             project = Project.objects.get(
                 pk=pk,
                 roles__user=user,
                 roles__role__in=ProjectRole.change_participants_roles
             )
-
-            all_roles = project.roles.all()
-
-            user_role = [
-                role for role in all_roles if role.user.id == user_id][0]
-
-            if user_role.role == ProjectRole.Role.owner:
-                role = [
-                    role for role in all_roles if role.user.id == user.id][0]
-                if not role.role == ProjectRole.Role.owner:
-                    return JsonResponse({
-                        'error': 'Not allowed'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            user_role.role = new_role
-            user_role.save()
-
-            return JsonResponse(ProjectParticipantsSerializer.serialize(all_roles, user), safe=False)
         except Project.DoesNotExist:
             return JsonResponse({
                 'error': 'Not allowed'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        all_roles = project.roles.all()
+
+        user_role = next((r for r in all_roles if r.user.id == user_id), None)
+        if user_role is None:
             return JsonResponse({
-                'error': e
-            }, status=status.HTTP_400_BAD_REQUEST)
+                'error': 'User not found in project'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        if user_role.role == ProjectRole.Role.owner:
+            current_role = next(
+                (r for r in all_roles if r.user.id == user.id), None)
+            if current_role is None or current_role.role != ProjectRole.Role.owner:
+                return JsonResponse({
+                    'error': 'Not allowed'
+                }, status=status.HTTP_403_FORBIDDEN)
+
+        user_role.role = new_role
+        user_role.save()
+
+        return JsonResponse(ProjectParticipantsSerializer.serialize(all_roles, user), safe=False)
 
     def delete(self, request, pk):
+        user = request.user
+        user_id = request.data['user_id']
+
         try:
-            user_id = request.data['user_id']
-            user = request.user
             project = Project.objects.get(
                 pk=pk,
                 roles__user=user,
                 roles__role__in=ProjectRole.change_participants_roles
             )
-
-            role = ProjectRole.objects.get(
-                project=project,
-                user__pk=user_id
-            )
-            role.delete()
-
-            try:
-                tokens = ProjectAccessToken.objects.filter(
-                    project=project,
-                    user__pk=user_id
-                )
-                for token in tokens:
-                    token.delete()
-            except Exception:
-                pass
-
-            return JsonResponse(ProjectParticipantsSerializer.serialize(project.roles.all(), user), safe=False)
         except Project.DoesNotExist:
             return JsonResponse({
                 'error': 'Not allowed'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            role = ProjectRole.objects.get(project=project, user__pk=user_id)
+        except ProjectRole.DoesNotExist:
             return JsonResponse({
-                'error': e
-            }, status=status.HTTP_400_BAD_REQUEST)
+                'error': 'User not found in project'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        role.delete()
+
+        ProjectAccessToken.objects.filter(
+            project=project, user__pk=user_id).delete()
+
+        return JsonResponse(ProjectParticipantsSerializer.serialize(project.roles.all(), user), safe=False)
 
 
 class ProjectInvitationAPI(generics.GenericAPIView):
@@ -136,39 +140,39 @@ class ProjectInvitationAPI(generics.GenericAPIView):
     def post(self, request, pk):
         user = request.user
         role = request.data['role']
+
         try:
             project = Project.objects.get(pk=pk, roles__user=user)
+        except Project.DoesNotExist:
+            return JsonResponse({
+                'error': 'Unable to generate code'
+            }, status=status.HTTP_403_FORBIDDEN)
 
-            user_role = project.roles.get(user=user)
-            if user_role.role == ProjectRole.Role.admin:
-                if not role in ProjectRole.common_roles:
-                    return JsonResponse({
-                        'error': 'Unable to generate code'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-            elif user_role.role == ProjectRole.Role.translator:
-                if not role in ProjectRole.translator_roles:
-                    return JsonResponse({
-                        'error': 'Unable to generate code'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+        user_role = project.roles.get(user=user)
 
-            elif user_role.role == ProjectRole.Role.editor:
+        if user_role.role == ProjectRole.Role.admin:
+            if role not in ProjectRole.common_roles:
                 return JsonResponse({
                     'error': 'Unable to generate code'
                 }, status=status.HTTP_400_BAD_REQUEST)
+        elif user_role.role == ProjectRole.Role.translator:
+            if role not in ProjectRole.translator_roles:
+                return JsonResponse({
+                    'error': 'Unable to generate code'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        elif user_role.role == ProjectRole.Role.editor:
+            return JsonResponse({
+                'error': 'Unable to generate code'
+            }, status=status.HTTP_403_FORBIDDEN)
 
-            code = ''.join(random.choices(string.ascii_letters, k=16))
-            invitation = Invitation()
-            invitation.code = code
-            invitation.project = project
-            invitation.role = role
-            invitation.save()
-            return JsonResponse({
-                'code': code
-            })
-        except Exception as e:
-            return JsonResponse({
-                'error': e
-            }, status=status.HTTP_400_BAD_REQUEST)
+        code = generate_token()
+        invitation = Invitation()
+        invitation.code = code
+        invitation.project = project
+        invitation.role = role
+        invitation.save()
+
+        return JsonResponse({'code': code})
 
 
 class ProjectAccessTokenAPI(generics.GenericAPIView):
@@ -177,84 +181,71 @@ class ProjectAccessTokenAPI(generics.GenericAPIView):
     def get(self, request, pk):
         user = request.user
 
-        try:
-            tokens = ProjectAccessToken.objects.filter(
-                project__pk=pk,
-                project__roles__user=user,
-            )
-            result = []
-            for token in tokens:
-                if token.expiration and token.expiration < datetime.now():
-                    try:
-                        token.delete()
-                    except Exception:
-                        pass
-                else:
-                    result.append(token)
+        tokens = ProjectAccessToken.objects.filter(
+            project__pk=pk,
+            project__roles__user=user,
+        )
 
-            serializer = ProjectAccessTokenSerializer(result, many=True)
-            return JsonResponse(serializer.data, safe=False)
-        except ProjectAccessToken.DoesNotExist:
-            return JsonResponse([], safe=False)
-        except Exception:
-            return JsonResponse({
-                'error': 'Invalid request'
-            }, status=status.HTTP_400_BAD_REQUEST)
+        valid_tokens = delete_expired_tokens(tokens)
+
+        # Bulk-delete expired tokens
+        valid_ids = {t.pk for t in valid_tokens}
+        tokens.exclude(pk__in=valid_ids).delete()
+
+        serializer = ProjectAccessTokenSerializer(valid_tokens, many=True)
+        return JsonResponse(serializer.data, safe=False)
 
     def post(self, request, pk):
         user = request.user
-        type = request.data.get('permission')
-        if not type:
+        permission = request.data.get('permission')
+        if not permission:
             return JsonResponse({
                 'error': 'Permissions required'
             }, status=status.HTTP_400_BAD_REQUEST)
         expiration = request.data.get('expiration')
 
         try:
-            project = Project.objects.get(
-                pk=pk,
-                roles__user=user
-            )
-
-            token = ProjectAccessToken()
-            token.permission = type
-            token.user = user
-            token.token = ''.join(random.choices(string.ascii_letters, k=16))
-            token.project = project
-            if expiration:
-                token.expiration = datetime.strptime(expiration, '%Y-%m-%d')
-            token.save()
-            serializer = ProjectAccessTokenSerializer(token)
-            return JsonResponse(serializer.data)
+            project = Project.objects.get(pk=pk, roles__user=user)
         except Project.DoesNotExist:
             return JsonResponse({
                 'error': 'Invalid request'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        token = ProjectAccessToken()
+        token.permission = permission
+        token.user = user
+        token.token = generate_token()
+        token.project = project
+        if expiration:
+            token.expiration = datetime.strptime(expiration, '%Y-%m-%d')
+        token.save()
+
+        serializer = ProjectAccessTokenSerializer(token)
+        return JsonResponse(serializer.data)
+
     def delete(self, request, pk):
         user = request.user
-        token = request.data.get('token')
-        if not token:
+        token_value = request.data.get('token')
+        if not token_value:
             return JsonResponse({
                 'error': 'Invalid token'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             api_token = ProjectAccessToken.objects.get(
-                token=token,
+                token=token_value,
                 project__roles__user=user
             )
-
-            api_token.delete()
-
-            tokens = ProjectAccessToken.objects.filter(
-                project__pk=pk,
-                project__roles__user=user,
-            )
-            serializer = ProjectAccessTokenSerializer(tokens, many=True)
-            return JsonResponse(serializer.data, safe=False)
-
         except ProjectAccessToken.DoesNotExist:
             return JsonResponse({
                 'error': 'Invalid token'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        api_token.delete()
+
+        tokens = ProjectAccessToken.objects.filter(
+            project__pk=pk,
+            project__roles__user=user,
+        )
+        serializer = ProjectAccessTokenSerializer(tokens, many=True)
+        return JsonResponse(serializer.data, safe=False)

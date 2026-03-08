@@ -29,13 +29,14 @@ class LanguageAPI(generics.GenericAPIView):
             project = Project.objects.get(
                 pk=project_id, roles__user=user, roles__role__in=ProjectRole.change_language_roles)
         except Project.DoesNotExist:
-            return JsonResponse(status=status.HTTP_404_NOT_FOUND)
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         except exception.ValidationError as e:
             return JsonResponse({
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            language = Language.objects.get(code=code, project=project_id)
+            Language.objects.get(code=code, project=project)
             return JsonResponse({
                 'error': 'Project already has this language'
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -44,6 +45,7 @@ class LanguageAPI(generics.GenericAPIView):
             language.project = project
             language.code = code.upper()
             language.save()
+
         return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request):
@@ -71,6 +73,7 @@ class LanguageAPI(generics.GenericAPIView):
             return JsonResponse({
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             language = Language.objects.get(code=code, project=project)
             language.delete()
