@@ -200,6 +200,25 @@ class Translation(models.Model):
             history.save()
 
 
+class PluralTranslation(models.Model):
+    class PluralForm(models.TextChoices):
+        zero = 'zero'
+        one = 'one'
+        two = 'two'
+        few = 'few'
+        many = 'many'
+        other = 'other'
+
+    translation = models.ForeignKey(
+        Translation, on_delete=models.CASCADE, related_name='plural_forms'
+    )
+    plural_form = models.CharField(max_length=5, choices=PluralForm.choices)
+    value = models.TextField()
+
+    class Meta:
+        unique_together = ['translation', 'plural_form']
+
+
 class HistoryRecord(models.Model):
     class Status(models.TextChoices):
         created = 'created'
