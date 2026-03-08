@@ -155,12 +155,18 @@ export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
     } else if (response.status == 204) { // No content
         return {}
     }
-    const json = await response.json()
+    try {
+        const json = await response.json()
 
-    const error = json["error"]
-    if (error) {
-        return { error: error }
+        const error = json["error"]
+        if (error || response.status != 200) {
+            console.log("Error response:\n", json)
+            return { error: error ?? "Request failed" }
+        }
+
+        return { value: json as T }
+    } catch (e) {
+        console.log("Failed to parse response as JSON")
+        return { error: "Invalid response from server" }
     }
-
-    return { value: json as T }
 }

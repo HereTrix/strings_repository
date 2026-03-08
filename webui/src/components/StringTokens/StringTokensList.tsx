@@ -1,5 +1,6 @@
-import { FC, useEffect, useState } from "react"
-import StringToken, { STATUS_OPTIONS } from "../model/StringToken"
+import { FC, useCallback, useEffect, useState } from "react"
+import StringToken, { getStatusName, getStatusVariant, STATUS_OPTIONS } from "../model/StringToken"
+import PaginatedResponse from "../model/PaginatedResponse"
 import Project from "../model/Project"
 import { Badge, Button, ButtonGroup, Collapse, Container, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
@@ -28,26 +29,16 @@ type StringTokenItemProps = {
     onStatusChange: (status: string) => void
 }
 
-const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, selectedTags, onAddTag, onDelete, onTagClick, onStatusChange }) => {
+type StatusFilter = 'all' | string
 
+const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, selectedTags, onAddTag, onDelete, onTagClick, onStatusChange }) => {
     const [open, setOpen] = useState<boolean>(false)
 
-    const getStatusVariant = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'active': return 'success'
-            case 'deprecated': return 'danger'
-            default: return 'info'
-        }
-    }
-
     return (
-        <ListGroup.Item
-            className="d-flex justify-content-between align-items-start">
+        <ListGroup.Item className="d-flex justify-content-between align-items-start">
             <Container>
-                <Stack direction="horizontal" gap={4}
-                    onClick={() => setOpen(!open)}
-                >
-                    <label>{token.token}</label>
+                <Stack direction="horizontal" gap={4} onClick={() => setOpen(!open)}>
+                    <span>{token.token}</span>
                     <Dropdown onClick={(e) => e.stopPropagation()}>
                         <Dropdown.Toggle
                             variant={getStatusVariant(token.status)}
@@ -60,7 +51,7 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, sele
                             {STATUS_OPTIONS.map(status => (
                                 <Dropdown.Item
                                     key={status}
-                                    active={status === token.status}
+                                    active={false}
                                     className="text-capitalize"
                                     onClick={() => onStatusChange(status)}
                                 >
@@ -78,21 +69,15 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, sele
                             selectedTags={selectedTags}
                             onTagClick={onTagClick}
                         />}
-                    <Stack
-                        direction="horizontal"
-                        gap={3}
-                    >
+                    <Stack direction="horizontal" gap={3}>
                         <Button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                onAddTag()
-                            }}
+                            onClick={(e) => { e.stopPropagation(); onAddTag() }}
                             className="text-nowrap"
                         >Edit tags</Button>
-                        <Button onClick={(e) => {
-                            e.stopPropagation()
-                            onDelete()
-                        }} className="btn-danger">Delete</Button>
+                        <Button
+                            onClick={(e) => { e.stopPropagation(); onDelete() }}
+                            className="btn-danger"
+                        >Delete</Button>
                     </Stack>
                 </Stack>
                 <Collapse in={open}>
@@ -101,21 +86,19 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, sele
                     </div>
                 </Collapse>
             </Container>
-        </ListGroup.Item >
+        </ListGroup.Item>
     )
 }
 
 const StringTokensList: FC<StringTokenProps> = ({ project }) => {
-
     const limit = 20
     const [hasMore, setHasMore] = useState<boolean>(true)
     const [offset, setOffset] = useState<number>(0)
-
     const [showDialog, setShowDialog] = useState(false)
     const [tokens, setTokens] = useState<StringToken[]>([])
     const [tags, setTags] = useState<string[]>([])
     const [selectedTags, setSelectedTags] = useState<string[]>([])
-    const [untranslatedOnly, setUntranslatedOnly] = useState<boolean>(false)
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
     const [query, setQuery] = useState<string>("")
     const [selectedToken, setSelectedToken] = useState<StringToken>()
     const [error, setError] = useState<string>()
@@ -125,80 +108,75 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         setTokens(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t))
     }
 
-    const fetch = async () => {
-        fetchData(selectedTags, query, offset, untranslatedOnly)
-    }
-
-    const fetchData = async (
+    const fetchData = useCallback(async (
         tags: string[],
         term: string,
         newOffset: number,
-        untranslated: boolean
+        status: StatusFilter
     ) => {
-        setOffset(newOffset);
+        setOffset(newOffset)
 
-        const params: Record<string, any> = {};
+        const params: Record<string, any> = {}
+        if (tags?.length) params.tags = tags
+        if (term) params.q = term
+        if (status !== 'all') params.status = status
 
-        if (tags?.length) params.tags = tags;
-        if (term) params.q = term;
-        if (untranslated) params.new = true;
-
-        params.offset = `${newOffset}`;
-        params.limit = `${limit}`;
+        params.offset = `${newOffset}`
+        params.limit = `${limit}`
 
         const result = await http<PaginatedResponse<StringToken>>({
             method: APIMethod.get,
             path: `/api/project/${project.id}/tokens`,
             params,
-        });
+        })
 
         if (result.value) {
-            setHasMore(result.value.results.length >= limit);
-
+            setHasMore(result.value.results.length >= limit)
             if (newOffset === 0) {
-                setTokens(result.value.results);
+                setTokens(result.value.results)
             } else {
-                setTokens(prev => [...(prev ?? []), ...result.value!.results]);
+                setTokens(prev => [...prev, ...result.value!.results])
             }
         } else {
-            setHasMore(false);
-            setError(result.error);
+            setHasMore(false)
+            setError(result.error)
         }
-    }
+    }, [project.id])
 
-    const fetchTags = async () => {
+    const fetchTags = useCallback(async () => {
         const result = await http<string[]>({
             method: APIMethod.get,
             path: `/api/project/${project.id}/tags`
         })
+        if (result.value) setTags(result.value)
+        else setError(result.error)
+    }, [project.id])
 
-        if (result.value) {
-            setTags(result.value)
-        } else {
-            setError(result.error)
-        }
+    useEffect(() => {
+        fetchData(selectedTags, query, 0, statusFilter)
+        fetchTags()
+    }, [])
+
+    const onSearch = (newQuery: string) => {
+        setQuery(newQuery)
+        fetchData(selectedTags, newQuery, 0, statusFilter)
     }
 
-    const selectTags = async (tags: string[]) => {
-        setSelectedTags(tags)
-        fetchData(tags, query, 0, untranslatedOnly)
+    const selectTags = (newTags: string[]) => {
+        setSelectedTags(newTags)
+        fetchData(newTags, query, 0, statusFilter)
     }
 
-    const udateTagSelection = async (tag: string) => {
-        const idx = selectedTags.indexOf(tag)
-        if (idx >= 0) {
-            selectedTags.splice(idx, 1)
-            selectTags(selectedTags)
-        } else {
-            var tags = selectedTags
-            tags.push(tag)
-            selectTags(tags)
-        }
+    const updateTagSelection = (tag: string) => {
+        const updated = selectedTags.includes(tag)
+            ? selectedTags.filter(t => t !== tag)
+            : [...selectedTags, tag]
+        selectTags(updated)
     }
 
-    const onSearch = async (query: string) => {
-        setQuery(query)
-        fetchData(selectedTags, query, 0, untranslatedOnly)
+    const changeStatusFilter = (status: StatusFilter) => {
+        setStatusFilter(status)
+        fetchData(selectedTags, query, 0, status)
     }
 
     const deleteToken = async (token: StringToken) => {
@@ -206,114 +184,96 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         const result = await http({
             method: APIMethod.delete,
             path: "/api/string_token",
-            data: { "id": token.id }
+            data: { id: token.id }
         })
-
-        if (result.error) {
-            setError(result.error)
-        } else {
-            fetch()
-        }
+        if (result.error) setError(result.error)
+        else fetchData(selectedTags, query, 0, statusFilter)
     }
 
     const updateTokenStatus = async (token: StringToken, status: string) => {
         const previousStatus = token.status
-
         updateTokenInList(token.id, { status })
-
         const result = await http<StringToken>({
             method: APIMethod.put,
             path: `/api/string_token/${token.id}/status`,
-            data: { "status": status },
+            data: { status },
         })
-
         if (result.error) {
             setError(result.error)
             updateTokenInList(token.id, { status: previousStatus })
         }
     }
 
-    const toggleAll = () => {
-        setUntranslatedOnly(false)
-        fetchData(selectedTags, query, 0, false)
-    }
-
-    const toggleUntranslated = () => {
-        setUntranslatedOnly(true)
-        fetchData(selectedTags, query, 0, true)
-    }
-
-    useEffect(() => {
-        fetch()
-        fetchTags()
-    }, [])
-
     return (
         <>
             <Stack direction="vertical" gap={2} className="my-3">
                 <Stack direction="horizontal" gap={5}>
-                    <Button
-                        onClick={() => setShowDialog(true)
-                        } className="my-2" >
+                    <Button onClick={() => setShowDialog(true)} className="my-2">
                         Add localization key
                     </Button>
-                    {tags && <>
+                </Stack>
+                <Stack direction="horizontal" gap={2}>
+                    {/* Status filter */}
+                    <Stack direction="horizontal" gap={2}>
+                        <span className="text-muted small">Status:</span>
+                        <Dropdown>
+                            <Dropdown.Toggle variant="outline-secondary" size="sm" className="text-capitalize">
+                                {statusFilter === 'all' ? 'All' : statusFilter}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                <Dropdown.Item active={false} onClick={() => changeStatusFilter('all')}>
+                                    All
+                                </Dropdown.Item>
+                                <Dropdown.Divider />
+                                {STATUS_OPTIONS.map(status => (
+                                    <Dropdown.Item
+                                        key={status}
+                                        active={false}
+                                        className="text-capitalize"
+                                        onClick={() => changeStatusFilter(status)}
+                                    >
+                                        <Badge bg={getStatusVariant(status)} className="me-2">
+                                            {status}
+                                        </Badge>
+                                        {status}
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
+                    </Stack>
+                    {/* Tags filter */}
+                    {tags &&
                         <Typeahead
                             id="basic-typeahead-multiple"
                             multiple
                             labelKey="tags"
                             options={tags}
                             placeholder="Tags filter"
-                            onChange={(data) => { selectTags(data as string[]) }}
+                            onChange={(data) => selectTags(data as string[])}
                             selected={selectedTags}
-                            renderMenuItemChildren={(item) => {
-                                return (
-                                    <Stack direction="horizontal" gap={3}>
-                                        <label className="align-items-center display-linebreak">{item as string}</label>
-                                    </Stack>
-                                )
-                            }}
+                            renderMenuItemChildren={(item) => (
+                                <span>{item as string}</span>
+                            )}
                         />
-                    </>
                     }
+                    {/* Search bar */}
                     <SearchBar onSearch={onSearch} />
-                    <OverlayTrigger
-                        trigger="click"
-                        placement="left"
-                        overlay={HelpPopover}
-                    >
-                        <Button className="ms-auto" variant="outline-primary">
-                            i
-                        </Button>
+                    {/* Info button */}
+                    <OverlayTrigger trigger="click" placement="left" overlay={HelpPopover}>
+                        <Button className="ms-auto" variant="outline-primary">i</Button>
                     </OverlayTrigger>
                 </Stack>
-                <ButtonGroup>
-                    <Button
-                        className={untranslatedOnly ? "btn-secondary" : "btn-primary"}
-                        onClick={() => toggleAll()}
-                    >
-                        All
-                    </Button>
-                    <Button
-                        className={untranslatedOnly ? "btn-primary" : "btn-secondary"}
-                        onClick={() => toggleUntranslated()}
-                    >
-                        New
-                    </Button>
-                </ButtonGroup>
-            </Stack >
+            </Stack>
+
             {tokens &&
                 <InfiniteScroll
                     dataLength={tokens.length}
-                    next={() => {
-                        const newOffset = offset + limit
-                        fetchData(selectedTags, query, newOffset, untranslatedOnly)
-                    }}
+                    next={() => fetchData(selectedTags, query, offset + limit, statusFilter)}
                     hasMore={hasMore}
                     loader={<p>Loading...</p>}
                 >
                     <ListGroup>
-                        {tokens.map((token) =>
+                        {tokens.map(token =>
                             <StringTokenListItem
                                 key={token.id}
                                 token={token}
@@ -321,42 +281,39 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                                 selectedTags={selectedTags}
                                 onAddTag={() => setSelectedToken(token)}
                                 onDelete={() => setDeletionItem(token)}
-                                onTagClick={(tag => udateTagSelection(tag))}
+                                onTagClick={updateTagSelection}
                                 onStatusChange={(status) => updateTokenStatus(token, status)}
                             />
                         )}
                     </ListGroup>
                 </InfiniteScroll>
             }
-            {
-                showDialog && <AddTokenPage
+
+            {showDialog &&
+                <AddTokenPage
                     project_id={project.id}
                     show={showDialog}
                     tags={tags}
                     onHide={() => setShowDialog(false)}
-                    onSuccess={() => {
-                        fetch()
-                        setShowDialog(false)
-                    }
-                    } />
+                    onSuccess={() => { fetchData(selectedTags, query, 0, statusFilter); setShowDialog(false) }}
+                />
             }
-            {
-                selectedToken &&
+            {selectedToken &&
                 <AddTokenTagPage
                     token={selectedToken}
                     tags={tags}
                     onHide={() => setSelectedToken(undefined)}
                     onSuccess={() => {
-                        fetch()
+                        fetchData(selectedTags, query, 0, statusFilter)
                         fetchTags()
                         setSelectedToken(undefined)
                     }}
                 />
             }
             {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
-            {
-                deletionItem && <ConfirmationAlert
-                    message={`You are going to remove item ${deletionItem?.token}`}
+            {deletionItem &&
+                <ConfirmationAlert
+                    message={`You are going to remove item ${deletionItem.token}`}
                     onDismiss={() => setDeletionItem(undefined)}
                     onConfirm={() => deleteToken(deletionItem)}
                 />

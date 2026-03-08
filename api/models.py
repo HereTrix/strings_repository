@@ -105,11 +105,12 @@ class Translation(models.Model):
     def __str__(self):
         return f"{self.id} {self.translation}"
 
-    def create_translation(user: User, token: StringToken, code: str, project_id, text: str):
+    def create_or_update_translation(user: User, token: StringToken, code: str, project_id, text: str) -> Translation:
         old_value = ''
         try:
             translation = Translation.objects.get(
                 token=token,
+                token__project__pk=project_id,
                 language__code=code.upper(),
             )
 
@@ -142,6 +143,7 @@ class Translation(models.Model):
             record.editor = user
             record.language = translation.language.code
             record.save()
+        return translation
 
     def import_record(user, project_id, code, record, tags):
         project = Project.objects.get(

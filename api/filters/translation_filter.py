@@ -6,8 +6,7 @@ from django.db.models import Q
 class TranslationTokenFilter(django_filters.FilterSet):
     q = django_filters.CharFilter(method='filter_query')
     tags = django_filters.CharFilter(method='filter_tags')
-    untranslated = django_filters.BooleanFilter(method='filter_untranslated')
-    status = django_filters.CharFilter(field_name='status')
+    status = django_filters.CharFilter(method='filter_status')
 
     def filter_query(self, queryset, name, value):
         print('filtering query', value)
@@ -21,15 +20,9 @@ class TranslationTokenFilter(django_filters.FilterSet):
             queryset = queryset.filter(tags__tag=tag)
         return queryset
 
-    def filter_untranslated(self, queryset, name, value):
-        print('filtering untranslated', value)
-        if value:
-            return queryset.filter(
-                Q(translation__translation__exact='') |
-                Q(translation__translation__isnull=True)
-            )
-        return queryset
+    def filter_status(self, queryset, name, value):
+        return queryset.filter(translation__status=value)
 
     class Meta:
         model = StringToken
-        fields = ['q', 'tags', 'untranslated', 'status']
+        fields = ['q', 'tags', 'status']

@@ -137,7 +137,7 @@ class TranslationAPI(generics.GenericAPIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            Translation.create_translation(
+            Translation.create_or_update_translation(
                 user=user,
                 token=token,
                 code=code,
@@ -150,6 +150,66 @@ class TranslationAPI(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         return JsonResponse({}, status=status.HTTP_200_OK)
+
+
+class TranslationStatusAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        project_id = request.data['project_id']
+
+        if project_id is None:
+            return JsonResponse({
+                'error': 'project_id is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        code = request.data['code']
+        if code is None:
+            return JsonResponse({
+                'error': 'code is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        token_key = request.data['token']
+        if token_key is None:
+            return JsonResponse({
+                'error': 'token is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        status_value = request.data.get('status')
+
+        if status_value is None:
+            return JsonResponse({
+                'error': 'Status is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if status_value not in Translation.Status.values or status_value == Translation.Status.new:
+            return JsonResponse({
+                'error': 'Invalid status value'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        token = StringToken.objects.get(
+            project__pk=project_id,
+            token=token_key,
+            project__roles__user=user,
+        )
+        language = Language.objects.get(
+            code=code.upper(), project__pk=project_id)
+
+        translation, _ = Translation.objects.get_or_create(
+            token=token,
+            language=language,
+            defaults={
+                'status': Translation.Status.new,
+                'translation': '',
+            }
+        )
+
+        translation.status = status_value
+        translation.save()
+
+        serializer = TranslationSerializer(translation)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
 
 class StringTokenTagAPI(generics.GenericAPIView):

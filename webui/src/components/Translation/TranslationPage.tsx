@@ -1,42 +1,72 @@
-import { ChangeEventHandler, FC, useEffect, useState } from "react"
+import { ChangeEventHandler, FC, useCallback, useEffect, useState } from "react"
 import { APIMethod, http } from "../Utils/network"
-import Translation, { TranslationModel } from "../model/Translation"
-import { Button, ButtonGroup, Container, Dropdown, ListGroup, Row, Stack } from "react-bootstrap"
-import ExportPage from "./ExportPage"
+import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel } from "../model/Translation"
+import { Badge, Button, OverlayTrigger, Container, Dropdown, ListGroup, Row, Stack } from "react-bootstrap"
+import PaginatedResponse from "../model/PaginatedResponse"
 import SearchBar from "../UI/SearchBar"
 import TagsContainer from "../UI/TagsContainer"
 import ErrorAlert from "../UI/ErrorAlert"
 import InfiniteScroll from "react-infinite-scroll-component"
 import { Typeahead } from "react-bootstrap-typeahead"
+import HelpPopover from "../UI/HelpPopover"
 
 type TranslationListItemProps = {
     translation: TranslationModel
     selectedTags: string[]
     onSave: (translation: Translation) => void
+    onStatusChange: (status: string) => void
     onTagClick: (tag: string) => void
 }
 
-const TranslationListItem: FC<TranslationListItemProps> = ({ translation, selectedTags, onSave, onTagClick }) => {
-
+const TranslationListItem: FC<TranslationListItemProps> = ({ translation, selectedTags, onSave, onStatusChange, onTagClick }) => {
     const [canSave, setCanSave] = useState<boolean>(false)
+    const [saveSuccess, setSaveSuccess] = useState<boolean>(false)
     const [text, setText] = useState<string | undefined>(translation.translation)
+
+    // Sync text if translation prop changes externally (e.g. optimistic revert)
+    useEffect(() => {
+        setText(translation.translation)
+    }, [translation.translation])
 
     const onTranslationChange: ChangeEventHandler<HTMLTextAreaElement> = (event) => {
         setText(event.target.value)
         setCanSave(true)
+        setSaveSuccess(false)
     }
 
     const save = () => {
         setCanSave(false)
+        setSaveSuccess(true)
         const newTranslation: Translation = { token: translation.token, translation: text }
         onSave(newTranslation)
     }
 
     return (
-        <ListGroup.Item >
+        <ListGroup.Item>
             <Stack>
                 <Stack direction="horizontal" gap={4}>
-                    <label>{translation.token}</label>
+                    <span>{translation.token}</span>
+
+                    <Dropdown>
+                        <Dropdown.Toggle variant={getStatusVariant(translation.status)} size="sm">
+                            {getStatusName(translation.status)}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            {EDITABLE_STATUSES.map(status => (
+                                <Dropdown.Item
+                                    key={status}
+                                    active={false}
+                                    onClick={() => onStatusChange(status)}
+                                >
+                                    <Badge bg={getStatusVariant(status)} className="me-2">
+                                        {getStatusName(status)}
+                                    </Badge>
+                                    {getStatusName(status)}
+                                </Dropdown.Item>
+                            ))}
+                        </Dropdown.Menu>
+                    </Dropdown>
+
                     {translation.tags &&
                         <TagsContainer
                             tags={translation.tags}
@@ -45,8 +75,16 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, select
                         />}
                 </Stack>
                 <Row>
-                    <textarea defaultValue={translation.translation} onChange={onTranslationChange} />
+                    <textarea
+                        rows={3}
+                        style={{ resize: 'vertical' }}
+                        value={text ?? ''}
+                        onChange={onTranslationChange}
+                    />
                     {canSave && <Button onClick={save} className="my-1">Save</Button>}
+                    {!canSave && saveSuccess && (
+                        <span className="text-success my-1 small">✓ Saved</span>
+                    )}
                 </Row>
             </Stack>
         </ListGroup.Item>
@@ -54,200 +92,198 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, select
 }
 
 type TranslationPageProps = {
-    untranslated: boolean,
-    project_id: string,
+    project_id: string
     code: string
 }
 
-const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
+type FilterStatus = 'all' | string
 
-    // Request modifiers
+const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
     const limit = 20
     const [hasMore, setHasMore] = useState<boolean>(true)
     const [offset, setOffset] = useState<number>(0)
     const [query, setQuery] = useState<string>("")
-    const [untranslatedOnly, setUntranslatedOnly] = useState<boolean>(false)
+    const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
 
-    // Data
-    const [translations, setTranslations] = useState<TranslationModel[]>()
-
-    // Tags
+    const [translations, setTranslations] = useState<TranslationModel[]>([])
     const [tags, setTags] = useState<string[]>([])
     const [filteredTags, setFilteredTags] = useState<string[]>([])
-
     const [error, setError] = useState<string>()
 
-    const fetch = async () => {
-        fetchData(filteredTags, query, offset, untranslatedOnly)
-    }
-
-    const fetchData = async (
+    const fetchData = useCallback(async (
         tags: string[],
         term: string,
         newOffset: number,
-        untranslated: boolean
+        status: FilterStatus
     ) => {
-        setOffset(newOffset);
+        setOffset(newOffset)
 
-        const params: Record<string, any> = {};
+        const params: Record<string, any> = {}
+        if (tags?.length) params.tags = tags
+        if (term) params.q = term
+        else if (status !== 'all') params.status = status
 
-        if (tags?.length) params.tags = tags;
-        if (term) params.q = term;
-        if (untranslated) params.untranslated = true;
-
-        params.offset = `${newOffset}`;
-        params.limit = `${limit}`;
+        params.offset = `${newOffset}`
+        params.limit = `${limit}`
 
         const result = await http<PaginatedResponse<TranslationModel>>({
             method: APIMethod.get,
             path: `/api/project/${project_id}/translations/${code}`,
             params,
-        });
-
-        if (result.value) {
-            const hasMore = result.value.results.length >= limit;
-            setHasMore(hasMore);
-
-            if (newOffset === 0) {
-                setTranslations(result.value.results);
-            } else {
-                setTranslations(prev => [...(prev ?? []), ...result.value!.results]);
-            }
-        } else {
-            setHasMore(false);
-            setError(result.error);
-        }
-    };
-
-    const fetchTags = async () => {
-        const result = await http<[string]>({
-            method: APIMethod.get,
-            path: `/api/project/${project_id}/tags`
         })
 
         if (result.value) {
-            setTags(result.value)
+            setHasMore(result.value.results.length >= limit)
+            if (newOffset === 0) {
+                setTranslations(result.value.results)
+            } else {
+                setTranslations(prev => [...prev, ...result.value!.results])
+            }
         } else {
+            setHasMore(false)
             setError(result.error)
         }
+    }, [project_id, code])
+
+    const fetchTags = useCallback(async () => {
+        const result = await http<string[]>({
+            method: APIMethod.get,
+            path: `/api/project/${project_id}/tags`
+        })
+        if (result.value) setTags(result.value)
+        else setError(result.error)
+    }, [project_id])
+
+    useEffect(() => {
+        fetchData(filteredTags, query, 0, statusFilter)
+        fetchTags()
+    }, [])
+
+    const onSearch = (newQuery: string) => {
+        setQuery(newQuery)
+        fetchData(filteredTags, newQuery, 0, statusFilter)
     }
 
-    const onSearch = async (query: string) => {
-        setQuery(query)
-        fetchData(filteredTags, query, 0, untranslatedOnly)
+    const filterTags = (newTags: string[]) => {
+        setFilteredTags(newTags)
+        fetchData(newTags, query, 0, statusFilter)
     }
 
-    const filterTags = (tags: string[]) => {
-        setFilteredTags(tags)
-        fetchData(tags, query, 0, untranslatedOnly)
+    const updateTagSelection = (tag: string) => {
+        const updated = filteredTags.includes(tag)
+            ? filteredTags.filter(t => t !== tag)
+            : [...filteredTags, tag]
+        filterTags(updated)
     }
 
-    const udateTagSelection = async (tag: string) => {
-        const idx = filteredTags.indexOf(tag)
+    const changeStatusFilter = (status: FilterStatus) => {
+        setStatusFilter(status)
+        fetchData(filteredTags, query, 0, status)
+    }
 
-        if (idx >= 0) {
-            filteredTags.splice(idx, 1)
-            filterTags(filteredTags)
-        } else {
-            var tags = filteredTags
-            tags.push(tag)
-            filterTags(tags)
+    const updateTranslationInList = (translation: TranslationModel, updates: Partial<TranslationModel>) => {
+        setTranslations(prev => prev.map(t => t.token === translation.token ? { ...t, ...updates } : t))
+    }
+
+    const updateTranslationStatus = async (translation: TranslationModel, status: string) => {
+        const previousStatus = translation.status
+        updateTranslationInList(translation, { status })
+        const result = await http<TranslationModel>({
+            method: APIMethod.put,
+            path: `/api/translation/status`,
+            data: { project_id, code, token: translation.token, status }
+        })
+        if (result.error) {
+            setError(result.error)
+            updateTranslationInList(translation, { status: previousStatus })
         }
-    }
-
-    const toggleAll = () => {
-        setUntranslatedOnly(false)
-        fetchData(filteredTags, query, 0, false)
-    }
-
-    const toggleUntranslated = () => {
-        setUntranslatedOnly(true)
-        fetchData(filteredTags, query, 0, true)
     }
 
     const saveTranslation = async (translation: Translation) => {
         const result = await http({
             method: APIMethod.post,
             path: "/api/translation",
-            data: { "project_id": project_id, "code": code, "token": translation.token, "translation": translation.translation }
+            data: { project_id, code, token: translation.token, translation: translation.translation }
         })
-
-        if (result.error) {
-            setError(result.error)
-        } else {
-
-        }
+        if (result.error) setError(result.error)
     }
 
-    useEffect(() => {
-        fetch()
-        fetchTags()
-    }, [])
+    const statusFilterOptions: { label: string, value: FilterStatus }[] = [
+        { label: 'All', value: 'all' },
+        ...STATUS_OPTIONS.map(s => ({ label: getStatusName(s), value: s }))
+    ]
 
     return (
         <Container>
-            <Stack direction="vertical" gap={2}>
-                <Stack direction="horizontal" gap={5}>
-                    {filteredTags &&
-                        <Typeahead
-                            id="basic-typeahead-multiple"
-                            multiple
-                            labelKey="tags"
-                            options={tags}
-                            placeholder="Tags filter"
-                            onChange={(data) => { filterTags(data as string[]) }}
-                            selected={filteredTags}
-                            renderMenuItemChildren={(item) => {
-                                return (
-                                    <Stack direction="horizontal" gap={3}>
-                                        <label className="align-items-center display-linebreak">{item as string}</label>
-                                    </Stack>
-                                )
-                            }}
-                        />
-                    }
-                    <SearchBar onSearch={onSearch} />
+            <Stack direction="horizontal" gap={3}>
+                <Stack direction="horizontal" gap={2}>
+                    <span className="text-muted small">Status:</span>
+                    <Dropdown>
+                        <Dropdown.Toggle variant="outline-secondary">
+                            {statusFilterOptions.find(o => o.value === statusFilter)?.label ?? 'All'}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            {statusFilterOptions.map(({ label, value }) => (
+                                <Dropdown.Item
+                                    key={value}
+                                    active={statusFilter === value}
+                                    onClick={() => changeStatusFilter(value)}
+                                >
+                                    {value !== 'all' && value !== 'untranslated' &&
+                                        <Badge bg={getStatusVariant(value)} className="me-2">{label}</Badge>
+                                    }
+                                    {label}
+                                </Dropdown.Item>
+                            ))}
+                        </Dropdown.Menu>
+                    </Dropdown>
                 </Stack>
-                <ButtonGroup>
-                    <Button
-                        className={untranslatedOnly ? "btn-secondary" : "btn-primary"}
-                        onClick={() => toggleAll()}
-                    >
-                        All
+                <Typeahead
+                    id="tags-filter"
+                    multiple
+                    labelKey="tags"
+                    options={tags}
+                    placeholder="Filter by tags"
+                    onChange={(data) => filterTags(data as string[])}
+                    selected={filteredTags}
+                    renderMenuItemChildren={(item) => <span>{item as string}</span>}
+                />
+                <SearchBar onSearch={onSearch} />
+                <OverlayTrigger
+                    trigger="click"
+                    placement="left"
+                    overlay={HelpPopover}
+                >
+                    <Button className="ms-auto" variant="outline-primary">
+                        i
                     </Button>
-                    <Button
-                        className={untranslatedOnly ? "btn-primary" : "btn-secondary"}
-                        onClick={() => toggleUntranslated()}
-                    >
-                        Untranslated
-                    </Button>
-                </ButtonGroup>
+                </OverlayTrigger>
             </Stack>
-            {translations &&
-                translations.length > 0 ?
+
+            {translations.length > 0 ? (
                 <InfiniteScroll
                     dataLength={translations.length}
-                    next={() => {
-                        const newOffset = offset + limit
-                        fetchData(filteredTags, query, newOffset, untranslatedOnly)
-                    }}
+                    next={() => fetchData(filteredTags, query, offset + limit, statusFilter)}
                     hasMore={hasMore}
                     loader={<p>Loading...</p>}
                 >
-                    <ListGroup>
-                        {translations.map(
-                            (translation) => <TranslationListItem
+                    <ListGroup className="mt-2">
+                        {translations.map(translation => (
+                            <TranslationListItem
+                                key={translation.token}
                                 translation={translation}
                                 selectedTags={filteredTags}
                                 onSave={saveTranslation}
-                                onTagClick={tag => udateTagSelection(tag)}
-                                key={translation.token}
+                                onStatusChange={(status) => updateTranslationStatus(translation, status)}
+                                onTagClick={updateTagSelection}
                             />
-                        )}
+                        ))}
                     </ListGroup>
                 </InfiniteScroll>
-                : <label>All keys translated</label>
-            }
+            ) : (
+                <p className="text-muted mt-3">No translations found.</p>
+            )}
+
             {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </Container>
     )

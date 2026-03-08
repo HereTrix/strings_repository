@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Button, Container, OverlayTrigger, Stack } from "react-bootstrap"
+import { Button, Container, Stack } from "react-bootstrap"
 import { useNavigate, useParams } from "react-router-dom"
 import { APIMethod, http } from "../Utils/network"
 import Project from "../model/Project"
@@ -7,7 +7,6 @@ import ErrorAlert from "../UI/ErrorAlert"
 import ExportPage from "./ExportPage"
 import OptionalImage from "../UI/OptionalImage"
 import TranslationPage from "./TranslationPage"
-import HelpPopover from "../UI/HelpPopover"
 
 const LanguageTranslationsPage = () => {
     const navigate = useNavigate()
@@ -56,24 +55,14 @@ const LanguageTranslationsPage = () => {
         <Container>
             <Container className="d-flex justify-content-between align-items-start">
                 <Button onClick={backToProject}>Back to project</Button>
+                <Stack direction="horizontal" gap={1} className="my-1">
+                    {code && <OptionalImage src={`/static/flags/${code.toLocaleLowerCase()}.png`} alt={code} />}
+                    <label>This is translation for {code}</label>
+                </Stack>
                 {project && <Button onClick={onExport}>Export</Button>}
             </Container>
-            <Stack direction="horizontal" gap={1} className="my-1">
-                {code && <OptionalImage src={`/static/flags/${code.toLocaleLowerCase()}.png`} alt={code} />}
-                <label>This is translation for {code}</label>
-                <OverlayTrigger
-                    trigger="click"
-                    placement="left"
-                    overlay={HelpPopover}
-                >
-                    <Button className="ms-auto" variant="outline-primary">
-                        i
-                    </Button>
-                </OverlayTrigger>
-            </Stack>
             {project_id && code &&
                 <TranslationPage
-                    untranslated={false}
                     project_id={project_id}
                     code={code}
                 />
