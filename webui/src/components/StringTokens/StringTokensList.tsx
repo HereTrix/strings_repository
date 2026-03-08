@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from "react"
-import StringToken from "../model/StringToken"
+import StringToken, { STATUS_OPTIONS } from "../model/StringToken"
 import Project from "../model/Project"
-import { Button, ButtonGroup, Collapse, Container, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
+import { Badge, Button, ButtonGroup, Collapse, Container, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
 import AddTokenPage from "./AddTokenPage"
 import SearchBar from "../UI/SearchBar"
@@ -25,11 +25,20 @@ type StringTokenItemProps = {
     onAddTag: () => void
     onDelete: () => void
     onTagClick: (tag: string) => void
+    onStatusChange: (status: string) => void
 }
 
-const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, selectedTags, onAddTag, onDelete, onTagClick }) => {
+const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, selectedTags, onAddTag, onDelete, onTagClick, onStatusChange }) => {
 
     const [open, setOpen] = useState<boolean>(false)
+
+    const getStatusVariant = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'active': return 'success'
+            case 'deprecated': return 'danger'
+            default: return 'info'
+        }
+    }
 
     return (
         <ListGroup.Item
@@ -39,6 +48,30 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, sele
                     onClick={() => setOpen(!open)}
                 >
                     <label>{token.token}</label>
+                    <Dropdown onClick={(e) => e.stopPropagation()}>
+                        <Dropdown.Toggle
+                            variant={getStatusVariant(token.status)}
+                            size="sm"
+                            className="text-capitalize"
+                        >
+                            {token.status}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            {STATUS_OPTIONS.map(status => (
+                                <Dropdown.Item
+                                    key={status}
+                                    active={status === token.status}
+                                    className="text-capitalize"
+                                    onClick={() => onStatusChange(status)}
+                                >
+                                    <Badge bg={getStatusVariant(status)} className="me-2">
+                                        {status}
+                                    </Badge>
+                                    {status}
+                                </Dropdown.Item>
+                            ))}
+                        </Dropdown.Menu>
+                    </Dropdown>
                     {token.tags &&
                         <TagsContainer
                             tags={token.tags}
@@ -87,6 +120,10 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const [selectedToken, setSelectedToken] = useState<StringToken>()
     const [error, setError] = useState<string>()
     const [deletionItem, setDeletionItem] = useState<StringToken>()
+
+    const updateTokenInList = (id: string, changes: Partial<StringToken>) => {
+        setTokens(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t))
+    }
 
     const fetch = async () => {
         fetchData(selectedTags, query, offset, untranslatedOnly)
@@ -179,6 +216,23 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         }
     }
 
+    const updateTokenStatus = async (token: StringToken, status: string) => {
+        const previousStatus = token.status
+
+        updateTokenInList(token.id, { status })
+
+        const result = await http<StringToken>({
+            method: APIMethod.put,
+            path: `/api/string_token/${token.id}/status`,
+            data: { "status": status },
+        })
+
+        if (result.error) {
+            setError(result.error)
+            updateTokenInList(token.id, { status: previousStatus })
+        }
+    }
+
     const toggleAll = () => {
         setUntranslatedOnly(false)
         fetchData(selectedTags, query, 0, false)
@@ -268,6 +322,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                                 onAddTag={() => setSelectedToken(token)}
                                 onDelete={() => setDeletionItem(token)}
                                 onTagClick={(tag => udateTagSelection(tag))}
+                                onStatusChange={(status) => updateTokenStatus(token, status)}
                             />
                         )}
                     </ListGroup>

@@ -1,3 +1,4 @@
+from api.models import StringToken, ProjectRole
 from django.http import JsonResponse
 import django.core.exceptions as exception
 from rest_framework import generics, permissions, status
@@ -176,6 +177,41 @@ class StringTokenTagAPI(generics.GenericAPIView):
         token.save()
 
         return JsonResponse({})
+
+
+class StringTokenStatusAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, pk):
+        user = request.user
+        status_value = request.data.get('status')
+
+        if status_value is None:
+            return JsonResponse({
+                'error': 'Status is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if status_value not in StringToken.Status.values:
+            return JsonResponse({
+                'error': 'Invalid status value'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            token = StringToken.objects.get(
+                pk=pk,
+                project__roles__user=user,
+                project__roles__role__in=ProjectRole.change_token_roles
+            )
+        except StringToken.DoesNotExist:
+            return JsonResponse({
+                'error': 'Token not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        token.status = status_value
+        token.save()
+
+        serializer = StringTokenSerializer(token)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
 
 class StringTokenTranslationsAPI(generics.GenericAPIView):

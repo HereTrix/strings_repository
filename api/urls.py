@@ -7,7 +7,7 @@ from api.views.language import LanguageAPI
 from api.views.plugin import FetchLanguagesAPI, PluginExportAPI, PullAPI, PushAPI
 from api.views.project import *
 from api.views.roles import ProjectAccessTokenAPI, ProjectInvitationAPI, ProjectParticipantsAPI, RolesAPI
-from api.views.translation import StringTokenAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI
+from api.views.translation import StringTokenAPI, StringTokenStatusAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI
 from knox.views import LogoutView
 
 urlpatterns = [
@@ -39,6 +39,7 @@ urlpatterns = [
     path('language', LanguageAPI.as_view()),
     # tokens
     path('string_token', StringTokenAPI.as_view()),
+    path('string_token/<int:pk>/status', StringTokenStatusAPI.as_view()),
     path('string_token/<int:pk>/tags', StringTokenTagAPI.as_view()),
     path('string_token/<int:pk>/translations',
          StringTokenTranslationsAPI.as_view()),

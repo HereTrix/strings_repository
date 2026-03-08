@@ -73,7 +73,7 @@ class ProjectAvailableLanguagesAPI(generics.ListAPIView):
             if lang[LANGUAGE_CODE_KEY] not in used_codes
         ]
         serializer = self.get_serializer(unused, many=True)
-        return JsonResponse(serializer.data)
+        return JsonResponse(serializer.data, safe=False)
 
 
 class LanguageListAPI(generics.ListAPIView):
