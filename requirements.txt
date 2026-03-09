@@ -1,5 +1,5 @@
 autopep8==2.3.2
-Django==6.0.1
+Django==6.0.3
 django-cors-headers==4.9.0
 django-rest-knox==5.0.2
 djangorestframework==3.16.1
@@ -8,3 +8,4 @@ polib==1.2.0
 whitenoise==6.11.0
 django-environ==0.12.0
 django-filter==25.2
+gunicorn==25.1.0
