@@ -36,9 +36,7 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({ item, onSave })
             className="d-flex justify-content-between align-items-start">
             <Stack>
                 <Stack direction="horizontal" gap={2}>
-                    <OptionalImage
-                        src={`/static/flags/${item.code.toLocaleLowerCase()}.png`}
-                        alt={item.code} />
+                    <OptionalImage src={item.img} alt={item.code} width={50} height={38} />
                     <label>{item.code}</label>
                 </Stack>
                 <textarea

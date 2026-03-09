@@ -11,8 +11,6 @@ import TranslationPage from "./TranslationPage"
 const LanguageTranslationsPage = () => {
     const navigate = useNavigate()
 
-    const [activeTab, setActiveTab] = useState('all')
-
     const { project_id, code } = useParams()
     const [showExport, setShowExport] = useState(false)
 
@@ -45,18 +43,14 @@ const LanguageTranslationsPage = () => {
         setShowExport(true)
     }
 
-    const activateTab = (tab: string | null) => {
-        if (tab) {
-            setActiveTab(tab)
-        }
-    }
+    const language = project?.languages.find(l => l.code.toLowerCase() === code?.toLowerCase())
 
     return (
         <Container>
             <Container className="d-flex justify-content-between align-items-start">
                 <Button onClick={backToProject}>Back to project</Button>
                 <Stack direction="horizontal" gap={1} className="my-1">
-                    {code && <OptionalImage src={`/static/flags/${code.toLocaleLowerCase()}.png`} alt={code} />}
+                    <OptionalImage src={language.img} alt={code ?? ""} width={32} height={24} />
                     <label>This is translation for {code}</label>
                 </Stack>
                 {project && <Button onClick={onExport}>Export</Button>}

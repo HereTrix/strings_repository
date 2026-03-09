@@ -26,7 +26,7 @@ const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, onDe
             action
             className="d-flex justify-content-between align-items-start"
             key={language.code}>
-            <OptionalImage src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code} />
+            <OptionalImage src={language.img} alt={language.code} width={50} height={38} />
             <label>{language.name}</label>
             <Button
                 onClick={(e) => {

@@ -1,7 +1,7 @@
 import { ChangeEventHandler, FC, useCallback, useEffect, useState } from "react"
 import { APIMethod, http } from "../Utils/network"
 import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel } from "../model/Translation"
-import { Badge, Button, OverlayTrigger, Container, Dropdown, ListGroup, Row, Stack } from "react-bootstrap"
+import { Badge, Button, OverlayTrigger, Container, Dropdown, ListGroup, Row, Stack, Card } from "react-bootstrap"
 import PaginatedResponse from "../model/PaginatedResponse"
 import SearchBar from "../UI/SearchBar"
 import TagsContainer from "../UI/TagsContainer"
@@ -46,7 +46,12 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, select
             <Stack>
                 <Stack direction="horizontal" gap={4}>
                     <span>{translation.token}</span>
-
+                    {translation.tags &&
+                        <TagsContainer
+                            tags={translation.tags}
+                            selectedTags={selectedTags}
+                            onTagClick={onTagClick}
+                        />}
                     <Dropdown>
                         <Dropdown.Toggle variant={getStatusVariant(translation.status)} size="sm">
                             {getStatusName(translation.status)}
@@ -66,13 +71,6 @@ const TranslationListItem: FC<TranslationListItemProps> = ({ translation, select
                             ))}
                         </Dropdown.Menu>
                     </Dropdown>
-
-                    {translation.tags &&
-                        <TagsContainer
-                            tags={translation.tags}
-                            selectedTags={selectedTags}
-                            onTagClick={onTagClick}
-                        />}
                 </Stack>
                 <Row>
                     <textarea
@@ -106,6 +104,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
     const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
 
     const [translations, setTranslations] = useState<TranslationModel[]>([])
+    const [total, setTotal] = useState<number>(0)
     const [tags, setTags] = useState<string[]>([])
     const [filteredTags, setFilteredTags] = useState<string[]>([])
     const [error, setError] = useState<string>()
@@ -134,6 +133,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
 
         if (result.value) {
             setHasMore(result.value.results.length >= limit)
+            setTotal(result.value.count)
             if (newOffset === 0) {
                 setTranslations(result.value.results)
             } else {
@@ -261,25 +261,35 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
             </Stack>
 
             {translations.length > 0 ? (
-                <InfiniteScroll
-                    dataLength={translations.length}
-                    next={() => fetchData(filteredTags, query, offset + limit, statusFilter)}
-                    hasMore={hasMore}
-                    loader={<p>Loading...</p>}
-                >
-                    <ListGroup className="mt-2">
-                        {translations.map(translation => (
-                            <TranslationListItem
-                                key={translation.token}
-                                translation={translation}
-                                selectedTags={filteredTags}
-                                onSave={saveTranslation}
-                                onStatusChange={(status) => updateTranslationStatus(translation, status)}
-                                onTagClick={updateTagSelection}
-                            />
-                        ))}
-                    </ListGroup>
-                </InfiniteScroll>
+                <Card className="mt-3">
+                    <Card.Header className="d-flex justify-content-between align-items-center">
+                        <span className="fw-semibold">Translations</span>
+                        <Badge bg="secondary">
+                            {total} result{total !== 1 ? 's' : ''}
+                        </Badge>
+                    </Card.Header>
+                    <Card.Body className="p-0">
+                        <InfiniteScroll
+                            dataLength={translations.length}
+                            next={() => fetchData(filteredTags, query, offset + limit, statusFilter)}
+                            hasMore={hasMore}
+                            loader={<p>Loading...</p>}
+                        >
+                            <ListGroup className="mt-2">
+                                {translations.map(translation => (
+                                    <TranslationListItem
+                                        key={translation.token}
+                                        translation={translation}
+                                        selectedTags={filteredTags}
+                                        onSave={saveTranslation}
+                                        onStatusChange={(status) => updateTranslationStatus(translation, status)}
+                                        onTagClick={updateTagSelection}
+                                    />
+                                ))}
+                            </ListGroup>
+                        </InfiniteScroll>
+                    </Card.Body>
+                </Card>
             ) : (
                 <p className="text-muted mt-3">No translations found.</p>
             )}

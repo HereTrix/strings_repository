@@ -1,572 +1,753 @@
 Subtag: aa
 Description: Afar
+Flag: et
 %%
 Subtag: ab
 Description: Abkhazian
+Flag: ge
 %%
 Subtag: ae
 Description: Avestan
 %%
 Subtag: af
 Description: Afrikaans
+Flag: za
 %%
 Subtag: ak
 Description: Akan
+Flag: gh
 %%
 Subtag: am
 Description: Amharic
+Flag: et
 %%
 Subtag: an
 Description: Aragonese
+Flag: es
 %%
 Subtag: ar
 Description: Arabic
+Flag: sa
 %%
 Subtag: as
 Description: Assamese
+Flag: in
 %%
 Subtag: av
 Description: Avaric
+Flag: ru
 %%
 Subtag: ay
 Description: Aymara
+Flag: bo
 %%
 Subtag: az
 Description: Azerbaijani
+Flag: az
 %%
 Subtag: ba
 Description: Bashkir
+Flag: ru
 %%
 Subtag: be
 Description: Belarusian
+Flag: by
 %%
 Subtag: bg
 Description: Bulgarian
+Flag: bg
 %%
 Subtag: bh
 Description: Bihari languages
 %%
 Subtag: bi
 Description: Bislama
+Flag: vu
 %%
 Subtag: bm
 Description: Bambara
+Flag: ml
 %%
 Subtag: bn
 Description: Bengali, Bangla
+Flag: bd
 %%
 Subtag: bo
 Description: Tibetan
+Flag: cn
 %%
 Subtag: br
 Description: Breton
+Flag: fr
 %%
 Subtag: bs
 Description: Bosnian
+Flag: ba
 %%
 Subtag: ca
 Description: Catalan, Valencian
+Flag: es
 %%
 Subtag: ce
 Description: Chechen
+Flag: ru
 %%
 Subtag: ch
 Description: Chamorro
+Flag: gu
 %%
 Subtag: co
 Description: Corsican
+Flag: fr
 %%
 Subtag: cr
 Description: Cree
+Flag: ca
 %%
 Subtag: cs
 Description: Czech
+Flag: cz
 %%
 Subtag: cu
 Description: Church Slavic, Church Slavonic, Old Bulgarian, Old Church Slavonic, Old Slavonic
+Flag: bg
 %%
 Subtag: cv
 Description: Chuvash
+Flag: ru
 %%
 Subtag: cy
 Description: Welsh
+Flag: gb
 %%
 Subtag: da
 Description: Danish
+Flag: dk
 %%
 Subtag: de
 Description: German
+Flag: de
 %%
 Subtag: dv
 Description: Dhivehi, Divehi, Maldivian
+Flag: mv
 %%
 Subtag: dz
 Description: Dzongkha
+Flag: bt
 %%
 Subtag: ee
 Description: Ewe
+Flag: gh
 %%
 Subtag: el
 Description: Modern Greek (1453-)
+Flag: gr
 %%
 Subtag: en
 Description: English
+Flag: gb
 %%
 Subtag: eo
 Description: Esperanto
+Flag: eu
 %%
 Subtag: es
 Description: Spanish, Castilian
+Flag: es
 %%
 Subtag: et
 Description: Estonian
+Flag: ee
 %%
 Subtag: eu
 Description: Basque
+Flag: es
 %%
 Subtag: fa
 Description: Persian
+Flag: ir
 %%
 Subtag: ff
 Description: Fulah
+Flag: gn
 %%
 Subtag: fi
 Description: Finnish
+Flag: fi
 %%
 Subtag: fj
 Description: Fijian
+Flag: fj
 %%
 Subtag: fo
 Description: Faroese
+Flag: fo
 %%
 Subtag: fr
 Description: French
+Flag: fr
 %%
 Subtag: fy
 Description: Western Frisian
+Flag: nl
 %%
 Subtag: ga
 Description: Irish
+Flag: ie
 %%
 Subtag: gd
 Description: Scottish Gaelic, Gaelic
+Flag: gb
 %%
 Subtag: gl
 Description: Galician
+Flag: es
 %%
 Subtag: gn
 Description: Guarani
+Flag: py
 %%
 Subtag: gu
 Description: Gujarati
+Flag: in
 %%
 Subtag: gv
 Description: Manx
+Flag: im
 %%
 Subtag: ha
 Description: Hausa
+Flag: ng
 %%
 Subtag: he
 Description: Hebrew
+Flag: il
 %%
 Subtag: hi
 Description: Hindi
+Flag: in
 %%
 Subtag: ho
 Description: Hiri Motu
+Flag: pg
 %%
 Subtag: hr
 Description: Croatian
+Flag: hr
 %%
 Subtag: ht
 Description: Haitian, Haitian Creole
+Flag: ht
 %%
 Subtag: hu
 Description: Hungarian
+Flag: hu
 %%
 Subtag: hy
 Description: Armenian
+Flag: am
 %%
 Subtag: hz
 Description: Herero
+Flag: na
 %%
 Subtag: ia
 Description: Interlingua (International Auxiliary Language Association)
 %%
 Subtag: id
 Description: Indonesian
+Flag: id
 %%
 Subtag: ie
 Description: Interlingue, Occidental
 %%
 Subtag: ig
 Description: Igbo
+Flag: ng
 %%
 Subtag: ii
 Description: Sichuan Yi, Nuosu
+Flag: cn
 %%
 Subtag: ik
 Description: Inupiaq
+Flag: us
 %%
 Subtag: in
 Description: Indonesian
 %%
 Subtag: io
 Description: Ido
+Flag: eu
 %%
 Subtag: is
 Description: Icelandic
+Flag: is
 %%
 Subtag: it
 Description: Italian
+Flag: it
 %%
 Subtag: iu
 Description: Inuktitut
+Flag: ca
 %%
 Subtag: iw
 Description: Hebrew
 %%
 Subtag: ja
 Description: Japanese
+Flag: jp
 %%
 Subtag: ji
 Description: Yiddish
 %%
 Subtag: jv
 Description: Javanese
+Flag: id
 %%
 Subtag: jw
 Description: Javanese
 %%
 Subtag: ka
 Description: Georgian
+Flag: ge
 %%
 Subtag: kg
 Description: Kongo
+Flag: cd
 %%
 Subtag: ki
 Description: Kikuyu, Gikuyu
+Flag: ke
 %%
 Subtag: kj
 Description: Kuanyama, Kwanyama
+Flag: na
 %%
 Subtag: kk
 Description: Kazakh
+Flag: kz
 %%
 Subtag: kl
 Description: Kalaallisut, Greenlandic
+Flag: gl
 %%
 Subtag: km
 Description: Khmer, Central Khmer
+Flag: kh
 %%
 Subtag: kn
 Description: Kannada
+Flag: in
 %%
 Subtag: ko
 Description: Korean
+Flag: kr
 %%
 Subtag: kr
 Description: Kanuri
+Flag: ng
 %%
 Subtag: ks
 Description: Kashmiri
+Flag: in
 %%
 Subtag: ku
 Description: Kurdish
+Flag: iq
 %%
 Subtag: kv
 Description: Komi
+Flag: ru
 %%
 Subtag: kw
 Description: Cornish
+Flag: gb
 %%
 Subtag: ky
 Description: Kirghiz, Kyrgyz
+Flag: kg
 %%
 Subtag: la
 Description: Latin
+Flag: va
 %%
 Subtag: lb
 Description: Luxembourgish, Letzeburgesch
+Flag: lu
 %%
 Subtag: lg
 Description: Ganda, Luganda
+Flag: ug
 %%
 Subtag: li
 Description: Limburgan, Limburger, Limburgish
+Flag: nl
 %%
 Subtag: ln
 Description: Lingala
+Flag: cd
 %%
 Subtag: lo
 Description: Lao
+Flag: la
 %%
 Subtag: lt
 Description: Lithuanian
+Flag: lt
 %%
 Subtag: lu
 Description: Luba-Katanga
+Flag: cd
 %%
 Subtag: lv
 Description: Latvian
+Flag: lv
 %%
 Subtag: mg
 Description: Malagasy
+Flag: mg
 %%
 Subtag: mh
 Description: Marshallese
+Flag: mh
 %%
 Subtag: mi
 Description: Maori
+Flag: nz
 %%
 Subtag: mk
 Description: Macedonian
+Flag: mk
 %%
 Subtag: ml
 Description: Malayalam
+Flag: in
 %%
 Subtag: mn
 Description: Mongolian
+Flag: mn
 %%
 Subtag: mo
 Description: Moldavian, Moldovan
+Flag: mo
 %%
 Subtag: mr
 Description: Marathi
+Flag: in
 %%
 Subtag: ms
 Description: Malay (macrolanguage)
+Flag: my
 %%
 Subtag: mt
 Description: Maltese
+Flag: mt
 %%
 Subtag: my
 Description: Burmese
+Flag: mm
 %%
 Subtag: na
 Description: Nauru
+Flag: nr
 %%
 Subtag: nb
 Description: Norwegian Bokmål
+Flag: no
 %%
 Subtag: nd
 Description: North Ndebele
+Flag: zw
 %%
 Subtag: ne
 Description: Nepali (macrolanguage)
+Flag: np
 %%
 Subtag: ng
 Description: Ndonga
+Flag: na
 %%
 Subtag: nl
 Description: Dutch, Flemish
+Flag: nl
 %%
 Subtag: nn
 Description: Norwegian Nynorsk
+Flag: no
 %%
 Subtag: no
 Description: Norwegian
+Flag: no
 %%
 Subtag: nr
 Description: South Ndebele
+Flag: za
 %%
 Subtag: nv
 Description: Navajo, Navaho
+Flag: us
 %%
 Subtag: ny
 Description: Nyanja, Chewa, Chichewa
+Flag: mw
 %%
 Subtag: oc
 Description: Occitan (post 1500)
+Flag: fr
 %%
 Subtag: oj
 Description: Ojibwa
+Flag: ca
 %%
 Subtag: om
 Description: Oromo
+Flag: et
 %%
 Subtag: or
 Description: Oriya (macrolanguage), Odia (macrolanguage)
+Flag: in
 %%
 Subtag: os
 Description: Ossetian, Ossetic
+Flag: ge
 %%
 Subtag: pa
 Description: Panjabi, Punjabi
+Flag: in
 %%
 Subtag: pi
 Description: Pali
+Flag: in
 %%
 Subtag: pl
 Description: Polish
+Flag: pl
 %%
 Subtag: ps
 Description: Pushto, Pashto
+Flag: af
 %%
 Subtag: pt
 Description: Portuguese
+Flag: pt
 %%
 Subtag: qu
 Description: Quechua
+Flag: pe
 %%
 Subtag: rm
 Description: Romansh
+Flag: ch
 %%
 Subtag: rn
 Description: Rundi
+Flag: bi
 %%
 Subtag: ro
 Description: Romanian, Moldavian, Moldovan
+Flag: ro
 %%
 Subtag: ru
 Description: Russian
+Flag: ru
 %%
 Subtag: rw
 Description: Kinyarwanda
+Flag: rw
 %%
 Subtag: sa
 Description: Sanskrit
+Flag: in
 %%
 Subtag: sc
 Description: Sardinian
+Flag: it
 %%
 Subtag: sd
 Description: Sindhi
+Flag: pk
 %%
 Subtag: se
 Description: Northern Sami
+Flag: no
 %%
 Subtag: sg
 Description: Sango
+Flag: cf
 %%
 Subtag: sh
 Description: Serbo-Croatian
 %%
 Subtag: si
 Description: Sinhala, Sinhalese
+Flag: lk
 %%
 Subtag: sk
 Description: Slovak
+Flag: sk
 %%
 Subtag: sl
 Description: Slovenian
+Flag: si
 %%
 Subtag: sm
 Description: Samoan
+Flag: ws
 %%
 Subtag: sn
 Description: Shona
+Flag: zw
 %%
 Subtag: so
 Description: Somali
+Flag: so
 %%
 Subtag: sq
 Description: Albanian
+Flag: al
 %%
 Subtag: sr
 Description: Serbian
+Flag: rs
 %%
 Subtag: ss
 Description: Swati
+Flag: sz
 %%
 Subtag: st
 Description: Southern Sotho
+Flag: ls
 %%
 Subtag: su
 Description: Sundanese
+Flag: id
 %%
 Subtag: sv
 Description: Swedish
+Flag: se
 %%
 Subtag: sw
 Description: Swahili (macrolanguage)
+Flag: tz
 %%
 Subtag: ta
 Description: Tamil
+Flag: in
 %%
 Subtag: te
 Description: Telugu
+Flag: in
 %%
 Subtag: tg
 Description: Tajik
+Flag: tj
 %%
 Subtag: th
 Description: Thai
+Flag: th
 %%
 Subtag: ti
 Description: Tigrinya
+Flag: et
 %%
 Subtag: tk
 Description: Turkmen
+Flag: tm
 %%
 Subtag: tl
 Description: Tagalog
+Flag: ph
 %%
 Subtag: tn
 Description: Tswana
+Flag: bw
 %%
 Subtag: to
 Description: Tonga (Tonga Islands)
+Flag: to
 %%
 Subtag: tr
 Description: Turkish
+Flag: tr
 %%
 Subtag: ts
 Description: Tsonga
+Flag: za
 %%
 Subtag: tt
 Description: Tatar
+Flag: ru
 %%
 Subtag: tw
 Description: Twi
+Flag: gh
 %%
 Subtag: ty
 Description: Tahitian
+Flag: pf
 %%
 Subtag: ug
 Description: Uighur, Uyghur
+Flag: cn
 %%
 Subtag: uk
 Description: Ukrainian
+Flag: ua
 %%
 Subtag: ur
 Description: Urdu
+Flag: pk
 %%
 Subtag: uz
 Description: Uzbek
+Flag: uz
 %%
 Subtag: ve
 Description: Venda
+Flag: za
 %%
 Subtag: vi
 Description: Vietnamese
+Flag: vn
 %%
 Subtag: vo
 Description: Volapük
+Flag: eu
 %%
 Subtag: wa
 Description: Walloon
+Flag: be
 %%
 Subtag: wo
 Description: Wolof
+Flag: sn
 %%
 Subtag: xh
 Description: Xhosa
+Flag: za
 %%
 Subtag: yi
 Description: Yiddish
+Flag: il
 %%
 Subtag: yo
 Description: Yoruba
+Flag: ng
 %%
 Subtag: za
 Description: Zhuang, Chuang
+Flag: cn
 %%
 Subtag: zh
 Description: Chinese
+Flag: cn
 %%
 Subtag: zu
 Description: Zulu
+Flag: za
 %%
 Subtag: aaa
 Description: Ghotuo
@@ -24636,4 +24817,5 @@ Description: Zaza, Dimili, Dimli (macrolanguage), Kirdki, Kirmanjki (macrolangua
 %%
 Subtag: zzj
 Description: Zuojiang Zhuang
+%%
 %%

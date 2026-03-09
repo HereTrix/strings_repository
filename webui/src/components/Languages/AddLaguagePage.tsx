@@ -55,9 +55,10 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
     }
 
     useEffect(() => {
-        fetch()
-    }, [])
-
+        if (show) {
+            fetch()
+        }
+    }, [show])
 
     return (
         <Modal show={show} onHide={onHide}>
@@ -78,7 +79,7 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
                             var language = item as Language
                             return (
                                 <Stack direction="horizontal" gap={3}>
-                                    <OptionalImage src={`/static/flags/${language.code.toLocaleLowerCase()}.png`} alt={language.code.toUpperCase()} />
+                                    <OptionalImage src={language.img} alt={language.code.toUpperCase()} width={50} height={38} />
                                     <label className="align-items-center display-linebreak">{language.name}</label>
                                 </Stack>
                             )

@@ -117,8 +117,11 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
                         return (
                             <Stack direction="horizontal" gap={3}>
                                 <OptionalImage
-                                    src={`/static/flags/${language.code.toLocaleLowerCase()}.png`}
-                                    alt={language.code} />
+                                    src={language.img}
+                                    alt={language.code}
+                                    width={50}
+                                    height={38}
+                                />
                                 <label className="align-items-center">{language.name}</label>
 
                             </Stack>

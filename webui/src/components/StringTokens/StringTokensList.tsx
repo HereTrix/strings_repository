@@ -1,8 +1,8 @@
 import { FC, useCallback, useEffect, useState } from "react"
-import StringToken, { getStatusName, getStatusVariant, STATUS_OPTIONS } from "../model/StringToken"
+import StringToken, { getStatusVariant, STATUS_OPTIONS } from "../model/StringToken"
 import PaginatedResponse from "../model/PaginatedResponse"
 import Project from "../model/Project"
-import { Badge, Button, ButtonGroup, Collapse, Container, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
+import { Badge, Button, Card, Collapse, Container, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
 import AddTokenPage from "./AddTokenPage"
 import SearchBar from "../UI/SearchBar"
@@ -39,30 +39,6 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, sele
             <Container>
                 <Stack direction="horizontal" gap={4} onClick={() => setOpen(!open)}>
                     <span>{token.token}</span>
-                    <Dropdown onClick={(e) => e.stopPropagation()}>
-                        <Dropdown.Toggle
-                            variant={getStatusVariant(token.status)}
-                            size="sm"
-                            className="text-capitalize"
-                        >
-                            {token.status}
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu>
-                            {STATUS_OPTIONS.map(status => (
-                                <Dropdown.Item
-                                    key={status}
-                                    active={false}
-                                    className="text-capitalize"
-                                    onClick={() => onStatusChange(status)}
-                                >
-                                    <Badge bg={getStatusVariant(status)} className="me-2">
-                                        {status}
-                                    </Badge>
-                                    {status}
-                                </Dropdown.Item>
-                            ))}
-                        </Dropdown.Menu>
-                    </Dropdown>
                     {token.tags &&
                         <TagsContainer
                             tags={token.tags}
@@ -70,6 +46,30 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, sele
                             onTagClick={onTagClick}
                         />}
                     <Stack direction="horizontal" gap={3}>
+                        <Dropdown onClick={(e) => e.stopPropagation()}>
+                            <Dropdown.Toggle
+                                variant={getStatusVariant(token.status)}
+                                size="sm"
+                                className="text-capitalize"
+                            >
+                                {token.status}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                {STATUS_OPTIONS.map(status => (
+                                    <Dropdown.Item
+                                        key={status}
+                                        active={false}
+                                        className="text-capitalize"
+                                        onClick={() => onStatusChange(status)}
+                                    >
+                                        <Badge bg={getStatusVariant(status)} className="me-2">
+                                            {status}
+                                        </Badge>
+                                        {status}
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
                         <Button
                             onClick={(e) => { e.stopPropagation(); onAddTag() }}
                             className="text-nowrap"
@@ -103,6 +103,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const [selectedToken, setSelectedToken] = useState<StringToken>()
     const [error, setError] = useState<string>()
     const [deletionItem, setDeletionItem] = useState<StringToken>()
+    const [total, setTotal] = useState<number>(0)
 
     const updateTokenInList = (id: string, changes: Partial<StringToken>) => {
         setTokens(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t))
@@ -132,6 +133,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
 
         if (result.value) {
             setHasMore(result.value.results.length >= limit)
+            setTotal(result.value.count)
             if (newOffset === 0) {
                 setTokens(result.value.results)
             } else {
@@ -266,27 +268,39 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
             </Stack>
 
             {tokens &&
-                <InfiniteScroll
-                    dataLength={tokens.length}
-                    next={() => fetchData(selectedTags, query, offset + limit, statusFilter)}
-                    hasMore={hasMore}
-                    loader={<p>Loading...</p>}
-                >
-                    <ListGroup>
-                        {tokens.map(token =>
-                            <StringTokenListItem
-                                key={token.id}
-                                token={token}
-                                project_id={project.id}
-                                selectedTags={selectedTags}
-                                onAddTag={() => setSelectedToken(token)}
-                                onDelete={() => setDeletionItem(token)}
-                                onTagClick={updateTagSelection}
-                                onStatusChange={(status) => updateTokenStatus(token, status)}
-                            />
-                        )}
-                    </ListGroup>
-                </InfiniteScroll>
+                <Card className="mt-3">
+                    <Card.Header className="d-flex justify-content-between align-items-center">
+                        <span className="fw-semibold">Localization keys</span>
+                        {tokens.length > 0 &&
+                            <Badge bg="secondary">
+                                {total} key{total !== 1 ? 's' : ''}
+                            </Badge>
+                        }
+                    </Card.Header>
+                    <Card.Body className="p-0">
+                        <InfiniteScroll
+                            dataLength={tokens.length}
+                            next={() => fetchData(selectedTags, query, offset + limit, statusFilter)}
+                            hasMore={hasMore}
+                            loader={<p>Loading...</p>}
+                        >
+                            <ListGroup>
+                                {tokens.map(token =>
+                                    <StringTokenListItem
+                                        key={token.id}
+                                        token={token}
+                                        project_id={project.id}
+                                        selectedTags={selectedTags}
+                                        onAddTag={() => setSelectedToken(token)}
+                                        onDelete={() => setDeletionItem(token)}
+                                        onTagClick={updateTagSelection}
+                                        onStatusChange={(status) => updateTokenStatus(token, status)}
+                                    />
+                                )}
+                            </ListGroup>
+                        </InfiniteScroll>
+                    </Card.Body>
+                </Card>
             }
 
             {showDialog &&

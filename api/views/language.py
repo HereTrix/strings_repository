@@ -27,7 +27,9 @@ class LanguageAPI(generics.GenericAPIView):
 
         try:
             project = Project.objects.get(
-                pk=project_id, roles__user=user, roles__role__in=ProjectRole.change_language_roles)
+                pk=project_id, roles__user=user,
+                roles__role__in=ProjectRole.change_language_roles
+            )
         except Project.DoesNotExist:
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
         except exception.ValidationError as e:

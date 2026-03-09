@@ -6,6 +6,7 @@ from datetime import datetime
 
 from api.models import HistoryRecord, Language, Tag, Translation, StringToken, Project, ProjectRole
 from api.serializers import StringTokenSerializer, TranslationSerializer
+from api.languages.langcoder import Langcoder
 
 
 def create_history_record(project, token_name, record_status, user):
@@ -297,8 +298,12 @@ class StringTokenTranslationsAPI(generics.GenericAPIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         data = [
-            {'code': lang.code, 'translation': self.get_or_empty(
-                token.translation, lang)}
+            {
+                'code': lang.code,
+                'translation': self.get_or_empty(
+                    token.translation, lang),
+                'img': Langcoder.flag(lang.code)
+            }
             for lang in token.project.languages.all()
         ]
 
