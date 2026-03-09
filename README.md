@@ -1,75 +1,100 @@
 ![build status](https://github.com/HereTrix/strings_repository/actions/workflows/main-build.yml/badge.svg)
 
-StringsRepository
-========
+# StringsRepository
 
-**StringsRepository** is a self-hosted web-service that simplifies software localization management between different platforms. 
+**StringsRepository** is a self-hosted localization management service designed to simplify translation workflows for software projects.
 
-Overview
---------
+It provides a centralized place to manage translation keys, collaborate with translators, and synchronize translations with applications using a CLI tool or API.
 
-**StringsRepository** provides the following features:
+## Features
 
-* Multiple project support
-* User roles for each project
-* Custom tags for translations separation
-* Export translations to file
-* Full history of changes
-* Import translations from file
-* [Figma plugin](https://github.com/HereTrix/strings_repository-figma-plugin) support
-* [CLI application](https://github.com/HereTrix/strings_repository_cli) for CI/CD purposes
+* **Multiple project support** - manage translations for multiple projects independently
+* **User roles & access control** - per-project roles with an invitation system for team collaboration
+* **Multi-language support** - configure and manage any number of target languages per project
+* **Translation management** - create, update, and track translation status for each string key
+* **Custom tags** - organize and group translations using custom tags
+* **Import & export** - import/export translations in multiple supported formats
+* **Full change history** - track all translation changes with an exportable history log
+* **Figma plugin** - integrate design workflows
+  https://github.com/HereTrix/strings_repository-figma-plugin
+* **CLI application** - integrate localization into CI/CD pipelines
+  https://github.com/HereTrix/strings_repository_cli
 
-Configuration
---------
+## Tech Stack
 
-Befor installation please ensure all OS variables are set.
+| Layer          | Technology                                                                  |
+| -------------- | --------------------------------------------------------------------------- |
+| Backend        | Python / Django REST Framework                                              |
+| Authentication | Knox token-based authentication                                             |
+| Frontend       | React (TypeScript) with React Router                                        |
+| Database       | SQLite (default) or any Django-supported database (PostgreSQL, MySQL, etc.) |
+| Deployment     | Docker                                                                      |
 
-List of variables:
-- `APP_SECRET_KEY` - secret key (any random string)
-- `ALLOWED_HOSTS` - allowed hosts separated by comma or empty to allow all
-- `DB_ENGINE` - engine name (mysql, postgresql, sqlite3, [etc.](https://docs.djangoproject.com/en/5.0/ref/databases/)
-- `DB_NAME` - database name
-- `DB_HOST` - database host (can be skipped for sqlite3)
-- `DB_PORT` - database port (can be skipped for sqlite3)
-- `DB_USER` - database user (can be skipped for sqlite3)
-- `DB_PASSWORD` - password for database (can be skipped for sqlite3)
-- `DJANGO_SUPERUSER_USERNAME` - the superuser login name
-- `DJANGO_SUPERUSER_EMAIL` - the superuser email
-- `DJANGO_SUPERUSER_PASSWORD` - the superuser password
+## Configuration
 
+Before installation, configure the required environment variables.
 
-Installation
---------
+| Variable                    | Description                                              |
+| --------------------------- | -------------------------------------------------------- |
+| `APP_SECRET_KEY`            | Django secret key (any random string)                    |
+| `ALLOWED_HOSTS`             | Allowed hosts separated by commas, or empty to allow all |
+| `DB_ENGINE`                 | Database engine (`mysql`, `postgresql`, `sqlite3`, etc.) |
+| `DB_NAME`                   | Database name                                            |
+| `DB_HOST`                   | Database host (optional for SQLite)                      |
+| `DB_PORT`                   | Database port (optional for SQLite)                      |
+| `DB_USER`                   | Database user (optional for SQLite)                      |
+| `DB_PASSWORD`               | Database password (optional for SQLite)                  |
+| `DJANGO_SUPERUSER_USERNAME` | Admin username                                           |
+| `DJANGO_SUPERUSER_EMAIL`    | Admin email                                              |
+| `DJANGO_SUPERUSER_PASSWORD` | Admin password                                           |
+
+For supported database engines see:
+https://docs.djangoproject.com/en/5.0/ref/databases/
+
+## Installation
 
 ### Docker
 
-`docker pull ghcr.io/heretrix/strings_repository:main`
+```bash
+docker pull ghcr.io/heretrix/strings_repository:main
+```
+
+Then run the container with the required environment variables configured.
 
 ### Manual installation
 
-The application require `npm` to be installed.
+Requires **Node.js (npm)** and **Python (pip)**.
 
-The application uses SQLite storage by default. If you want to use own database update `DATABASES` section in `settings.py`
+SQLite is used by default.
 
-```
-cd ./webui
-npm i
+```bash
+cd webui
+npm install
 npm run build
+
 cd ..
 pip install -r requirements.txt
+
 python manage.py makemigrations api
 python manage.py migrate
+python manage.py createsuperuser
 ```
 
-Do not forget to create superuser by `python manage.py createsuperuser`
+## Usage
 
-Docker file will be added in future updates
+Detailed usage instructions are available in the project wiki:
 
-How to use
-=======
-You can find instructions on [wiki page](https://github.com/HereTrix/strings_repository/wiki)
+https://github.com/HereTrix/strings_repository/wiki
 
-License
--------
+## Related Tools
 
-**StringsRepository** is released under the MIT license. See `LICENSE` for details.
+* CLI client
+  https://github.com/HereTrix/strings_repository_cli
+
+* Figma plugin
+  https://github.com/HereTrix/strings_repository-figma-plugin
+
+## License
+
+StringsRepository is released under the **MIT License**.
+See the `LICENSE` file for details.
