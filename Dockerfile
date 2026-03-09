@@ -11,7 +11,7 @@ RUN npm run build
 # ──────────────────────────────────────────────
 # Stage 2: Backend / final image
 # ──────────────────────────────────────────────
-FROM python:3.14-alpine AS backend
+FROM python:3.14.3-alpine AS backend
 WORKDIR /app
 
 # Install Python dependencies
