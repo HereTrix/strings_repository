@@ -25,7 +25,7 @@ COPY --chown=1000:1000 . /app/
 COPY --from=frontend --chown=1000:1000 /app/webui/static/ /app/webui/static/
 COPY --from=frontend --chown=1000:1000 /app/webui/templates/ /app/webui/templates/
 
-RUN mkdir -p /app/static && chown 1000:1000 /app/static
+RUN mkdir -p /app/static && chown -R 1000:1000 /app
 
 USER 1000:1000
 
