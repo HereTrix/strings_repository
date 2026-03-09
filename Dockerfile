@@ -12,6 +12,7 @@ RUN npm run build
 # Stage 2: Backend / final image
 # ──────────────────────────────────────────────
 FROM python:3.14.3-alpine AS backend
+RUN apk upgrade --no-cache
 WORKDIR /app
 
 # Install Python dependencies
