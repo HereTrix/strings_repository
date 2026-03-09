@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import LogoutButton from './Logout';
 import { Container, Nav, Navbar, Image, Dropdown } from 'react-bootstrap';
 import { APIMethod, http } from './Utils/network';
@@ -55,7 +55,7 @@ const NavBar = () => {
                     </Nav>
                     <Nav>
                         <Dropdown>
-                            <Dropdown.Toggle split variant="info" className='bg-transparent border-0'>
+                            <Dropdown.Toggle variant="info" className='bg-transparent border-0 p-0 d-flex align-items-end'>
                                 {profile &&
                                     <OptionalImage src={''} alt={userAlt()} />
                                 }

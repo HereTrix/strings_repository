@@ -44,13 +44,12 @@ const LanguageTranslationsPage = () => {
     }
 
     const language = project?.languages.find(l => l.code.toLowerCase() === code?.toLowerCase())
-
     return (
         <Container>
-            <Container className="d-flex justify-content-between align-items-start">
+            <Container className="d-flex my-3 justify-content-between align-items-start">
                 <Button onClick={backToProject}>Back to project</Button>
                 <Stack direction="horizontal" gap={1} className="my-1">
-                    <OptionalImage src={language.img} alt={code ?? ""} width={32} height={24} />
+                    {language && <OptionalImage src={language.img} alt={code ?? ""} width={32} height={24} />}
                     <label>This is translation for {code}</label>
                 </Stack>
                 {project && <Button onClick={onExport}>Export</Button>}
