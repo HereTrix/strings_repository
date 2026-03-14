@@ -7,7 +7,7 @@ from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
 from api.models import PluralTranslation
 
-PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER
+PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
 
 class MOFileWriter(TranslationFileWriter):

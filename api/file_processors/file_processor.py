@@ -1,9 +1,11 @@
 from api.file_processors.android_resources import AndroidResourceFileWriter, AndroidResourceFileReader
+from api.file_processors.common_json_file import CommonJSONFileReader
 from api.file_processors.dotnet_file import DotNetFileReader, DotNetFileWriter
 from api.file_processors.excel_file import ExcelFileWriter, ExcelSingleSheetFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.file_processors.import_file_type import ImportFile
-from api.file_processors.json_file import JsonFileReader, JsonFileWriter
+from api.file_processors.json_file import JsonFileWriter
+from api.file_processors.json_dict_file import JsonDictFileWriter
 from api.file_processors.mo_file import MOFileReader, MOFileWriter
 from api.file_processors.po_file import POFileReader, POFileWriter
 from api.file_processors.properties_file import PropertiesFileReader, PropertiesFileWriter
@@ -19,6 +21,7 @@ WRITER_MAP = {
     ExportFile.excel: ExcelFileWriter,
     ExportFile.excel_single: ExcelSingleSheetFileWriter,
     ExportFile.json: JsonFileWriter,
+    ExportFile.json_dict: JsonDictFileWriter,
     ExportFile.resx: DotNetFileWriter,
     ExportFile.properties: PropertiesFileWriter,
     ExportFile.po: POFileWriter,
@@ -50,7 +53,7 @@ READER_MAP = {
     ImportFile.strings.name: AppleStringsFileReader,
     ImportFile.xcstrings.name: XCStringsFileReader,
     ImportFile.xml.name: AndroidResourceFileReader,
-    ImportFile.json.name: JsonFileReader,
+    ImportFile.json.name: CommonJSONFileReader,
     ImportFile.resx.name: DotNetFileReader,
     ImportFile.properties.name: PropertiesFileReader,
     ImportFile.po.name: POFileReader,

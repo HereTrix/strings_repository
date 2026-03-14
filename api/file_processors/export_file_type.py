@@ -8,6 +8,7 @@ class ExportFile(enum.Enum):
     excel = 'excel'
     excel_single = 'xlsx'
     json = 'json'
+    json_dict = 'json_dict'
     resx = 'resx'
     properties = 'properties'
     po = 'po'
@@ -26,6 +27,8 @@ class ExportFile(enum.Enum):
             case ExportFile.excel_single:
                 return '.xlsx'
             case ExportFile.json:
+                return '.json'
+            case ExportFile.json_dict:
                 return '.json'
             case ExportFile.resx:
                 return '.resx'
@@ -50,6 +53,8 @@ class ExportFile(enum.Enum):
                 return 'Excel with single sheet'
             case ExportFile.json:
                 return 'Key and Value (i18next)'
+            case ExportFile.json_dict:
+                return 'Key and Dictionary'
             case ExportFile.resx:
                 return 'ASP.NET'
             case ExportFile.properties:
