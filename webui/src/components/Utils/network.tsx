@@ -63,7 +63,7 @@ export async function download(request: APIRequest): Promise<APIResponse<File>> 
         const disposition = response.headers.get('content-disposition')
         var filename
         if (disposition) {
-            filename = disposition.split('filename=')[1]
+            filename = disposition.split('filename=')[1]?.replace(/"/g, '').trim()
         } else {
             filename = ''
         }
