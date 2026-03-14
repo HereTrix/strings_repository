@@ -5,6 +5,7 @@ from api.views.history import ProjectHistoryAPI, ProjectHistoryExportAPI
 from api.views.import_api import ImportAPI
 from api.views.language import LanguageAPI
 from api.views.plugin import FetchLanguagesAPI, PluginExportAPI, PullAPI, PushAPI
+from api.views.plural_translation import PluralTranslationAPI
 from api.views.project import *
 from api.views.roles import ProjectAccessTokenAPI, ProjectInvitationAPI, ProjectParticipantsAPI, RolesAPI
 from api.views.translation import StringTokenAPI, StringTokenStatusAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI, TranslationStatusAPI
@@ -48,6 +49,8 @@ urlpatterns = [
     path('export', ExportAPI.as_view()),
     path('import', ImportAPI.as_view()),
     path('supported_formats', ExportFormatsAPI.as_view()),
+    # plural translation
+    path('plural', PluralTranslationAPI.as_view()),
     # plugin
     path('plugin/export', PluginExportAPI.as_view()),
     path('plugin/pull', PullAPI.as_view()),

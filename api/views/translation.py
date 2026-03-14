@@ -1,4 +1,4 @@
-from api.models import StringToken, ProjectRole
+from api.models import PluralTranslation, StringToken, ProjectRole
 from django.http import JsonResponse
 import django.core.exceptions as exception
 from rest_framework import generics, permissions, status
@@ -138,7 +138,7 @@ class TranslationAPI(generics.GenericAPIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            Translation.create_or_update_translation(
+            translation = Translation.create_or_update_translation(
                 user=user,
                 token=token,
                 code=code,
@@ -150,7 +150,16 @@ class TranslationAPI(generics.GenericAPIView):
                 'error': 'Language not found'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        return JsonResponse({}, status=status.HTTP_200_OK)
+        return JsonResponse({
+            'code': code,
+            'img': Langcoder.flag(code),
+            'translation': translation.translation if translation else '',
+            'status': translation.status if translation else Translation.Status.new,
+            'plural_forms': {
+                pf.plural_form: pf.value
+                for pf in translation.plural_forms.all()
+            } if translation else {},
+        }, status=status.HTTP_200_OK)
 
 
 class TranslationStatusAPI(generics.GenericAPIView):
@@ -278,12 +287,6 @@ class StringTokenStatusAPI(generics.GenericAPIView):
 class StringTokenTranslationsAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_or_empty(self, translation, language):
-        try:
-            return translation.get(language=language).translation
-        except Translation.DoesNotExist:
-            return ''
-
     def get(self, request, pk):
         user = request.user
 
@@ -297,14 +300,18 @@ class StringTokenTranslationsAPI(generics.GenericAPIView):
                 'error': 'Token not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        data = [
-            {
+        data = []
+        for lang in token.project.languages.all():
+            translation = token.translation.filter(language=lang).first()
+            data.append({
                 'code': lang.code,
-                'translation': self.get_or_empty(
-                    token.translation, lang),
-                'img': Langcoder.flag(lang.code)
-            }
-            for lang in token.project.languages.all()
-        ]
+                'img': Langcoder.flag(lang.code),
+                'translation': translation.translation if translation else '',
+                'status': translation.status if translation else Translation.Status.new,
+                'plural_forms': {
+                    pf.plural_form: pf.value
+                    for pf in translation.plural_forms.all()
+                } if translation else {},
+            })
 
         return JsonResponse(data, safe=False)

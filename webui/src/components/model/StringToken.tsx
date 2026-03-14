@@ -16,4 +16,12 @@ export const getStatusVariant = (status: string): string => {
     }
 }
 
+export const getStatusName = (status: string): string => {
+    switch (status) {
+        case 'active': return 'Active'
+        case 'deprecated': return 'Deprecated'
+        default: return 'Unknown'
+    }
+}
+
 export default StringToken

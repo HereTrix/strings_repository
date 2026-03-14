@@ -3,12 +3,17 @@ interface Translation {
     translation: string | undefined
 }
 
+export type PluralForms = Partial<Record<'zero' | 'one' | 'two' | 'few' | 'many' | 'other', string>>
+
 export interface TranslationModel {
     token: string
     translation: string | undefined
     tags: string[]
     status: string
+    plural_forms?: PluralForms
 }
+
+export const PLURAL_FORM_ORDER: Array<keyof PluralForms> = ['zero', 'one', 'two', 'few', 'many', 'other']
 
 // Status can be 'new' but it can not be set by the user, so it's not included in the options
 export const EDITABLE_STATUSES = ['in_review', 'approved', 'deprecated']

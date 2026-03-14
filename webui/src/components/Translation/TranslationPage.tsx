@@ -1,93 +1,14 @@
-import { ChangeEventHandler, FC, useCallback, useEffect, useState } from "react"
+import { FC, useCallback, useEffect, useState } from "react"
 import { APIMethod, http } from "../Utils/network"
-import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel } from "../model/Translation"
-import { Badge, Button, OverlayTrigger, Container, Dropdown, ListGroup, Row, Stack, Card } from "react-bootstrap"
+import Translation, { getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel } from "../model/Translation"
+import { Badge, Button, OverlayTrigger, Container, Dropdown, ListGroup, Stack, Card } from "react-bootstrap"
 import PaginatedResponse from "../model/PaginatedResponse"
 import SearchBar from "../UI/SearchBar"
-import TagsContainer from "../UI/TagsContainer"
 import ErrorAlert from "../UI/ErrorAlert"
 import InfiniteScroll from "react-infinite-scroll-component"
 import { Typeahead } from "react-bootstrap-typeahead"
 import HelpPopover from "../UI/HelpPopover"
-
-type TranslationListItemProps = {
-    translation: TranslationModel
-    selectedTags: string[]
-    onSave: (translation: Translation) => void
-    onStatusChange: (status: string) => void
-    onTagClick: (tag: string) => void
-}
-
-const TranslationListItem: FC<TranslationListItemProps> = ({ translation, selectedTags, onSave, onStatusChange, onTagClick }) => {
-    const [canSave, setCanSave] = useState<boolean>(false)
-    const [saveSuccess, setSaveSuccess] = useState<boolean>(false)
-    const [text, setText] = useState<string | undefined>(translation.translation)
-
-    // Sync text if translation prop changes externally (e.g. optimistic revert)
-    useEffect(() => {
-        setText(translation.translation)
-    }, [translation.translation])
-
-    const onTranslationChange: ChangeEventHandler<HTMLTextAreaElement> = (event) => {
-        setText(event.target.value)
-        setCanSave(true)
-        setSaveSuccess(false)
-    }
-
-    const save = () => {
-        setCanSave(false)
-        setSaveSuccess(true)
-        const newTranslation: Translation = { token: translation.token, translation: text }
-        onSave(newTranslation)
-    }
-
-    return (
-        <ListGroup.Item>
-            <Stack>
-                <Stack direction="horizontal" gap={4}>
-                    <span>{translation.token}</span>
-                    {translation.tags &&
-                        <TagsContainer
-                            tags={translation.tags}
-                            selectedTags={selectedTags}
-                            onTagClick={onTagClick}
-                        />}
-                    <Dropdown>
-                        <Dropdown.Toggle variant={getStatusVariant(translation.status)} size="sm">
-                            {getStatusName(translation.status)}
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu>
-                            {EDITABLE_STATUSES.map(status => (
-                                <Dropdown.Item
-                                    key={status}
-                                    active={false}
-                                    onClick={() => onStatusChange(status)}
-                                >
-                                    <Badge bg={getStatusVariant(status)} className="me-2">
-                                        {getStatusName(status)}
-                                    </Badge>
-                                    {getStatusName(status)}
-                                </Dropdown.Item>
-                            ))}
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </Stack>
-                <Row>
-                    <textarea
-                        rows={3}
-                        style={{ resize: 'vertical' }}
-                        value={text ?? ''}
-                        onChange={onTranslationChange}
-                    />
-                    {canSave && <Button onClick={save} className="my-1">Save</Button>}
-                    {!canSave && saveSuccess && (
-                        <span className="text-success my-1 small">✓ Saved</span>
-                    )}
-                </Row>
-            </Stack>
-        </ListGroup.Item>
-    )
-}
+import TranslationListItem from "./TranslationListItem"
 
 type TranslationPageProps = {
     project_id: string
@@ -281,9 +202,12 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
                                         key={translation.token}
                                         translation={translation}
                                         selectedTags={filteredTags}
+                                        project_id={project_id}
+                                        code={code}
                                         onSave={saveTranslation}
                                         onStatusChange={(status) => updateTranslationStatus(translation, status)}
                                         onTagClick={updateTagSelection}
+                                        onError={msg => setError(msg)}
                                     />
                                 ))}
                             </ListGroup>

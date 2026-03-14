@@ -115,6 +115,7 @@ class Translation(models.Model):
             )
 
             old_value = translation.translation
+            translation.status = Translation.Status.in_review
 
         except Translation.DoesNotExist:
             languages = Language.objects.filter(

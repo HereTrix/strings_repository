@@ -2,93 +2,23 @@ import { FC, useCallback, useEffect, useState } from "react"
 import StringToken, { getStatusVariant, STATUS_OPTIONS } from "../model/StringToken"
 import PaginatedResponse from "../model/PaginatedResponse"
 import Project from "../model/Project"
-import { Badge, Button, Card, Collapse, Container, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
+import { Badge, Button, Card, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
 import AddTokenPage from "./AddTokenPage"
 import SearchBar from "../UI/SearchBar"
 import AddTokenTagPage from "./AddTokenTagPage"
-import TokenTranslationsPage from "./TokenTranslationsPage"
 import ErrorAlert from "../UI/ErrorAlert"
-import TagsContainer from "../UI/TagsContainer"
 import InfiniteScroll from "react-infinite-scroll-component"
 import ConfirmationAlert from "../UI/ConfirmationAlert"
 import HelpPopover from "../UI/HelpPopover"
 import { Typeahead } from "react-bootstrap-typeahead"
+import StringTokenListItem from "./StringTokenListItem"
 
 type StringTokenProps = {
     project: Project
 }
 
-type StringTokenItemProps = {
-    project_id: number
-    token: StringToken
-    selectedTags: string[]
-    onAddTag: () => void
-    onDelete: () => void
-    onTagClick: (tag: string) => void
-    onStatusChange: (status: string) => void
-}
-
 type StatusFilter = 'all' | string
-
-const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, selectedTags, onAddTag, onDelete, onTagClick, onStatusChange }) => {
-    const [open, setOpen] = useState<boolean>(false)
-
-    return (
-        <ListGroup.Item className="d-flex justify-content-between align-items-start">
-            <Container>
-                <Stack direction="horizontal" gap={4} onClick={() => setOpen(!open)}>
-                    <span>{token.token}</span>
-                    {token.tags &&
-                        <TagsContainer
-                            tags={token.tags}
-                            selectedTags={selectedTags}
-                            onTagClick={onTagClick}
-                        />}
-                    <Stack direction="horizontal" gap={3}>
-                        <Dropdown onClick={(e) => e.stopPropagation()}>
-                            <Dropdown.Toggle
-                                variant={getStatusVariant(token.status)}
-                                size="sm"
-                                className="text-capitalize"
-                            >
-                                {token.status}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                {STATUS_OPTIONS.map(status => (
-                                    <Dropdown.Item
-                                        key={status}
-                                        active={false}
-                                        className="text-capitalize"
-                                        onClick={() => onStatusChange(status)}
-                                    >
-                                        <Badge bg={getStatusVariant(status)} className="me-2">
-                                            {status}
-                                        </Badge>
-                                        {status}
-                                    </Dropdown.Item>
-                                ))}
-                            </Dropdown.Menu>
-                        </Dropdown>
-                        <Button
-                            onClick={(e) => { e.stopPropagation(); onAddTag() }}
-                            className="text-nowrap"
-                        >Edit tags</Button>
-                        <Button
-                            onClick={(e) => { e.stopPropagation(); onDelete() }}
-                            className="btn-danger"
-                        >Delete</Button>
-                    </Stack>
-                </Stack>
-                <Collapse in={open}>
-                    <div>
-                        <TokenTranslationsPage project_id={project_id} token={token} open={open} />
-                    </div>
-                </Collapse>
-            </Container>
-        </ListGroup.Item>
-    )
-}
 
 const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const limit = 20

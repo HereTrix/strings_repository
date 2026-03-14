@@ -129,6 +129,7 @@ class StringTokenModelSerializer(serializers.Serializer):
     comment = serializers.CharField()
     tags = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
+    plural_forms = serializers.SerializerMethodField()
 
     def _get_translation_obj(self, obj):
         code = self.context.get('code', '').upper()
@@ -144,6 +145,12 @@ class StringTokenModelSerializer(serializers.Serializer):
     def get_status(self, obj):
         t = self._get_translation_obj(obj)
         return t.status if t else Translation.Status.new
+
+    def get_plural_forms(self, obj):
+        t = self._get_translation_obj(obj)
+        if not t:
+            return {}
+        return {pf.plural_form: pf.value for pf in t.plural_forms.all()}
 
 
 class SimplifiedStringTokenSerializer(serializers.Serializer):
