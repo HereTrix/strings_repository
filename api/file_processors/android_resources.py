@@ -1,13 +1,15 @@
-import tempfile
 import re
-from xml.dom import minidom
 import zipfile
+from xml.dom import minidom
 
 from django.http import HttpResponse
 
 from api.file_processors.common import escape_quotes
 from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
+from api.models import PluralTranslation
+
+PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
 
 class AndroidResourceFileWriter:
@@ -28,25 +30,46 @@ class AndroidResourceFileWriter:
             if record.comment:
                 comment = root.createComment(record.comment)
                 xml.appendChild(comment)
-            item = root.createElement('string')
-            item.setAttribute('name', record.token)
-            text = escape_quotes(record.translation)
-            if record.translation:
-                res = re.search(
-                    r'</?\s*[a-z-][^>]*\s*>|(\&(?:[\w\d]+|#\d+|#x[a-f\d]+);)', record.translation)
-                if res:
-                    text = root.createCDATASection(text)
-                else:
-                    text = root.createTextNode(text)
-                item.appendChild(text)
-            xml.appendChild(item)
+
+            if record.plural_forms:
+                plurals_elem = root.createElement('plurals')
+                plurals_elem.setAttribute('name', record.token)
+
+                for form in PLURAL_FORM_ORDER:
+                    if form not in record.plural_forms:
+                        continue
+                    item = root.createElement('item')
+                    item.setAttribute('quantity', form)
+                    text = escape_quotes(record.plural_forms[form])
+                    res = re.search(
+                        r'</?\s*[a-z-][^>]*\s*>|(\&(?:[\w\d]+|#\d+|#x[a-f\d]+);)',
+                        record.plural_forms[form]
+                    )
+                    if res:
+                        item.appendChild(root.createCDATASection(text))
+                    else:
+                        item.appendChild(root.createTextNode(text))
+                    plurals_elem.appendChild(item)
+
+                xml.appendChild(plurals_elem)
+            else:
+                item = root.createElement('string')
+                item.setAttribute('name', record.token)
+                text = escape_quotes(record.translation)
+                if record.translation:
+                    res = re.search(
+                        r'</?\s*[a-z-][^>]*\s*>|(\&(?:[\w\d]+|#\d+|#x[a-f\d]+);)',
+                        record.translation
+                    )
+                    if res:
+                        text = root.createCDATASection(text)
+                    else:
+                        text = root.createTextNode(text)
+                    item.appendChild(text)
+                xml.appendChild(item)
 
         data = root.toprettyxml()
-
-        self.zip_file.writestr(
-            self.path(code=code),
-            data
-        )
+        self.zip_file.writestr(self.path(code=code), data)
 
     def http_response(self):
         self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
@@ -59,20 +82,34 @@ class AndroidResourceFileReader:
     def read(self, file):
         file.seek(0)
         dom = minidom.parse(file=file)
-        strings = dom.getElementsByTagName('string')
         result = []
-        for node in strings:
+
+        for node in dom.getElementsByTagName('string'):
             token = node.getAttribute('name')
             translation = ''
             if node.childNodes:
                 text_node = node.childNodes[0]
-                if text_node.nodeType == node.TEXT_NODE or text_node.nodeType == node.CDATA_SECTION_NODE:
+                if text_node.nodeType in (node.TEXT_NODE, node.CDATA_SECTION_NODE):
                     translation = text_node.data
+            result.append(TranslationModel.create(
+                token=token, translation=translation))
 
-            model = TranslationModel.create(
+        for plurals_node in dom.getElementsByTagName('plurals'):
+            token = plurals_node.getAttribute('name')
+            plural_forms = {}
+            for item in plurals_node.getElementsByTagName('item'):
+                quantity = item.getAttribute('quantity')
+                value = ''
+                if item.childNodes:
+                    text_node = item.childNodes[0]
+                    if text_node.nodeType in (item.TEXT_NODE, item.CDATA_SECTION_NODE):
+                        value = text_node.data
+                if quantity:
+                    plural_forms[quantity] = value
+            result.append(TranslationModel.create(
                 token=token,
-                translation=translation
-            )
-            result.append(model)
+                translation='',
+                plural_forms=plural_forms,
+            ))
 
         return result

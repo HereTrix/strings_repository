@@ -211,6 +211,10 @@ class PluralTranslation(models.Model):
         many = 'many'
         other = 'other'
 
+        @staticmethod
+        def PLURAL_FORM_ORDER():
+            return ['zero', 'one', 'two', 'few', 'many', 'other']
+
     translation = models.ForeignKey(
         Translation, on_delete=models.CASCADE, related_name='plural_forms'
     )

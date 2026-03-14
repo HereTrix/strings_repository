@@ -1,15 +1,17 @@
 class TranslationModel:
 
-    def create(token, translation, comment=None, tags=None, code=None):
+    def create(token, translation, comment=None, tags=None, code=None, plural_forms=None):
         model = TranslationModel()
         model.token = token
         model.translation = translation
         model.comment = comment
         model.tags = tags
         model.code = code
+        model.plural_forms = plural_forms or {}
         return model
 
     def __init__(self, token_model=None, code=None):
+        self.plural_forms = {}
         if token_model:
             self.token = token_model.token
             self.tags = [tag.tag for tag in token_model.tags.all()]
@@ -18,6 +20,10 @@ class TranslationModel:
                 language__code=code.upper()).first()
             if translation:
                 text = translation.translation
+                self.plural_forms = {
+                    pf.plural_form: pf.value
+                    for pf in translation.plural_forms.all()
+                }
             else:
                 text = ''
 

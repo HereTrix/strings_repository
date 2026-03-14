@@ -6,6 +6,29 @@ from django.http import HttpResponse
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
+from api.models import PluralTranslation
+
+PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
+
+
+def _plural_suffix(form):
+    return f'[{form}]'
+
+
+def _split_plural_key(token):
+    """Return (base_token, form) if token ends with a known plural suffix, else (token, None)."""
+    for form in PLURAL_FORM_ORDER:
+        if token.endswith(_plural_suffix(form)):
+            return token[:-len(_plural_suffix(form))], form
+    return token, None
+
+
+def _xml_escape(text):
+    return (text
+            .replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('"', '&quot;')
+            .replace('>', '&gt;'))
 
 
 class DotNetFileWriter(TranslationFileWriter):
@@ -18,35 +41,39 @@ class DotNetFileWriter(TranslationFileWriter):
         return f'/WebResources.{code.lower()}{ExportFile.resx.file_extension()}'
 
     def append(self, records, code):
-
         data = '<?xml version="1.0" encoding="utf-8"?>\n<root>\n' + self.__header
 
         for record in records:
-            data += self.convert(record=record)
+            plural_forms = getattr(record, 'plural_forms', None) or {}
+            if plural_forms:
+                for form in plural_forms.keys():
+                    suffixed_token = record.token + _plural_suffix(form)
+                    # Only attach the comment to the first form
+                    comment = record.comment if form == PLURAL_FORM_ORDER[0] else None
+                    data += self._convert_raw(
+                        token=suffixed_token,
+                        translation=plural_forms[form],
+                        comment=comment,
+                    )
+            else:
+                data += self.convert(record)
 
         data += '</root>'
-
-        self.zip_file.writestr(
-            self.path(code=code),
-            data
-        )
+        self.zip_file.writestr(self.path(code=code), data)
 
     def convert(self, record):
+        return self._convert_raw(
+            token=record.token,
+            translation=record.translation,
+            comment=record.comment,
+        )
+
+    def _convert_raw(self, token, translation, comment):
         text = ''
-        if record.comment:
-            text += f'''<!--
-    {record.comment}
--->
-'''
-        cleared = record.translation \
-            .replace('&', '&amp;') \
-            .replace('<', '&lt;') \
-            .replace('"', '&quot;') \
-            .replace('>', '&gt;')
-        return text + f'''    <data name="{record.token}" xml:space="preserve">
-        <value>{cleared}</value>
-    </data>
-'''
+        if comment:
+            text += f'<!--\n    {comment}\n-->\n'
+        cleared = _xml_escape(translation or '')
+        return text + f'    <data name="{token}" xml:space="preserve">\n        <value>{cleared}</value>\n    </data>\n'
 
     def http_response(self):
         self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
@@ -63,7 +90,7 @@ class DotNetFileWriter(TranslationFileWriter):
               <xsd:sequence>
                 <xsd:element name="value" type="xsd:string" minOccurs="0" />
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" use="required" />
               <xsd:attribute name="type" type="xsd:string" />
               <xsd:attribute name="mimetype" type="xsd:string" />
               <xsd:attribute ref="xml:space" />
@@ -121,21 +148,45 @@ class DotNetFileReader(TranslationFileReader):
         dom = minidom.parse(file=file)
         result = []
 
-        resources = dom.getElementsByTagName('data')
-        for resource in resources:
+        # Collect all raw data entries preserving document order
+        raw = {}       # name -> (translation, comment)
+        raw_order = []
+        for resource in dom.getElementsByTagName('data'):
             token = resource.getAttribute('name')
             translation = ''
             if resource.childNodes:
-                value = resource.getElementsByTagName("value")[0]
-                if value.childNodes:
-                    text_node = value.childNodes[0]
-                    if text_node.nodeType == text_node.TEXT_NODE:
-                        translation = text_node.data
+                value_nodes = resource.getElementsByTagName('value')
+                if value_nodes:
+                    value = value_nodes[0]
+                    if value.childNodes:
+                        text_node = value.childNodes[0]
+                        if text_node.nodeType == text_node.TEXT_NODE:
+                            translation = text_node.data
+            raw[token] = translation
+            raw_order.append(token)
 
-            model = TranslationModel.create(
-                token=token,
-                translation=translation
-            )
-            result.append(model)
+        # Group plural-suffixed keys back into plural_forms
+        consumed = set()
+        for token in raw_order:
+            if token in consumed:
+                continue
+            base, form = _split_plural_key(token)
+            if form is not None:
+                plural_forms = {}
+                for f in PLURAL_FORM_ORDER:
+                    suffixed = base + _plural_suffix(f)
+                    if suffixed in raw:
+                        plural_forms[f] = raw[suffixed]
+                        consumed.add(suffixed)
+                result.append(TranslationModel.create(
+                    token=base,
+                    translation='',
+                    plural_forms=plural_forms,
+                ))
+            else:
+                result.append(TranslationModel.create(
+                    token=token,
+                    translation=raw[token],
+                ))
 
         return result

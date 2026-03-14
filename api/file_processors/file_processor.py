@@ -39,7 +39,7 @@ class FileProcessor():
             raise FileProcessor.UnsupportedFile(
                 f"Export file type '{type}' is not supported")
 
-    def append(self, records, code):
+    def append(self, records: list[TranslationModel], code: str):
         self.writer.append(records=records, code=code)
 
     def http_response(self):

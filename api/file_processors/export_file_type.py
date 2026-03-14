@@ -49,7 +49,7 @@ class ExportFile(enum.Enum):
             case ExportFile.excel_single:
                 return 'Excel with single sheet'
             case ExportFile.json:
-                return 'Key and Value'
+                return 'Key and Value (i18next)'
             case ExportFile.resx:
                 return 'ASP.NET'
             case ExportFile.properties:

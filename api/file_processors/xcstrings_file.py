@@ -4,6 +4,9 @@ from django.http import HttpResponse
 
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.transport_models import TranslationModel
+from api.models import PluralTranslation
+
+PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
 
 class XCStringsFileReader(TranslationFileReader):
@@ -17,21 +20,39 @@ class XCStringsFileReader(TranslationFileReader):
             localizations = value.get('localizations')
             if localizations:
                 for (lang_code, node) in localizations.items():
-                    unit = node.get('stringUnit', {})
-                    translation = unit.get('value')
-                    model = TranslationModel.create(
-                        token=key,
-                        comment=comment,
-                        code=lang_code,
-                        translation=translation
-                    )
+                    variations = node.get('variations', {})
+                    plural_node = variations.get('plural', {})
+                    if plural_node:
+                        plural_forms = {}
+                        for form in PLURAL_FORM_ORDER:
+                            form_node = plural_node.get(form, {})
+                            unit = form_node.get('stringUnit', {})
+                            v = unit.get('value')
+                            if v is not None:
+                                plural_forms[form] = v
+                        model = TranslationModel.create(
+                            token=key,
+                            comment=comment,
+                            code=lang_code,
+                            translation='',
+                            plural_forms=plural_forms,
+                        )
+                    else:
+                        unit = node.get('stringUnit', {})
+                        translation = unit.get('value', '')
+                        model = TranslationModel.create(
+                            token=key,
+                            comment=comment,
+                            code=lang_code,
+                            translation=translation,
+                        )
+                    result.append(model)
             else:
-                model = TranslationModel.create(
+                result.append(TranslationModel.create(
                     token=key,
                     comment=comment,
                     translation=''
-                )
-            result.append(model)
+                ))
         return result
 
     def needs_language_code(self):
@@ -54,13 +75,32 @@ class XCStringsFileWriter(TranslationFileWriter):
                 entry['comment'] = item.comment
 
             localizations = entry.setdefault('localizations', {})
-            if item.translation:
+
+            if item.plural_forms:
+                plural_node = {}
+                for form in PLURAL_FORM_ORDER:
+                    if form not in item.plural_forms:
+                        continue
+                    plural_node[form] = {
+                        'stringUnit': {
+                            'state': 'translated',
+                            'value': item.plural_forms[form],
+                        }
+                    }
+                if plural_node:
+                    localizations[lang] = {
+                        'variations': {
+                            'plural': plural_node
+                        }
+                    }
+            elif item.translation:
                 localizations[lang] = {
                     'stringUnit': {
-                        "state": "translated",
+                        'state': 'translated',
                         'value': item.translation,
                     }
                 }
+
             self.data['strings'][item.token] = entry
 
     def http_response(self):

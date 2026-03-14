@@ -1,9 +1,11 @@
 import io
 from django.http import HttpResponse
 import xlsxwriter
-import tempfile
 
 from api.file_processors.common import TranslationFileWriter
+from api.models import PluralTranslation
+
+PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
 
 class FileConstants:
@@ -11,6 +13,10 @@ class FileConstants:
     tags_item = 'Tags'
     comment_item = 'Comments'
     translation_item = 'Translation'
+
+    @staticmethod
+    def plural_col(form):
+        return f'[{form}]'
 
 
 class ExcelFileWriter(TranslationFileWriter):
@@ -27,24 +33,32 @@ class ExcelFileWriter(TranslationFileWriter):
             ws = self.wb.add_worksheet(code)
             self.has_data = True
 
-        header = [FileConstants.key_item,
-                  FileConstants.translation_item,
-                  FileConstants.tags_item,
-                  FileConstants.comment_item]
+        plural_cols = [FileConstants.plural_col(f) for f in PLURAL_FORM_ORDER]
+        header = [
+            FileConstants.key_item,
+            FileConstants.translation_item,
+            *plural_cols,
+            FileConstants.tags_item,
+            FileConstants.comment_item,
+        ]
         indexes = {k: v for v, k in enumerate(header)}
 
-        for idx in range(len(header)):
-            ws.write(0, idx, header[idx])
+        for idx, col in enumerate(header):
+            ws.write(0, idx, col)
 
         row = 1
-
         for record in records:
             ws.write(row, indexes[FileConstants.key_item], record.token)
             ws.write(
-                row, indexes[FileConstants.translation_item], record.translation)
-            ws.write(row, indexes[FileConstants.comment_item], record.comment)
+                row, indexes[FileConstants.translation_item], record.translation or '')
+            ws.write(
+                row, indexes[FileConstants.comment_item], record.comment or '')
             ws.write(row, indexes[FileConstants.tags_item],
-                     ','.join(record.tags))
+                     ','.join(record.tags or []))
+            for form in PLURAL_FORM_ORDER:
+                col = FileConstants.plural_col(form)
+                ws.write(row, indexes[col], record.plural_forms.get(
+                    form, '') if record.plural_forms else '')
             row += 1
 
     def http_response(self):
@@ -71,49 +85,47 @@ class ExcelSingleSheetFileWriter:
             if not record:
                 record = {
                     FileConstants.key_item: item.token,
-                    FileConstants.comment_item: item.comment,
-                    FileConstants.tags_item: ','.join(item.tags)
+                    FileConstants.comment_item: item.comment or '',
+                    FileConstants.tags_item: ','.join(item.tags or []),
                 }
-            record[code] = item.translation
+            if item.plural_forms:
+                # Store each plural form as "<code>[form]"
+                for form in PLURAL_FORM_ORDER:
+                    col = f'{code}{FileConstants.plural_col(form)}'
+                    record[col] = item.plural_forms.get(form, '')
+            else:
+                record[code] = item.translation or ''
             self.records[item.token] = record
-        self.languages.append(code)
+        if code not in self.languages:
+            self.languages.append(code)
 
     def http_response(self):
         output = io.BytesIO()
         wb = xlsxwriter.Workbook(output, {'in_memory': True})
         ws = wb.add_worksheet()
 
-        header = [FileConstants.key_item] + \
-            self.languages + \
-            [FileConstants.tags_item, FileConstants.comment_item]
+        lang_cols = []
+        for code in self.languages:
+            lang_cols.append(code)
+            for form in PLURAL_FORM_ORDER:
+                lang_cols.append(f'{code}{FileConstants.plural_col(form)}')
+
+        header = [FileConstants.key_item] + lang_cols + \
+                 [FileConstants.tags_item, FileConstants.comment_item]
         indexes = {k: v for v, k in enumerate(header)}
 
-        for idx in range(len(header)):
-            ws.write(0, idx, header[idx])
+        for idx, col in enumerate(header):
+            ws.write(0, idx, col)
 
         row = 1
-        for key in self.records.keys():
-            record = self.records[key]
-            ws.write(
-                row,
-                indexes[FileConstants.key_item],
-                key
-            )
-            ws.write(
-                row,
-                indexes[FileConstants.comment_item],
-                record[FileConstants.comment_item]
-            )
+        for key, record in self.records.items():
+            ws.write(row, indexes[FileConstants.key_item], key)
+            ws.write(row, indexes[FileConstants.comment_item],
+                     record.get(FileConstants.comment_item, ''))
             ws.write(row, indexes[FileConstants.tags_item],
-                     record[FileConstants.tags_item])
-
-            for code in self.languages:
-                ws.write(
-                    row,
-                    indexes[code],
-                    record[code]
-                )
-
+                     record.get(FileConstants.tags_item, ''))
+            for col in lang_cols:
+                ws.write(row, indexes[col], record.get(col, ''))
             row += 1
 
         wb.close()

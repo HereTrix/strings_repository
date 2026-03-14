@@ -1,10 +1,27 @@
-from configparser import ConfigParser
-import tempfile
 import zipfile
 from django.http import HttpResponse
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
+from api.models import PluralTranslation
+
+PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
+PLURAL_FORMS_SET = set(PLURAL_FORM_ORDER)
+
+# Suffix pattern used for plural keys: token[one], token[other], etc.
+
+
+def _plural_suffix(form):
+    return f'[{form}]'
+
+
+def _split_plural_key(token):
+    """Return (base_token, form) if token ends with a known plural suffix, else (token, None)."""
+    for form in PLURAL_FORM_ORDER:
+        suffix = _plural_suffix(form)
+        if token.endswith(suffix):
+            return token[:-len(suffix)], form
+    return token, None
 
 
 class PropertiesFileWriter(TranslationFileWriter):
@@ -17,18 +34,35 @@ class PropertiesFileWriter(TranslationFileWriter):
         return f'/{code.lower()}{ExportFile.properties.file_extension()}'
 
     def append(self, records, code):
-        data = '\n'.join([self.convert_item(x) for x in records])
-        self.zip_file.writestr(
-            self.path(code=code),
-            data
+        lines = []
+        for item in records:
+            plural_forms = getattr(item, 'plural_forms', None) or {}
+            if plural_forms:
+                for form in PLURAL_FORM_ORDER:
+                    if form not in plural_forms:
+                        continue
+                    suffixed_token = item.token + _plural_suffix(form)
+                    lines.append(self._convert_item_raw(
+                        token=suffixed_token,
+                        translation=plural_forms[form],
+                        comment=item.comment if form == PLURAL_FORM_ORDER[0] else None,
+                    ))
+            else:
+                lines.append(self._convert_item(item))
+        self.zip_file.writestr(self.path(code=code), '\n'.join(lines))
+
+    def _convert_item(self, item):
+        return self._convert_item_raw(
+            token=item.token,
+            translation=item.translation if item.translation else '',
+            comment=item.comment,
         )
 
-    def convert_item(self, item):
-        translation = item.translation if item.translation else ''
+    def _convert_item_raw(self, token, translation, comment):
         translation = self.clear(translation)
-        token = self.prepare(item.token)
-        if item.comment:
-            comment = item.comment.replace('\n', '\n# ')
+        token = self.prepare(token)
+        if comment:
+            comment = comment.replace('\n', '\n# ')
             return f'# {comment}\n{token}={translation}'
         else:
             return f'{token}={translation}'
@@ -40,7 +74,6 @@ class PropertiesFileWriter(TranslationFileWriter):
         text = text.replace('#', r'\#')
         text = text.replace(r'\"', r'\\"')
         text = text.replace(' ', r'\ ')
-
         return text
 
     def clear(self, text):
@@ -53,7 +86,6 @@ class PropertiesFileWriter(TranslationFileWriter):
         text = text.replace(r'\#', '#')
         text = text.replace(r'\\"', r'\"')
         text = text.replace(r'\ ', ' ')
-
         return text
 
     def http_response(self):
@@ -75,22 +107,51 @@ class PropertiesFileReader(TranslationFileReader):
         # keys containing whitespace chars are allowed.
 
         lines = file.readlines()
-        result = []
 
+        # First pass: collect all raw key-value pairs
+        raw = {}       # token -> TranslationModel (singular)
+        raw_order = []  # preserve insertion order for output
         comment = ''
         for line in lines:
             str_line = line.decode()
             if len(str_line) > 0:
-                # Any line that starts with a '#' is considerered a comment
                 if str_line[0] == '#':
                     comment += str_line
                 else:
-                    model = self.process_line(
-                        line=str_line,
-                        comment=comment
-                    )
-                    result.append(model)
+                    model = self.process_line(line=str_line, comment=comment)
+                    raw[model.token] = model
+                    raw_order.append(model.token)
                     comment = ''
+
+        # Second pass: group plural-suffixed keys back into plural_forms
+        result = []
+        consumed = set()
+        for token in raw_order:
+            if token in consumed:
+                continue
+            base, form = _split_plural_key(token)
+            if form is not None:
+                # This is a plural entry — collect all forms for this base token
+                plural_forms = {}
+                for f in PLURAL_FORM_ORDER:
+                    suffixed = base + _plural_suffix(f)
+                    if suffixed in raw:
+                        plural_forms[f] = raw[suffixed].translation
+                        consumed.add(suffixed)
+                # Use the comment from the first form's entry
+                first_key = next(
+                    (base + _plural_suffix(f)
+                     for f in PLURAL_FORM_ORDER if base + _plural_suffix(f) in raw),
+                    token
+                )
+                result.append(TranslationModel.create(
+                    token=base,
+                    translation='',
+                    comment=raw[first_key].comment,
+                    plural_forms=plural_forms,
+                ))
+            else:
+                result.append(raw[token])
 
         return result
 
@@ -100,10 +161,8 @@ class PropertiesFileReader(TranslationFileReader):
         value = ''
         delim = -1
         for i, char in enumerate(line):
-            # separators are : = and space
             if char == ':' or char == '=' or char == ' ':
                 if prev == '\\':
-                    # escaping is part of key
                     continue
                 else:
                     if delim == -1:
@@ -119,13 +178,11 @@ class PropertiesFileReader(TranslationFileReader):
                     break
             prev = char
 
-        model = TranslationModel.create(
+        return TranslationModel.create(
             token=token,
             translation=value,
-            comment=comment
+            comment=comment,
         )
-
-        return model
 
     def clear(self, text):
         if not text:
@@ -137,5 +194,4 @@ class PropertiesFileReader(TranslationFileReader):
         text = text.replace(r'\#', '#')
         text = text.replace(r'\\"', r'\"')
         text = text.replace(r'\ ', ' ')
-
         return text

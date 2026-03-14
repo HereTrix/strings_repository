@@ -6,6 +6,16 @@ from api.file_processors.common import TranslationFileReader, TranslationFileWri
 from api.file_processors.export_file_type import ExportFile
 from api.transport_models import TranslationModel
 
+PLURAL_FORM_ORDER = ['zero', 'one', 'two', 'few', 'many', 'other']
+
+
+def _split_plural_key(token):
+    """Return (base_token, form) if token ends with a known _form suffix, else (token, None)."""
+    for form in PLURAL_FORM_ORDER:
+        if token.endswith(f'_{form}'):
+            return token[:-len(f'_{form}')], form
+    return token, None
+
 
 class AppleStringsFileReader(TranslationFileReader):
 
@@ -26,7 +36,7 @@ class AppleStringsFileReader(TranslationFileReader):
         state = AppleStringsFileReader.State.scan
         prev_symbol = None
         is_completed = False
-        records = []
+        raw = []
         record = TranslationModel.create('', '')
         comment = None
 
@@ -36,7 +46,7 @@ class AppleStringsFileReader(TranslationFileReader):
                 case AppleStringsFileReader.State.scan:
                     if is_completed:
                         record.comment = comment
-                        records.append(record)
+                        raw.append(record)
                         record = TranslationModel.create('', '')
                         # All comments before key = value belongs to this pair
                         comment = None
@@ -52,42 +62,31 @@ class AppleStringsFileReader(TranslationFileReader):
                     else:
                         if char == '*':
                             state = AppleStringsFileReader.State.multi_line_comment
-                            if comment is not None:
-                                comment += '\n'
                             prev_symbol = None
-                        if char == '/':
+                        elif char == '/':
                             state = AppleStringsFileReader.State.single_line_comment
-                            if comment is not None:
-                                comment += '\n'
-                            prev_symbol = None
-                case AppleStringsFileReader.State.multi_line_comment:
-                    if comment is None:
-                        comment = ''
-                    if prev_symbol is None:
-                        if char == '*':
-                            prev_symbol = char
-                        else:
-                            comment += char
-                    else:
-                        if prev_symbol == '/' or prev_symbol == '*':
-                            if char == '/':
-                                state = AppleStringsFileReader.State.scan
-                            else:
-                                comment += prev_symbol + char
                             prev_symbol = None
                         else:
-                            if char == '/' or char == '*':
-                                prev_symbol = char
-                            else:
-                                comment += char
+                            prev_symbol = None
                 case AppleStringsFileReader.State.single_line_comment:
-                    if comment is None:
-                        comment = ''
                     if char == '\n':
                         state = AppleStringsFileReader.State.scan
+                        prev_symbol = None
                     else:
+                        if comment is None:
+                            comment = ''
                         comment += char
-                # Token should ends on "
+                case AppleStringsFileReader.State.multi_line_comment:
+                    if prev_symbol == '*' and char == '/':
+                        state = AppleStringsFileReader.State.scan
+                        prev_symbol = None
+                        if comment:
+                            comment = comment[:-1].strip()
+                    else:
+                        prev_symbol = char
+                        if comment is None:
+                            comment = ''
+                        comment += char
                 case AppleStringsFileReader.State.token:
                     if char == '"':
                         state = AppleStringsFileReader.State.delimiter
@@ -105,6 +104,33 @@ class AppleStringsFileReader(TranslationFileReader):
                     else:
                         prev_symbol = char
                         record.translation += char
+
+        # Group plural-suffixed keys (e.g. token_one, token_other) into one model
+        plural_buckets = {}
+        seen_plural_bases = set()
+        records = []
+
+        for r in raw:
+            base, form = _split_plural_key(r.token)
+            if form is not None:
+                if base not in plural_buckets:
+                    plural_buckets[base] = {}
+                plural_buckets[base][form] = r.translation
+
+        for r in raw:
+            base, form = _split_plural_key(r.token)
+            if form is not None:
+                if base not in seen_plural_bases:
+                    seen_plural_bases.add(base)
+                    records.append(TranslationModel.create(
+                        token=base,
+                        translation='',
+                        comment=r.comment,
+                        plural_forms=plural_buckets[base],
+                    ))
+            else:
+                records.append(r)
+
         return records
 
 
@@ -126,6 +152,22 @@ class AppleStringsFileWriter(TranslationFileWriter):
         )
 
     def convert_item(self, item):
+        plural_forms = getattr(item, 'plural_forms', None) or {}
+        if plural_forms:
+            lines = []
+            for form in PLURAL_FORM_ORDER:
+                if form not in plural_forms:
+                    continue
+                suffixed_token = f'{item.token}_{form}'
+                value = plural_forms[form].replace(
+                    '&nbsp;', ' ').replace('"', '\\"').replace('%s', '%@')
+                if item.comment and form == next(f for f in PLURAL_FORM_ORDER if f in plural_forms):
+                    lines.append(
+                        f'/*{item.comment}*/\n"{suffixed_token}" = "{value}";')
+                else:
+                    lines.append(f'"{suffixed_token}" = "{value}";')
+            return '\n'.join(lines)
+
         translation = item.translation if item.translation else ''
         translation = translation.replace(
             '&nbsp;', ' '
