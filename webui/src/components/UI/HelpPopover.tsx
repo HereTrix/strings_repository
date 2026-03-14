@@ -53,10 +53,6 @@ const HelpPopover = (
                             <td className="bordered">Underline</td>
                         </tr>
                         <tr>
-                            <td className="bordered">&lt;u&gt;</td>
-                            <td className="bordered">Underline</td>
-                        </tr>
-                        <tr>
                             <td className="bordered">&lt;font color=”hex_color”&gt;</td>
                             <td className="bordered">Setting font properties (verify on your system)</td>
                         </tr>

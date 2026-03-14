@@ -2,8 +2,9 @@ import { Badge, Button, Dropdown, ListGroup, Row, Stack } from "react-bootstrap"
 import PluralFormsPanel from "../UI/PluralFormsPanel"
 import DiffView from "../UI/DiffView"
 import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, PluralForms, TranslationModel } from "../model/Translation"
-import { ChangeEventHandler, FC, useEffect, useState } from "react"
+import { ChangeEventHandler, FC, useEffect, useRef, useState } from "react"
 import TagsContainer from "../UI/TagsContainer"
+import MarkdownField from "../UI/MarkdownField"
 
 type TranslationListItemProps = {
     translation: TranslationModel
@@ -29,6 +30,8 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
     )
     const [pluralsOpen, setPluralsOpen] = useState(false)
 
+    const ref = useRef<HTMLTextAreaElement>(null)
+
     const hasPluralForms = Object.keys(pluralForms).length > 0
 
     // Sync text if translation prop changes externally (e.g. optimistic revert)
@@ -37,8 +40,8 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
         setSavedText(translation.translation)
     }, [translation.translation])
 
-    const onTranslationChange: ChangeEventHandler<HTMLTextAreaElement> = (event) => {
-        setText(event.target.value)
+    const onTranslationChange = (text: string) => {
+        setText(text)
         setCanSave(true)
         setSaveSuccess(false)
     }
@@ -102,10 +105,7 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
                 )}
 
                 <Row>
-                    <textarea
-                        rows={3}
-                        style={{ resize: 'vertical' }}
-                        value={text ?? ''}
+                    <MarkdownField value={text ?? ''}
                         onChange={onTranslationChange}
                     />
                     <Stack direction="horizontal" gap={2} className="my-1">

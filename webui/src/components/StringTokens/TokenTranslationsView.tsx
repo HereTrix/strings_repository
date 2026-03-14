@@ -1,11 +1,12 @@
-import { ChangeEventHandler, FC, useState } from "react"
+import { ChangeEventHandler, FC, useRef, useState } from "react"
 import { APIMethod, http } from "../Utils/network"
 import TokenTranslation from "../model/TokenTranslation"
-import { Badge, Button, Dropdown, ListGroup, Stack } from "react-bootstrap"
+import { Badge, Button, Container, Dropdown, ListGroup, Stack } from "react-bootstrap"
 import OptionalImage from "../UI/OptionalImage"
 import { EDITABLE_STATUSES, PluralForms, getStatusName, getStatusVariant } from "../model/Translation"
 import StringToken from "../model/StringToken"
 import PluralFormsPanel from "../UI/PluralFormsPanel"
+import MarkdownField from "../UI/MarkdownField"
 
 type TokenTranslationsPageProps = {
     project_id: number
@@ -31,10 +32,12 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
     const [pluralsOpen, setPluralsOpen] = useState(false)
     const [error, setError] = useState<string>()
 
+    const ref = useRef<HTMLTextAreaElement>(null)
+
     const hasPluralForms = Object.keys(pluralForms).length > 0
 
-    const onTranslationChange: ChangeEventHandler<HTMLTextAreaElement> = (event) => {
-        setText(event.target.value)
+    const onTranslationChange = (text: string) => {
+        setText(text)
         setCanSave(true)
     }
 
@@ -45,7 +48,7 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
 
     return (
         <ListGroup.Item className="d-flex justify-content-between align-items-start">
-            <Stack className="w-100">
+            <Stack>
                 <Stack direction="horizontal" gap={2}>
                     <OptionalImage src={item.img} alt={item.code} width={50} height={38} />
                     <label>{item.code}</label>
@@ -81,11 +84,9 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
                     </Button>
                 </Stack>
 
-                <textarea
-                    className="my-2"
-                    value={text}
-                    onChange={onTranslationChange}
-                />
+                <Stack className="w-100 p-2">
+                    <MarkdownField value={text} onChange={onTranslationChange} />
+                </Stack>
                 {canSave && <Button onClick={onSavePress} className="my-1">Save</Button>}
                 {error && <span className="text-danger small">{error}</span>}
 
