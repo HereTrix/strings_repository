@@ -6,6 +6,7 @@ import Participant from "../model/Participant"
 import InviteUserPage from "./InviteUserPage"
 import AccessTokenPage from "./AccessToken"
 import IntegrationSettings from "./IntegrationSettings"
+import WebhookSettings from "./WebhookSettings"
 import CollapseSection from "../UI/CollapseSection"
 import ErrorAlert from "../UI/ErrorAlert"
 
@@ -91,6 +92,10 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
 
             <CollapseSection title="Translation Integration">
                 <IntegrationSettings project={project} />
+            </CollapseSection>
+
+            <CollapseSection title="Webhooks">
+                <WebhookSettings project={project} />
             </CollapseSection>
 
             <CollapseSection title="Participants">

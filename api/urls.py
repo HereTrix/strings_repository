@@ -10,6 +10,7 @@ from api.views.project import *
 from api.views.integration import IntegrationAPI, MachineTranslateAPI, VerifyIntegrationAPI
 from api.views.roles import ProjectAccessTokenAPI, ProjectInvitationAPI, ProjectParticipantsAPI, RolesAPI
 from api.views.translation import StringTokenAPI, StringTokenStatusAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI, TranslationStatusAPI
+from api.views.webhook import WebhookDetailAPI, WebhookEventsAPI, WebhookListAPI, WebhookLogsAPI, WebhookVerifyAPI
 from knox.views import LogoutView
 
 urlpatterns = [
@@ -37,6 +38,12 @@ urlpatterns = [
     path('project/<int:pk>/integration/verify', VerifyIntegrationAPI.as_view()),
     path('project/<int:pk>/history/export', ProjectHistoryExportAPI.as_view()),
     path('project/<int:pk>/history', ProjectHistoryAPI.as_view()),
+    # webhooks
+    path('project/<int:pk>/webhooks', WebhookListAPI.as_view()),
+    path('project/<int:pk>/webhooks/events', WebhookEventsAPI.as_view()),
+    path('project/<int:pk>/webhooks/<int:webhook_id>', WebhookDetailAPI.as_view()),
+    path('project/<int:pk>/webhooks/<int:webhook_id>/verify', WebhookVerifyAPI.as_view()),
+    path('project/<int:pk>/webhooks/<int:webhook_id>/logs', WebhookLogsAPI.as_view()),
     path('project/<int:pk>', ProjectAPI.as_view()),
     path('projects/list', ProjectListAPI.as_view()),
     path('project', CreateProjectAPI.as_view()),

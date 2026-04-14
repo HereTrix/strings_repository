@@ -5,6 +5,7 @@ from datetime import datetime
 from django.http import JsonResponse
 from rest_framework import generics, permissions, status
 
+from api import dispatcher
 from api.models.project import Project, Invitation, ProjectAccessToken, ProjectRole
 from api.serializers.project import ProjectAccessTokenSerializer, ProjectParticipantsSerializer
 
@@ -102,6 +103,13 @@ class ProjectParticipantsAPI(generics.GenericAPIView):
         user_role.role = new_role
         user_role.save()
 
+        dispatcher.dispatch_event(
+            project_id=pk,
+            event_type='member.role_changed',
+            payload={'user_id': user_id, 'role': new_role},
+            actor=user.email,
+        )
+
         return JsonResponse(ProjectParticipantsSerializer.serialize(all_roles, user), safe=False)
 
     def delete(self, request, pk):
@@ -171,6 +179,13 @@ class ProjectInvitationAPI(generics.GenericAPIView):
         invitation.project = project
         invitation.role = role
         invitation.save()
+
+        dispatcher.dispatch_event(
+            project_id=pk,
+            event_type='member.invited',
+            payload={'role': role},
+            actor=user.email,
+        )
 
         return JsonResponse({'code': code})
 
