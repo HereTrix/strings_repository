@@ -5,8 +5,8 @@ from datetime import datetime
 from django.http import JsonResponse
 from rest_framework import generics, permissions, status
 
-from api.models import Invitation, Project, ProjectAccessToken, ProjectRole
-from api.serializers import ProjectAccessTokenSerializer, ProjectParticipantsSerializer
+from api.models.project import Project, Invitation, ProjectAccessToken, ProjectRole
+from api.serializers.project import ProjectAccessTokenSerializer, ProjectParticipantsSerializer
 
 
 def generate_token(length=16):

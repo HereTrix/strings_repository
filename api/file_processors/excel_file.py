@@ -3,7 +3,7 @@ from django.http import HttpResponse
 import xlsxwriter
 
 from api.file_processors.common import TranslationFileWriter
-from api.models import PluralTranslation
+from api.models.translations import PluralTranslation
 
 PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 

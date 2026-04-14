@@ -11,7 +11,7 @@ from api.file_processors.po_file import POFileReader, POFileWriter
 from api.file_processors.properties_file import PropertiesFileReader, PropertiesFileWriter
 from api.file_processors.strings_file import AppleStringsFileReader, AppleStringsFileWriter
 from api.file_processors.xcstrings_file import XCStringsFileReader, XCStringsFileWriter
-from api.transport_models import TranslationModel
+from api.models.transport_models import TranslationModel
 import tempfile
 
 WRITER_MAP = {

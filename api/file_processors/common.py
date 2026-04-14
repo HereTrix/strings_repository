@@ -2,7 +2,7 @@ import re
 from typing import Protocol
 from abc import abstractmethod
 
-from api.transport_models import TranslationModel
+from api.models.transport_models import TranslationModel
 
 
 def escape_quotes(text):

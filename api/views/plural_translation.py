@@ -1,7 +1,8 @@
 from django.http import JsonResponse
 from rest_framework import generics, permissions, status
 
-from api.models import Language, PluralTranslation, StringToken, Translation
+from api.models.language import Language
+from api.models.translations import PluralTranslation, StringToken, Translation
 
 
 PLURAL_FORMS = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()

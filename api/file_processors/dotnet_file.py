@@ -5,8 +5,8 @@ from django.http import HttpResponse
 
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
-from api.transport_models import TranslationModel
-from api.models import PluralTranslation
+from api.models.transport_models import TranslationModel
+from api.models.translations import PluralTranslation
 
 PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
@@ -46,10 +46,12 @@ class DotNetFileWriter(TranslationFileWriter):
         for record in records:
             plural_forms = getattr(record, 'plural_forms', None) or {}
             if plural_forms:
-                for form in plural_forms.keys():
+                first_present_form = next((f for f in PLURAL_FORM_ORDER if f in plural_forms), None)
+                for form in PLURAL_FORM_ORDER:
+                    if form not in plural_forms:
+                        continue
                     suffixed_token = record.token + _plural_suffix(form)
-                    # Only attach the comment to the first form
-                    comment = record.comment if form == PLURAL_FORM_ORDER[0] else None
+                    comment = record.comment if form == first_present_form else None
                     data += self._convert_raw(
                         token=suffixed_token,
                         translation=plural_forms[form],

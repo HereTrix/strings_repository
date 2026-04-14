@@ -1,12 +1,15 @@
-from api.models import PluralTranslation, StringToken, ProjectRole
+from api.models.history import HistoryRecord
+from api.models.language import Language
+from api.models.project import Project, ProjectRole
 from django.http import JsonResponse
 import django.core.exceptions as exception
 from rest_framework import generics, permissions, status
 from datetime import datetime
 
-from api.models import HistoryRecord, Language, Tag, Translation, StringToken, Project, ProjectRole
-from api.serializers import StringTokenSerializer, TranslationSerializer
+from api.models.tag import Tag
+from api.models.translations import Translation, StringToken
 from api.languages.langcoder import Langcoder
+from api.serializers.translation import StringTokenSerializer, TranslationSerializer
 
 
 def create_history_record(project, token_name, record_status, user):

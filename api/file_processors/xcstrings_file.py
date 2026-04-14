@@ -3,8 +3,8 @@ import json
 from django.http import HttpResponse
 
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
-from api.transport_models import TranslationModel
-from api.models import PluralTranslation
+from api.models.transport_models import TranslationModel
+from api.models.translations import PluralTranslation
 
 PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 

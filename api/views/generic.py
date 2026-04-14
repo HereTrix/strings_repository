@@ -1,6 +1,7 @@
 from django.http import JsonResponse
-from api.models import Invitation, ProjectRole, User
-from api.serializers import UserSerializer, ProfileSerializer, LoginSerializer
+from django.contrib.auth.models import User
+from api.models.project import Invitation, ProjectRole
+from api.serializers.users import UserSerializer, LoginSerializer
 from rest_framework import generics, permissions, status
 from knox.models import AuthToken
 import re
@@ -39,7 +40,7 @@ class ChangePasswordAPI(generics.GenericAPIView):
             return JsonResponse({
                 'error': 'Password is invalid'
             }, status=status.HTTP_400_BAD_REQUEST)
-        regex = "^(?=.*[A-Za-z])(?=.*\d).{8,}$"
+        regex = r"^(?=.*[A-Za-z])(?=.*\d).{8,}$"
         if not re.fullmatch(regex, new_password):
             return JsonResponse({
                 'error': 'New password is invalid'
@@ -132,7 +133,7 @@ class SignUpAPI(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         password = request.data.get('password')
-        regex = "^(?=.*[A-Za-z])(?=.*\d).{8,}$"
+        regex = r"^(?=.*[A-Za-z])(?=.*\d).{8,}$"
         if not re.fullmatch(regex, password):
             return JsonResponse({
                 'error': 'Password is not strong enough'

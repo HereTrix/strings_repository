@@ -5,15 +5,47 @@ on:
     branches:
       - main
       - dev
+  pull_request:
+    branches:
+      - main
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  push_to_registry:
-    name: Build, test and push Docker image to GitHub Packages
+  test:
+    name: Django tests
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create required static directory
+        run: mkdir -p webui/static
+
+      - name: Run tests
+        env:
+          APP_SECRET_KEY: ci-secret-key
+          DB_ENGINE: sqlite3
+          DB_NAME: ci
+        run: python manage.py test api --verbosity=2
+
+  push_to_registry:
+    name: Build and push Docker image to GitHub Packages
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
 
     permissions:
       contents: read
@@ -21,10 +53,10 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -32,20 +64,25 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Docker image build
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
-          tags: ${{ steps.meta.outputs.tags }},ghcr.io/heretrix/strings_repository:${{ github.sha }} # here is a bit of hardcode, because of uppercase symbols in HereTrix username
-          # tags: ${{ steps.meta.outputs.tags }},ghcr.io/${{ github.repository }}:${{ github.sha }}
+          load: true
+          tags: ${{ steps.meta.outputs.tags }},ghcr.io/heretrix/strings_repository:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Docker container test-run
+      - name: Docker container smoke test
         id: smoke-test
         run: |
           docker run \
@@ -57,32 +94,34 @@ jobs:
           -e DB_NAME=test \
           -e APP_SECRET_KEY=y9Sag4UWWLHyp \
           --name testct -d -p 8080:8080 ${{ steps.meta.outputs.tags }}
-          sleep 45
-          echo -e "The CT is $(docker inspect --format='{{.State.Health.Status}}' testct) \n"
-          echo ""
-          if [ "$(docker inspect --format='{{.State.Health.Status}}' testct)" != "healthy" ]; then
-              echo "There is some problem. Printing CT logs."
+
+          for i in $(seq 1 15); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' testct 2>/dev/null || echo "unknown")
+            echo "Attempt $i/15: $STATUS"
+            [ "$STATUS" = "healthy" ] && break
+            if [ "$i" = "15" ]; then
+              echo "Container did not become healthy. Printing logs."
               docker logs testct
               exit 1
-          fi
-
-#          -e APP_SECRET_KEY=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo 2>/dev/null) \
-
-      - name: Docker image push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
+            fi
+            sleep 6
+          done
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ steps.meta.outputs.tags }}
+          image-ref: ghcr.io/heretrix/strings_repository:${{ github.sha }}
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+
+      - name: Docker image push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha

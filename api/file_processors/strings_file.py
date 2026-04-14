@@ -4,7 +4,7 @@ import zipfile
 from django.http import HttpResponse
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
-from api.transport_models import TranslationModel
+from api.models.transport_models import TranslationModel
 
 PLURAL_FORM_ORDER = ['zero', 'one', 'two', 'few', 'many', 'other']
 

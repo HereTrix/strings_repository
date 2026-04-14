@@ -2,8 +2,8 @@ from django.http import JsonResponse
 from rest_framework import generics, permissions, status
 
 from api.file_processors.file_processor import ExportFile, FileProcessor
-from api.models import Language, StringToken
-from api.transport_models import TranslationModel
+from api.models.translations import Language, StringToken
+from api.models.transport_models import TranslationModel
 
 
 class ExportFormatsAPI(generics.GenericAPIView):

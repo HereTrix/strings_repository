@@ -2,10 +2,9 @@ from datetime import datetime
 from django.http import HttpResponse, JsonResponse
 from rest_framework import generics, permissions, status
 from api.file_processors.history_file import HistoryFileWriter
-from django.db.models import Prefetch
 
-from api.models import HistoryRecord, Project, StringToken, Translation
-from api.serializers import HistorySerializer
+from api.models.history import HistoryRecord
+from api.serializers.history import HistorySerializer
 
 
 class ProjectHistoryAPI(generics.GenericAPIView):
