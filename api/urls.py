@@ -3,10 +3,11 @@ from api.views.export import ExportAPI, ExportFormatsAPI
 from api.views.generic import *
 from api.views.history import ProjectHistoryAPI, ProjectHistoryExportAPI
 from api.views.import_api import ImportAPI
-from api.views.language import LanguageAPI
+from api.views.language import LanguageAPI, SetDefaultLanguageAPI
 from api.views.plugin import FetchLanguagesAPI, PluginExportAPI, PullAPI, PushAPI
 from api.views.plural_translation import PluralTranslationAPI
 from api.views.project import *
+from api.views.integration import IntegrationAPI, MachineTranslateAPI, VerifyIntegrationAPI
 from api.views.roles import ProjectAccessTokenAPI, ProjectInvitationAPI, ProjectParticipantsAPI, RolesAPI
 from api.views.translation import StringTokenAPI, StringTokenStatusAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI, TranslationStatusAPI
 from knox.views import LogoutView
@@ -31,6 +32,9 @@ urlpatterns = [
     path('project/<int:pk>/invite', ProjectInvitationAPI.as_view()),
     path('project/<int:pk>/translations/<str:code>',
          TranslationsListAPI.as_view()),
+    path('project/<int:pk>/integration', IntegrationAPI.as_view()),
+    path('project/<int:pk>/machine-translate', MachineTranslateAPI.as_view()),
+    path('project/<int:pk>/integration/verify', VerifyIntegrationAPI.as_view()),
     path('project/<int:pk>/history/export', ProjectHistoryExportAPI.as_view()),
     path('project/<int:pk>/history', ProjectHistoryAPI.as_view()),
     path('project/<int:pk>', ProjectAPI.as_view()),
@@ -38,6 +42,7 @@ urlpatterns = [
     path('project', CreateProjectAPI.as_view()),
     # language
     path('language', LanguageAPI.as_view()),
+    path('project/<int:pk>/language/<str:code>/default', SetDefaultLanguageAPI.as_view()),
     # tokens
     path('string_token', StringTokenAPI.as_view()),
     path('string_token/<int:pk>/status', StringTokenStatusAPI.as_view()),

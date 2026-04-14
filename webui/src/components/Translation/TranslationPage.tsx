@@ -9,15 +9,18 @@ import InfiniteScroll from "react-infinite-scroll-component"
 import { Typeahead } from "react-bootstrap-typeahead"
 import HelpPopover from "../UI/HelpPopover"
 import TranslationListItem from "./TranslationListItem"
+import Project from "../model/Project"
 
 type TranslationPageProps = {
     project_id: string
     code: string
+    project?: Project
 }
 
 type FilterStatus = 'all' | string
 
-const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
+const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }) => {
+    const defaultLanguageCode = project?.languages.find(l => l.is_default)?.code
     const limit = 20
     const [hasMore, setHasMore] = useState<boolean>(true)
     const [offset, setOffset] = useState<number>(0)
@@ -29,6 +32,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
     const [tags, setTags] = useState<string[]>([])
     const [filteredTags, setFilteredTags] = useState<string[]>([])
     const [error, setError] = useState<string>()
+    const [integrationEnabled, setIntegrationEnabled] = useState(false)
 
     const fetchData = useCallback(async (
         tags: string[],
@@ -75,9 +79,18 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
         else setError(result.error)
     }, [project_id])
 
+    const fetchIntegration = useCallback(async () => {
+        const result = await http<{ enabled: boolean }>({
+            method: APIMethod.get,
+            path: `/api/project/${project_id}/integration`,
+        })
+        if (result.value) setIntegrationEnabled(result.value.enabled)
+    }, [project_id])
+
     useEffect(() => {
         fetchData(filteredTags, query, 0, statusFilter)
         fetchTags()
+        fetchIntegration()
     }, [])
 
     const onSearch = (newQuery: string) => {
@@ -204,6 +217,8 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code }) => {
                                         selectedTags={filteredTags}
                                         project_id={project_id}
                                         code={code}
+                                        defaultLanguageCode={defaultLanguageCode}
+                                        integrationEnabled={integrationEnabled}
                                         onSave={saveTranslation}
                                         onStatusChange={(status) => updateTranslationStatus(translation, status)}
                                         onTagClick={updateTagSelection}

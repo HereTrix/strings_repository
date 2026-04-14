@@ -121,6 +121,11 @@ class TranslationsListAPI(generics.ListAPIView):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['code'] = self.kwargs.get('code')
+        default_lang = Language.objects.filter(
+            project__pk=self.kwargs['pk'],
+            is_default=True
+        ).first()
+        context['default_code'] = default_lang.code if default_lang else None
         return context
 
 

@@ -55,3 +55,21 @@ class ProjectAccessToken(models.Model):
         User, on_delete=models.CASCADE, related_name='access')
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='access_tokens')
+
+
+class TranslationIntegration(models.Model):
+    PROVIDER_DEEPL = 'deepl'
+    PROVIDER_GOOGLE = 'google'
+    PROVIDER_CHOICES = [(PROVIDER_DEEPL, 'DeepL'),
+                        (PROVIDER_GOOGLE, 'Google Translate')]
+
+    project = models.OneToOneField(
+        Project, on_delete=models.CASCADE, related_name='integration')
+    provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
+    api_key = models.BinaryField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['provider', 'project']
+

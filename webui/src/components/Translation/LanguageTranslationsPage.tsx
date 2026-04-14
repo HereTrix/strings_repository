@@ -58,6 +58,7 @@ const LanguageTranslationsPage = () => {
                 <TranslationPage
                     project_id={project_id}
                     code={code}
+                    project={project}
                 />
             }
             {project &&

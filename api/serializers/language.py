@@ -22,7 +22,7 @@ class LanguageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Language
-        fields = ['code', 'name', 'img']
+        fields = ['code', 'name', 'img', 'is_default']
 
 
 class AvailableLanguageSerializer(serializers.Serializer):
