@@ -2,8 +2,8 @@ import zipfile
 from django.http import HttpResponse
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
-from api.transport_models import TranslationModel
-from api.models import PluralTranslation
+from api.models.transport_models import TranslationModel
+from api.models.translations import PluralTranslation
 
 PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 PLURAL_FORMS_SET = set(PLURAL_FORM_ORDER)
@@ -38,6 +38,7 @@ class PropertiesFileWriter(TranslationFileWriter):
         for item in records:
             plural_forms = getattr(item, 'plural_forms', None) or {}
             if plural_forms:
+                first_present_form = next((f for f in PLURAL_FORM_ORDER if f in plural_forms), None)
                 for form in PLURAL_FORM_ORDER:
                     if form not in plural_forms:
                         continue
@@ -45,7 +46,7 @@ class PropertiesFileWriter(TranslationFileWriter):
                     lines.append(self._convert_item_raw(
                         token=suffixed_token,
                         translation=plural_forms[form],
-                        comment=item.comment if form == PLURAL_FORM_ORDER[0] else None,
+                        comment=item.comment if form == first_present_form else None,
                     ))
             else:
                 lines.append(self._convert_item(item))

@@ -2,8 +2,9 @@ from django.http import JsonResponse
 from rest_framework import generics, permissions, status
 import django.core.exceptions as exception
 
-from api.models import Language, Project, ProjectRole
-from api.serializers import LanguageSerializer
+from api.models.project import Project, ProjectRole
+from api.models.language import Language
+from api.serializers.language import LanguageSerializer
 
 
 class LanguageAPI(generics.GenericAPIView):

@@ -1,6 +1,7 @@
 from django.http import JsonResponse
-from api.models import Invitation, ProjectRole, User
-from api.serializers import UserSerializer, ProfileSerializer, LoginSerializer
+from django.contrib.auth.models import User
+from api.models.project import Invitation, ProjectRole
+from api.serializers.users import UserSerializer, LoginSerializer
 from rest_framework import generics, permissions, status
 from knox.models import AuthToken
 import re

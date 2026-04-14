@@ -5,9 +5,12 @@ from rest_framework import generics, status, permissions
 
 from api.file_processors.export_file_type import ExportFile
 from api.file_processors.file_processor import FileProcessor
-from api.models import Language, ProjectAccessToken, StringToken, Translation
-from api.transport_models import TranslationModel
-from api.serializers import StringTokenModelSerializer
+from api.models.language import Language
+from api.models.project import ProjectAccessToken
+from api.models.string_token import StringToken
+from api.models.translations import Translation
+from api.models.transport_models import TranslationModel
+from api.serializers.translation import StringTokenModelSerializer
 
 
 def validate_access_token(token):

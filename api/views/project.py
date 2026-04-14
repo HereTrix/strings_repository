@@ -4,9 +4,15 @@ from rest_framework import generics, permissions, status
 from api.filters.string_token_filter import StringTokenFilter
 from api.filters.translation_filter import TranslationTokenFilter
 from api.languages.langcoder import LANGUAGE_CODE_KEY, Langcoder
-from api.models import Language, Project, ProjectRole, StringToken, Tag
+from api.models.language import Language
+from api.models.project import Project, ProjectRole
+from api.models.tag import Tag
+from api.models.translations import StringToken
 from api.paginators.string_token_paginator import TranslationsPagination
-from api.serializers import AvailableLanguageSerializer, ProjectSerializer, StringTokenModelSerializer, StringTokenSerializer, TagSerializer, LanguageSerializer, CreateProjectSerializer, ProjectDetailSerializer
+from api.serializers.project import ProjectSerializer, CreateProjectSerializer, ProjectDetailSerializer
+from api.serializers.language import AvailableLanguageSerializer, LanguageSerializer
+from api.serializers.tag import TagSerializer
+from api.serializers.translation import StringTokenModelSerializer, StringTokenSerializer
 
 
 class ProjectAPI(generics.RetrieveDestroyAPIView):
@@ -25,7 +31,7 @@ class ProjectAPI(generics.RetrieveDestroyAPIView):
             roles__role__in=ProjectRole.change_participants_roles
         )
         project.delete()
-        return JsonResponse(status=status.HTTP_204_NO_CONTENT)
+        return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
 
 
 class CreateProjectAPI(generics.CreateAPIView):

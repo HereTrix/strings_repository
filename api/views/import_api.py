@@ -4,8 +4,11 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework import generics, permissions, status, views
 
 from api.file_processors.file_processor import FileImporter
-from api.models import Language, Project, StringToken, Tag, Translation
-from api.transport_models import TranslationModel
+from api.models.project import Project
+from api.models.language import Language
+from api.models.translations import Translation
+from api.models.tag import Tag
+from api.models.transport_models import TranslationModel
 
 
 class ImportAPI(views.APIView):

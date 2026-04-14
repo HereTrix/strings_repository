@@ -4,7 +4,7 @@ from .views import index
 from django.views.static import serve
 
 urlpatterns = [
-    re_path(r"^(?!api).*", index),
+    re_path(r"^(?!api|admin).*", index),
     re_path(r'^static/(?P<path>.*)$', serve,
             {'document_root': settings.STATIC_ROOT})
 ]

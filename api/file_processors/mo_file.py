@@ -4,8 +4,8 @@ import polib
 
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
-from api.transport_models import TranslationModel
-from api.models import PluralTranslation
+from api.models.transport_models import TranslationModel
+from api.models.translations import PluralTranslation
 
 PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
@@ -49,7 +49,7 @@ class MOFileWriter(TranslationFileWriter):
         )
 
     def path(self, code):
-        return f'{code.lower()}.{ExportFile.mo.file_extension()}'
+        return f'{code.lower()}{ExportFile.mo.file_extension()}'
 
     def http_response(self):
         self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
