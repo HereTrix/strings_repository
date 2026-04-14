@@ -8,6 +8,7 @@ class Language(models.Model):
     code = models.CharField(max_length=2)
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='languages')
+    is_default = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ['code', 'project']

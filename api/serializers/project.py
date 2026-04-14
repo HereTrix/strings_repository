@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from api.models.project import Project, ProjectAccessToken, ProjectRole
+from api.models.project import Project, ProjectAccessToken, ProjectRole, TranslationIntegration
 from api.serializers.language import LanguageSerializer
 from api.models.transport_models import APIProject
 
@@ -76,3 +76,11 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'name', 'description', 'languages', 'role']
+
+
+class IntegrationSerializer(serializers.ModelSerializer):
+    api_key = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = TranslationIntegration
+        fields = ['provider', 'api_key']
