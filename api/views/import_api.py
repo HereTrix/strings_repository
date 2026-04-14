@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from rest_framework.parsers import MultiPartParser
 from rest_framework import generics, permissions, status, views
 
+from api import dispatcher
 from api.file_processors.file_processor import FileImporter
 from api.models.project import Project
 from api.models.language import Language
@@ -62,6 +63,7 @@ class ImportAPI(views.APIView):
 
                 tag_models.append(tag_model)
 
+        imported_count = 0
         for record in records:
             try:
                 if importer.needs_language_code():
@@ -80,6 +82,7 @@ class ImportAPI(views.APIView):
                         record=record,
                         tags=tag_models
                     )
+                imported_count += 1
             except Project.DoesNotExist:
                 return JsonResponse({
                     'error': 'Unable to import into project'
@@ -88,5 +91,16 @@ class ImportAPI(views.APIView):
                 return JsonResponse({
                     'error': 'Unable to import with language code'
                 }, status=status.HTTP_404_NOT_FOUND)
+
+        dispatcher.dispatch_event(
+            project_id=project_id,
+            event_type='import.completed',
+            payload={
+                'count': imported_count,
+                'language': code,
+                'filename': file.name,
+            },
+            actor=user.email,
+        )
 
         return JsonResponse({})

@@ -6,3 +6,4 @@ from api.tests.views.string_token import *
 from api.tests.views.export import *
 from api.tests.views.import_api import *
 from api.tests.views.history import *
+from api.tests.views.webhook import *

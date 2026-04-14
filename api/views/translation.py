@@ -1,3 +1,4 @@
+from api import dispatcher
 from api.models.history import HistoryRecord
 from api.models.language import Language
 from api.models.project import Project, ProjectRole
@@ -60,6 +61,13 @@ class StringTokenAPI(generics.GenericAPIView):
         create_history_record(token.project, token.token,
                               HistoryRecord.Status.created, user)
 
+        dispatcher.dispatch_event(
+            project_id=project.pk,
+            event_type='token.created',
+            payload={'token': token.token, 'comment': token.comment},
+            actor=user.email,
+        )
+
         if tags:
             for tag in tags:
                 token_tag, _ = Tag.objects.get_or_create(tag=tag)
@@ -99,6 +107,13 @@ class StringTokenAPI(generics.GenericAPIView):
 
         create_history_record(project, token_name,
                               HistoryRecord.Status.deleted, user)
+
+        dispatcher.dispatch_event(
+            project_id=project.pk,
+            event_type='token.deleted',
+            payload={'token': token_name},
+            actor=user.email,
+        )
 
         return JsonResponse({}, status=status.HTTP_200_OK)
 
@@ -140,6 +155,10 @@ class TranslationAPI(generics.GenericAPIView):
                 'error': 'Token not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
+        is_new = not Translation.objects.filter(
+            token=token, language__code=code.upper()
+        ).exists()
+
         try:
             translation = Translation.create_or_update_translation(
                 user=user,
@@ -152,6 +171,17 @@ class TranslationAPI(generics.GenericAPIView):
             return JsonResponse({
                 'error': 'Language not found'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        dispatcher.dispatch_event(
+            project_id=project_id,
+            event_type='translation.created' if is_new else 'translation.updated',
+            payload={
+                'token': token.token,
+                'language': code.upper(),
+                'value': text,
+            },
+            actor=user.email,
+        )
 
         return JsonResponse({
             'code': code,
@@ -221,6 +251,17 @@ class TranslationStatusAPI(generics.GenericAPIView):
         translation.status = status_value
         translation.save()
 
+        dispatcher.dispatch_event(
+            project_id=project_id,
+            event_type='translation.status_changed',
+            payload={
+                'token': token_key,
+                'language': code.upper(),
+                'status': status_value,
+            },
+            actor=user.email,
+        )
+
         serializer = TranslationSerializer(translation)
         return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
@@ -282,6 +323,13 @@ class StringTokenStatusAPI(generics.GenericAPIView):
 
         token.status = status_value
         token.save()
+
+        dispatcher.dispatch_event(
+            project_id=token.project_id,
+            event_type='token.status_changed',
+            payload={'token': token.token, 'status': status_value},
+            actor=user.email,
+        )
 
         serializer = StringTokenSerializer(token)
         return JsonResponse(serializer.data, status=status.HTTP_200_OK)

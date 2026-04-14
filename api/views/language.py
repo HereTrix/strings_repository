@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from rest_framework import generics, permissions, status
 import django.core.exceptions as exception
 
+from api import dispatcher
 from api.models.project import Project, ProjectRole
 from api.models.language import Language
 from api.serializers.language import LanguageSerializer
@@ -49,6 +50,13 @@ class LanguageAPI(generics.GenericAPIView):
             language.code = code.upper()
             language.save()
 
+        dispatcher.dispatch_event(
+            project_id=project.pk,
+            event_type='language.added',
+            payload={'language': code.upper()},
+            actor=user.email,
+        )
+
         return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request):
@@ -80,6 +88,12 @@ class LanguageAPI(generics.GenericAPIView):
         try:
             language = Language.objects.get(code=code, project=project)
             language.delete()
+            dispatcher.dispatch_event(
+                project_id=project.pk,
+                event_type='language.removed',
+                payload={'language': code.upper()},
+                actor=user.email,
+            )
             return JsonResponse({}, status=status.HTTP_200_OK)
         except Language.DoesNotExist:
             return JsonResponse({
