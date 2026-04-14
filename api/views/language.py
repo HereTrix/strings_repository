@@ -85,3 +85,28 @@ class LanguageAPI(generics.GenericAPIView):
             return JsonResponse({
                 'error': "Language doesn't exist"
             }, status=status.HTTP_404_NOT_FOUND)
+
+
+class SetDefaultLanguageAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, pk, code):
+        try:
+            project = Project.objects.get(
+                pk=pk,
+                roles__user=request.user,
+                roles__role__in=ProjectRole.change_language_roles,
+            )
+        except Project.DoesNotExist:
+            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            language = Language.objects.get(code=code.upper(), project=project)
+        except Language.DoesNotExist:
+            return JsonResponse({'error': 'Language not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        Language.objects.filter(project=project, is_default=True).update(is_default=False)
+        language.is_default = True
+        language.save()
+
+        return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)

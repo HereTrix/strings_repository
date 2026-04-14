@@ -1,9 +1,13 @@
+import logging
+
 from django.http import JsonResponse
 from rest_framework import generics, permissions, status
 
 from api.crypto import encrypt
 from api.models.project import Project, ProjectRole, TranslationIntegration
 from api.translation_providers import get_provider
+
+logger = logging.getLogger(__name__)
 
 
 class IntegrationAPI(generics.GenericAPIView):
@@ -17,11 +21,17 @@ class IntegrationAPI(generics.GenericAPIView):
         if not project:
             return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        providers = [{'value': v, 'label': l} for v, l in TranslationIntegration.PROVIDER_CHOICES]
         try:
             integration = project.integration
-            return JsonResponse({'enabled': True, 'provider': integration.provider})
+            return JsonResponse({
+                'enabled': True,
+                'provider': integration.provider,
+                'provider_label': dict(TranslationIntegration.PROVIDER_CHOICES).get(integration.provider, integration.provider),
+                'providers': providers,
+            })
         except TranslationIntegration.DoesNotExist:
-            return JsonResponse({'enabled': False})
+            return JsonResponse({'enabled': False, 'providers': providers})
 
     def post(self, request, pk):
         project = Project.objects.filter(
@@ -56,7 +66,12 @@ class IntegrationAPI(generics.GenericAPIView):
             )
             integration.save()
 
-        return JsonResponse({'enabled': True, 'provider': integration.provider})
+        return JsonResponse({
+            'enabled': True,
+            'provider': integration.provider,
+            'provider_label': dict(TranslationIntegration.PROVIDER_CHOICES).get(integration.provider, integration.provider),
+            'providers': [{'value': v, 'label': l} for v, l in TranslationIntegration.PROVIDER_CHOICES],
+        })
 
     def delete(self, request, pk):
         project = Project.objects.filter(
@@ -73,6 +88,33 @@ class IntegrationAPI(generics.GenericAPIView):
             return JsonResponse({'error': 'No integration configured'}, status=status.HTTP_404_NOT_FOUND)
 
         return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
+
+
+class VerifyIntegrationAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        project = Project.objects.filter(
+            pk=pk,
+            roles__user=request.user,
+            roles__role__in=ProjectRole.change_participants_roles,
+        ).first()
+        if not project:
+            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            integration = project.integration
+        except TranslationIntegration.DoesNotExist:
+            return JsonResponse({'error': 'No integration configured'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            provider = get_provider(integration)
+            provider.translate('Hello', 'FR')
+        except Exception as e:
+            logger.exception('Integration verification failed for project %s: %s', pk, e)
+            return JsonResponse({'error': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+
+        return JsonResponse({'ok': True})
 
 
 class MachineTranslateAPI(generics.GenericAPIView):
@@ -107,7 +149,8 @@ class MachineTranslateAPI(generics.GenericAPIView):
         try:
             provider = get_provider(integration)
             translation = provider.translate(text, target_lang, source_lang)
-        except Exception:
+        except Exception as e:
+            logger.exception('Machine translation failed for project %s: %s', pk, e)
             return JsonResponse({'error': 'Translation failed'}, status=status.HTTP_502_BAD_GATEWAY)
 
         return JsonResponse({'translation': translation})

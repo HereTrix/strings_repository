@@ -11,6 +11,7 @@ export interface TranslationModel {
     tags: string[]
     status: string
     plural_forms?: PluralForms
+    default_translation?: string
 }
 
 export const PLURAL_FORM_ORDER: Array<keyof PluralForms> = ['zero', 'one', 'two', 'few', 'many', 'other']

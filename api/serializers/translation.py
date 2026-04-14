@@ -54,6 +54,7 @@ class StringTokenModelSerializer(serializers.Serializer):
     tags = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     plural_forms = serializers.SerializerMethodField()
+    default_translation = serializers.SerializerMethodField()
 
     def _get_translation_obj(self, obj):
         code = self.context.get('code', '').upper()
@@ -75,6 +76,14 @@ class StringTokenModelSerializer(serializers.Serializer):
         if not t:
             return {}
         return {pf.plural_form: pf.value for pf in t.plural_forms.all()}
+
+    def get_default_translation(self, obj):
+        code = self.context.get('code', '').upper()
+        default_code = self.context.get('default_code', '')
+        if not default_code or default_code == code:
+            return None
+        t = obj.translation.filter(language__code=default_code).first()
+        return t.translation if t else None
 
 
 class SimplifiedStringTokenSerializer(serializers.Serializer):
