@@ -9,7 +9,6 @@ class TranslationTokenFilter(django_filters.FilterSet):
     status = django_filters.CharFilter(method='filter_status')
 
     def filter_query(self, queryset, name, value):
-        print('filtering query', value)
         return queryset.filter(
             Q(translation__translation__icontains=value) |
             Q(token__icontains=value)

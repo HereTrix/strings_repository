@@ -28,6 +28,8 @@ def make_bundle(project, version_name=None, is_active=False, created_by=None):
 def make_bundle_map(bundle, translation, value=None):
     return TranslationBundleMap.objects.create(
         bundle=bundle,
+        token=translation.token,
+        token_name=translation.token.token,
         translation=translation,
         language=translation.language,
         value=value if value is not None else translation.translation,
