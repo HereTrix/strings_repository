@@ -1,59 +1,51 @@
 import { FC, useCallback, useEffect, useState } from "react"
-import StringToken, { getStatusVariant, STATUS_OPTIONS } from "../model/StringToken"
+import StringToken, { getStatusName, getStatusVariant, STATUS_OPTIONS } from "../model/StringToken"
 import PaginatedResponse from "../model/PaginatedResponse"
 import Project from "../model/Project"
-import { Badge, Button, Card, Dropdown, ListGroup, OverlayTrigger, Stack } from "react-bootstrap"
+import { Badge, Button, Card, Container, ListGroup } from "react-bootstrap"
 import { APIMethod, http } from "../Utils/network"
 import AddTokenPage from "./AddTokenPage"
-import SearchBar from "../UI/SearchBar"
-import AddTokenTagPage from "./AddTokenTagPage"
 import ErrorAlert from "../UI/ErrorAlert"
 import InfiniteScroll from "react-infinite-scroll-component"
 import ConfirmationAlert from "../UI/ConfirmationAlert"
-import HelpPopover from "../UI/HelpPopover"
-import { Typeahead } from "react-bootstrap-typeahead"
+import FilterBar, { StatusOption } from "../UI/FilterBar"
+import AddTokenTagPage from "./AddTokenTagPage"
 import StringTokenListItem from "./StringTokenListItem"
+import { usePagination, PAGE_LIMIT } from "../../hooks/usePagination"
 
 type StringTokenProps = {
     project: Project
 }
 
-type StatusFilter = 'all' | string
+type Filters = {
+    tags: string[]
+    query: string
+    status: string
+    untranslated: boolean
+}
 
 const StringTokensList: FC<StringTokenProps> = ({ project }) => {
-    const limit = 20
-    const [hasMore, setHasMore] = useState<boolean>(true)
-    const [offset, setOffset] = useState<number>(0)
+    const [filters, setFilters] = useState<Filters>({ tags: [], query: '', status: 'all', untranslated: false })
+    const { items: tokens, offset, hasMore, setHasMore, total, handleResponse, setItems: setTokens } = usePagination<StringToken>()
     const [showDialog, setShowDialog] = useState(false)
-    const [tokens, setTokens] = useState<StringToken[]>([])
     const [tags, setTags] = useState<string[]>([])
-    const [selectedTags, setSelectedTags] = useState<string[]>([])
-    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-    const [query, setQuery] = useState<string>("")
     const [selectedToken, setSelectedToken] = useState<StringToken>()
     const [error, setError] = useState<string>()
     const [deletionItem, setDeletionItem] = useState<StringToken>()
-    const [total, setTotal] = useState<number>(0)
 
     const updateTokenInList = (id: string, changes: Partial<StringToken>) => {
         setTokens(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t))
     }
 
-    const fetchData = useCallback(async (
-        tags: string[],
-        term: string,
-        newOffset: number,
-        status: StatusFilter
-    ) => {
-        setOffset(newOffset)
-
+    const fetchData = useCallback(async (pageOffset: number) => {
         const params: Record<string, any> = {}
-        if (tags?.length) params.tags = tags
-        if (term) params.q = term
-        if (status !== 'all') params.status = status
+        if (filters.tags?.length) params.tags = filters.tags
+        if (filters.query) params.q = filters.query
+        if (filters.untranslated) params.untranslated = 'true'
+        else if (filters.status !== 'all') params.status = filters.status
 
-        params.offset = `${newOffset}`
-        params.limit = `${limit}`
+        params.offset = `${pageOffset}`
+        params.limit = `${PAGE_LIMIT}`
 
         const result = await http<PaginatedResponse<StringToken>>({
             method: APIMethod.get,
@@ -61,19 +53,9 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
             params,
         })
 
-        if (result.value) {
-            setHasMore(result.value.results.length >= limit)
-            setTotal(result.value.count)
-            if (newOffset === 0) {
-                setTokens(result.value.results)
-            } else {
-                setTokens(prev => [...prev, ...result.value!.results])
-            }
-        } else {
-            setHasMore(false)
-            setError(result.error)
-        }
-    }, [project.id])
+        if (result.value) handleResponse(result.value, pageOffset)
+        else { setHasMore(false); setError(result.error) }
+    }, [filters, project.id, handleResponse, setHasMore])
 
     const fetchTags = useCallback(async () => {
         const result = await http<string[]>({
@@ -85,31 +67,12 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     }, [project.id])
 
     useEffect(() => {
-        fetchData(selectedTags, query, 0, statusFilter)
+        fetchData(0)
+    }, [fetchData])
+
+    useEffect(() => {
         fetchTags()
-    }, [])
-
-    const onSearch = (newQuery: string) => {
-        setQuery(newQuery)
-        fetchData(selectedTags, newQuery, 0, statusFilter)
-    }
-
-    const selectTags = (newTags: string[]) => {
-        setSelectedTags(newTags)
-        fetchData(newTags, query, 0, statusFilter)
-    }
-
-    const updateTagSelection = (tag: string) => {
-        const updated = selectedTags.includes(tag)
-            ? selectedTags.filter(t => t !== tag)
-            : [...selectedTags, tag]
-        selectTags(updated)
-    }
-
-    const changeStatusFilter = (status: StatusFilter) => {
-        setStatusFilter(status)
-        fetchData(selectedTags, query, 0, status)
-    }
+    }, [fetchTags])
 
     const deleteToken = async (token: StringToken) => {
         setDeletionItem(undefined)
@@ -119,7 +82,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
             data: { id: token.id }
         })
         if (result.error) setError(result.error)
-        else fetchData(selectedTags, query, 0, statusFilter)
+        else fetchData(0)
     }
 
     const updateTokenStatus = async (token: StringToken, status: string) => {
@@ -136,98 +99,84 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         }
     }
 
-    return (
-        <>
-            <Stack direction="vertical" gap={2} className="my-3">
-                <Stack direction="horizontal" gap={5}>
-                    <Button onClick={() => setShowDialog(true)} className="my-2">
-                        Add localization key
-                    </Button>
-                </Stack>
-                <Stack direction="horizontal" gap={2}>
-                    {/* Status filter */}
-                    <Stack direction="horizontal" gap={2}>
-                        <span className="text-muted small">Status:</span>
-                        <Dropdown>
-                            <Dropdown.Toggle variant="outline-secondary" size="sm" className="text-capitalize">
-                                {statusFilter === 'all' ? 'All' : statusFilter}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item active={false} onClick={() => changeStatusFilter('all')}>
-                                    All
-                                </Dropdown.Item>
-                                <Dropdown.Divider />
-                                {STATUS_OPTIONS.map(status => (
-                                    <Dropdown.Item
-                                        key={status}
-                                        active={false}
-                                        className="text-capitalize"
-                                        onClick={() => changeStatusFilter(status)}
-                                    >
-                                        <Badge bg={getStatusVariant(status)} className="me-2">
-                                            {status}
-                                        </Badge>
-                                        {status}
-                                    </Dropdown.Item>
-                                ))}
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </Stack>
-                    {/* Tags filter */}
-                    {tags &&
-                        <Typeahead
-                            id="basic-typeahead-multiple"
-                            multiple
-                            options={tags}
-                            placeholder="Tags filter"
-                            onChange={(data) => selectTags(data as string[])}
-                            selected={selectedTags}
-                        />
-                    }
-                    {/* Search bar */}
-                    <SearchBar onSearch={onSearch} />
-                    {/* Info button */}
-                    <OverlayTrigger trigger="click" placement="left" overlay={HelpPopover}>
-                        <Button className="ms-auto" variant="outline-primary">i</Button>
-                    </OverlayTrigger>
-                </Stack>
-            </Stack>
+    const updateTagSelection = (tag: string) => {
+        setFilters(f => {
+            const updated = f.tags.includes(tag)
+                ? f.tags.filter(t => t !== tag)
+                : [...f.tags, tag]
+            return { ...f, tags: updated }
+        })
+    }
 
-            {tokens &&
-                <Card className="mt-3">
-                    <Card.Header className="d-flex justify-content-between align-items-center">
-                        <span className="fw-semibold">Localization keys</span>
-                        {tokens.length > 0 &&
-                            <Badge bg="secondary">
-                                {total} key{total !== 1 ? 's' : ''}
-                            </Badge>
-                        }
-                    </Card.Header>
-                    <Card.Body className="p-0">
-                        <InfiniteScroll
-                            dataLength={tokens.length}
-                            next={() => fetchData(selectedTags, query, offset + limit, statusFilter)}
-                            hasMore={hasMore}
-                            loader={<p>Loading...</p>}
-                        >
-                            <ListGroup>
-                                {tokens.map(token =>
-                                    <StringTokenListItem
-                                        key={token.id}
-                                        token={token}
-                                        project_id={project.id}
-                                        selectedTags={selectedTags}
-                                        onAddTag={() => setSelectedToken(token)}
-                                        onDelete={() => setDeletionItem(token)}
-                                        onTagClick={updateTagSelection}
-                                        onStatusChange={(status) => updateTokenStatus(token, status)}
-                                    />
-                                )}
-                            </ListGroup>
-                        </InfiniteScroll>
-                    </Card.Body>
-                </Card>
-            }
+    const statusOptions: StatusOption[] = [
+        { label: 'All', value: 'all' },
+        ...STATUS_OPTIONS.map(s => ({
+            label: getStatusName(s),
+            value: s,
+            badge: { variant: getStatusVariant(s), text: getStatusName(s) }
+        }))
+    ]
+
+    return (
+        <Container>
+            <Button onClick={() => setShowDialog(true)} className="my-3">
+                Add localization key
+            </Button>
+            <FilterBar
+                typeaheadId="tokens-tags-filter"
+                statusOptions={statusOptions}
+                statusFilter={filters.status}
+                onStatusChange={(status) => setFilters(f => ({ ...f, status }))}
+                dividerBeforeIndex={1}
+                statusDisabled={filters.untranslated}
+                tags={tags}
+                selectedTags={filters.tags}
+                onTagsChange={(newTags) => setFilters(f => ({ ...f, tags: newTags }))}
+                onSearch={(query) => setFilters(f => ({ ...f, query }))}
+                extraControls={
+                    <Button
+                        variant={filters.untranslated ? 'danger' : 'outline-danger'}
+                        size="sm"
+                        onClick={() => setFilters(f => ({ ...f, untranslated: !f.untranslated }))}
+                    >
+                        Untranslated
+                    </Button>
+                }
+            />
+
+            <Card className="mt-3">
+                <Card.Header className="d-flex justify-content-between align-items-center">
+                    <span className="fw-semibold">Localization keys</span>
+                    {tokens.length > 0 &&
+                        <Badge bg="secondary">
+                            {total} key{total !== 1 ? 's' : ''}
+                        </Badge>
+                    }
+                </Card.Header>
+                <Card.Body className="p-0">
+                    <InfiniteScroll
+                        dataLength={tokens.length}
+                        next={() => fetchData(offset + PAGE_LIMIT)}
+                        hasMore={hasMore}
+                        loader={<div className="text-center p-3 text-muted small">Loading...</div>}
+                    >
+                        <ListGroup>
+                            {tokens.map(token =>
+                                <StringTokenListItem
+                                    key={token.id}
+                                    token={token}
+                                    project_id={project.id}
+                                    selectedTags={filters.tags}
+                                    onAddTag={() => setSelectedToken(token)}
+                                    onDelete={() => setDeletionItem(token)}
+                                    onTagClick={updateTagSelection}
+                                    onStatusChange={(status) => updateTokenStatus(token, status)}
+                                />
+                            )}
+                        </ListGroup>
+                    </InfiniteScroll>
+                </Card.Body>
+            </Card>
 
             {showDialog &&
                 <AddTokenPage
@@ -235,7 +184,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                     show={showDialog}
                     tags={tags}
                     onHide={() => setShowDialog(false)}
-                    onSuccess={() => { fetchData(selectedTags, query, 0, statusFilter); setShowDialog(false) }}
+                    onSuccess={() => { fetchData(0); setShowDialog(false) }}
                 />
             }
             {selectedToken &&
@@ -244,7 +193,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                     tags={tags}
                     onHide={() => setSelectedToken(undefined)}
                     onSuccess={() => {
-                        fetchData(selectedTags, query, 0, statusFilter)
+                        fetchData(0)
                         fetchTags()
                         setSelectedToken(undefined)
                     }}
@@ -258,7 +207,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                     onConfirm={() => deleteToken(deletionItem)}
                 />
             }
-        </>
+        </Container>
     )
 }
 

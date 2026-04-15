@@ -7,6 +7,7 @@ class TranslationTokenFilter(django_filters.FilterSet):
     q = django_filters.CharFilter(method='filter_query')
     tags = django_filters.CharFilter(method='filter_tags')
     status = django_filters.CharFilter(method='filter_status')
+    untranslated = django_filters.BooleanFilter(method='filter_untranslated')
 
     def filter_query(self, queryset, name, value):
         return queryset.filter(
@@ -26,6 +27,15 @@ class TranslationTokenFilter(django_filters.FilterSet):
             translation__language__code=code,
         )
 
+    def filter_untranslated(self, queryset, name, value):
+        if value:
+            code = self.request.resolver_match.kwargs.get('code', '').upper()
+            return queryset.exclude(
+                translation__language__code=code,
+                translation__translation__gt='',
+            )
+        return queryset
+
     class Meta:
         model = StringToken
-        fields = ['q', 'tags', 'status']
+        fields = ['q', 'tags', 'status', 'untranslated']

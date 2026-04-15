@@ -8,7 +8,7 @@ class StringTokenFilter(django_filters.FilterSet):
     tags = django_filters.CharFilter(method='filter_tags')
     new = django_filters.BooleanFilter(method='filter_new')
     untranslated = django_filters.BooleanFilter(method='filter_untranslated')
-    status = django_filters.CharFilter(field_name='translation__status')
+    status = django_filters.CharFilter(field_name='status')
 
     def filter_query(self, queryset, name, value):
         return queryset.filter(

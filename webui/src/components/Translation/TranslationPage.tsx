@@ -1,15 +1,14 @@
 import { FC, useCallback, useEffect, useState } from "react"
 import { APIMethod, http } from "../Utils/network"
-import Translation, { getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel } from "../model/Translation"
-import { Badge, Button, OverlayTrigger, Container, Dropdown, ListGroup, Stack, Card } from "react-bootstrap"
+import Translation, { getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel, UNTRANSLATED_FILTER } from "../model/Translation"
+import { Badge, Card, Container, ListGroup } from "react-bootstrap"
 import PaginatedResponse from "../model/PaginatedResponse"
-import SearchBar from "../UI/SearchBar"
 import ErrorAlert from "../UI/ErrorAlert"
 import InfiniteScroll from "react-infinite-scroll-component"
-import { Typeahead } from "react-bootstrap-typeahead"
-import HelpPopover from "../UI/HelpPopover"
 import TranslationListItem from "./TranslationListItem"
 import Project from "../model/Project"
+import FilterBar, { StatusOption } from "../UI/FilterBar"
+import { usePagination, PAGE_LIMIT } from "../../hooks/usePagination"
 
 type TranslationPageProps = {
     project_id: string
@@ -17,38 +16,29 @@ type TranslationPageProps = {
     project?: Project
 }
 
-type FilterStatus = 'all' | string
+type Filters = {
+    tags: string[]
+    query: string
+    status: string
+}
 
 const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }) => {
     const defaultLanguageCode = project?.languages.find(l => l.is_default)?.code
-    const limit = 20
-    const [hasMore, setHasMore] = useState<boolean>(true)
-    const [offset, setOffset] = useState<number>(0)
-    const [query, setQuery] = useState<string>("")
-    const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
-
-    const [translations, setTranslations] = useState<TranslationModel[]>([])
-    const [total, setTotal] = useState<number>(0)
+    const [filters, setFilters] = useState<Filters>({ tags: [], query: '', status: 'all' })
+    const { items: translations, offset, hasMore, setHasMore, total, handleResponse, setItems: setTranslations } = usePagination<TranslationModel>()
     const [tags, setTags] = useState<string[]>([])
-    const [filteredTags, setFilteredTags] = useState<string[]>([])
     const [error, setError] = useState<string>()
     const [integrationEnabled, setIntegrationEnabled] = useState(false)
 
-    const fetchData = useCallback(async (
-        tags: string[],
-        term: string,
-        newOffset: number,
-        status: FilterStatus
-    ) => {
-        setOffset(newOffset)
-
+    const fetchData = useCallback(async (pageOffset: number) => {
         const params: Record<string, any> = {}
-        if (tags?.length) params.tags = tags
-        if (term) params.q = term
-        else if (status !== 'all') params.status = status
+        if (filters.tags?.length) params.tags = filters.tags
+        if (filters.query) params.q = filters.query
+        if (filters.status === UNTRANSLATED_FILTER) params.untranslated = 'true'
+        else if (filters.status !== 'all') params.status = filters.status
 
-        params.offset = `${newOffset}`
-        params.limit = `${limit}`
+        params.offset = `${pageOffset}`
+        params.limit = `${PAGE_LIMIT}`
 
         const result = await http<PaginatedResponse<TranslationModel>>({
             method: APIMethod.get,
@@ -56,19 +46,9 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }
             params,
         })
 
-        if (result.value) {
-            setHasMore(result.value.results.length >= limit)
-            setTotal(result.value.count)
-            if (newOffset === 0) {
-                setTranslations(result.value.results)
-            } else {
-                setTranslations(prev => [...prev, ...result.value!.results])
-            }
-        } else {
-            setHasMore(false)
-            setError(result.error)
-        }
-    }, [project_id, code])
+        if (result.value) handleResponse(result.value, pageOffset)
+        else { setHasMore(false); setError(result.error) }
+    }, [filters, project_id, code, handleResponse, setHasMore])
 
     const fetchTags = useCallback(async () => {
         const result = await http<string[]>({
@@ -88,32 +68,16 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }
     }, [project_id])
 
     useEffect(() => {
-        fetchData(filteredTags, query, 0, statusFilter)
+        fetchData(0)
+    }, [fetchData])
+
+    useEffect(() => {
         fetchTags()
+    }, [fetchTags])
+
+    useEffect(() => {
         fetchIntegration()
-    }, [])
-
-    const onSearch = (newQuery: string) => {
-        setQuery(newQuery)
-        fetchData(filteredTags, newQuery, 0, statusFilter)
-    }
-
-    const filterTags = (newTags: string[]) => {
-        setFilteredTags(newTags)
-        fetchData(newTags, query, 0, statusFilter)
-    }
-
-    const updateTagSelection = (tag: string) => {
-        const updated = filteredTags.includes(tag)
-            ? filteredTags.filter(t => t !== tag)
-            : [...filteredTags, tag]
-        filterTags(updated)
-    }
-
-    const changeStatusFilter = (status: FilterStatus) => {
-        setStatusFilter(status)
-        fetchData(filteredTags, query, 0, status)
-    }
+    }, [fetchIntegration])
 
     const updateTranslationInList = (translation: TranslationModel, updates: Partial<TranslationModel>) => {
         setTranslations(prev => prev.map(t => t.token === translation.token ? { ...t, ...updates } : t))
@@ -142,55 +106,43 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }
         if (result.error) setError(result.error)
     }
 
-    const statusFilterOptions: { label: string, value: FilterStatus }[] = [
+    const updateTagSelection = (tag: string) => {
+        setFilters(f => {
+            const updated = f.tags.includes(tag)
+                ? f.tags.filter(t => t !== tag)
+                : [...f.tags, tag]
+            return { ...f, tags: updated }
+        })
+    }
+
+    const statusOptions: StatusOption[] = [
         { label: 'All', value: 'all' },
-        ...STATUS_OPTIONS.map(s => ({ label: getStatusName(s), value: s }))
+        {
+            label: getStatusName(UNTRANSLATED_FILTER),
+            value: UNTRANSLATED_FILTER,
+            badge: { variant: getStatusVariant(UNTRANSLATED_FILTER), text: getStatusName(UNTRANSLATED_FILTER) }
+        },
+        ...STATUS_OPTIONS.map(s => ({
+            label: getStatusName(s),
+            value: s,
+            badge: { variant: getStatusVariant(s), text: getStatusName(s) }
+        }))
     ]
 
     return (
         <Container>
-            <Stack direction="horizontal" gap={3}>
-                <Stack direction="horizontal" gap={2}>
-                    <span className="text-muted small">Status:</span>
-                    <Dropdown>
-                        <Dropdown.Toggle variant="outline-secondary">
-                            {statusFilterOptions.find(o => o.value === statusFilter)?.label ?? 'All'}
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu>
-                            {statusFilterOptions.map(({ label, value }) => (
-                                <Dropdown.Item
-                                    key={value}
-                                    active={statusFilter === value}
-                                    onClick={() => changeStatusFilter(value)}
-                                >
-                                    {value !== 'all' && value !== 'untranslated' &&
-                                        <Badge bg={getStatusVariant(value)} className="me-2">{label}</Badge>
-                                    }
-                                    {label}
-                                </Dropdown.Item>
-                            ))}
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </Stack>
-                <Typeahead
-                    id="tags-filter"
-                    multiple
-                    options={tags}
-                    placeholder="Filter by tags"
-                    onChange={(data) => filterTags(data as string[])}
-                    selected={filteredTags}
-                />
-                <SearchBar onSearch={onSearch} />
-                <OverlayTrigger
-                    trigger="click"
-                    placement="left"
-                    overlay={HelpPopover}
-                >
-                    <Button className="ms-auto" variant="outline-primary">
-                        i
-                    </Button>
-                </OverlayTrigger>
-            </Stack>
+            <FilterBar
+                typeaheadId="translations-tags-filter"
+                statusOptions={statusOptions}
+                statusFilter={filters.status}
+                onStatusChange={(status) => setFilters(f => ({ ...f, status }))}
+                dividerBeforeIndex={2}
+                showActiveItems
+                tags={tags}
+                selectedTags={filters.tags}
+                onTagsChange={(newTags) => setFilters(f => ({ ...f, tags: newTags }))}
+                onSearch={(query) => setFilters(f => ({ ...f, query }))}
+            />
 
             {translations.length > 0 ? (
                 <Card className="mt-3">
@@ -203,16 +155,16 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }
                     <Card.Body className="p-0">
                         <InfiniteScroll
                             dataLength={translations.length}
-                            next={() => fetchData(filteredTags, query, offset + limit, statusFilter)}
+                            next={() => fetchData(offset + PAGE_LIMIT)}
                             hasMore={hasMore}
-                            loader={<p>Loading...</p>}
+                            loader={<div className="text-center p-3 text-muted small">Loading...</div>}
                         >
                             <ListGroup className="mt-2">
                                 {translations.map(translation => (
                                     <TranslationListItem
                                         key={translation.token}
                                         translation={translation}
-                                        selectedTags={filteredTags}
+                                        selectedTags={filters.tags}
                                         project_id={project_id}
                                         code={code}
                                         defaultLanguageCode={defaultLanguageCode}
