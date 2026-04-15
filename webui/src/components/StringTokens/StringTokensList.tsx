@@ -178,14 +178,10 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                         <Typeahead
                             id="basic-typeahead-multiple"
                             multiple
-                            labelKey="tags"
                             options={tags}
                             placeholder="Tags filter"
                             onChange={(data) => selectTags(data as string[])}
                             selected={selectedTags}
-                            renderMenuItemChildren={(item) => (
-                                <span>{item as string}</span>
-                            )}
                         />
                     }
                     {/* Search bar */}

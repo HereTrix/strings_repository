@@ -27,6 +27,7 @@ const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, canM
     return (
         <ListGroup.Item
             action
+            as="div"
             onClick={onNavigate}
             className="d-flex justify-content-between align-items-center"
             key={language.code}>

@@ -129,10 +129,31 @@ class ProjectInvitationAPITestCase(TestCase):
         self.assertIn('code', data)
         self.assertTrue(Invitation.objects.filter(code=data['code'], project=self.project).exists())
 
-    def test_editor_cannot_generate_invitation(self):
+    def test_editor_can_invite_translator(self):
         editor = make_user('editor')
         add_role(editor, self.project, ProjectRole.Role.editor)
         resp = authed_client(editor).post(
+            f'/api/project/{self.project.pk}/invite',
+            {'role': 'translator'},
+            format='json'
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('code', resp.json())
+
+    def test_editor_cannot_invite_admin(self):
+        editor = make_user('editor')
+        add_role(editor, self.project, ProjectRole.Role.editor)
+        resp = authed_client(editor).post(
+            f'/api/project/{self.project.pk}/invite',
+            {'role': 'admin'},
+            format='json'
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_translator_cannot_generate_invitation(self):
+        translator = make_user('translator')
+        add_role(translator, self.project, ProjectRole.Role.translator)
+        resp = authed_client(translator).post(
             f'/api/project/{self.project.pk}/invite',
             {'role': 'translator'},
             format='json'

@@ -9,7 +9,6 @@ class TranslationTokenFilter(django_filters.FilterSet):
     status = django_filters.CharFilter(method='filter_status')
 
     def filter_query(self, queryset, name, value):
-        print('filtering query', value)
         return queryset.filter(
             Q(translation__translation__icontains=value) |
             Q(token__icontains=value)
@@ -21,7 +20,11 @@ class TranslationTokenFilter(django_filters.FilterSet):
         return queryset
 
     def filter_status(self, queryset, name, value):
-        return queryset.filter(translation__status=value)
+        code = self.request.resolver_match.kwargs.get('code', '').upper()
+        return queryset.filter(
+            translation__status=value,
+            translation__language__code=code,
+        )
 
     class Meta:
         model = StringToken

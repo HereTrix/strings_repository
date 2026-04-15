@@ -1,5 +1,6 @@
 import { FC, JSX, useEffect, useState } from "react";
 import { Container, ListGroup, Tabs, Tab, Button, Stack, Modal } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import { http, APIMethod } from "../Utils/network";
 import AddProjectPage from "./AddProjectPage";
 import ErrorAlert from "../UI/ErrorAlert";
@@ -18,9 +19,11 @@ interface ProjectProps {
 }
 
 const ProjectListItem: FC<ProjectProps> = ({ project, onDelete }): JSX.Element => {
+    const navigate = useNavigate()
     return <ListGroup.Item
-        href={`/project/${project.id}`}
         action
+        as="div"
+        onClick={() => navigate(`/project/${project.id}`)}
     >
         <Stack direction="horizontal">
             {project.name}
@@ -28,7 +31,6 @@ const ProjectListItem: FC<ProjectProps> = ({ project, onDelete }): JSX.Element =
                 <Button
                     className="ms-auto btn-danger"
                     onClick={(e) => {
-                        e.preventDefault()
                         e.stopPropagation()
                         onDelete()
                     }}

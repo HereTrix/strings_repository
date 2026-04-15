@@ -1,4 +1,3 @@
-import { history } from "./history"
 import { navigate } from "./navigation"
 
 export enum APIMethod {
@@ -26,147 +25,138 @@ interface File {
     content: Blob
 }
 
-export async function download(request: APIRequest): Promise<APIResponse<File>> {
-    var headers: HeadersInit = []
-    headers.push(["Content-Type", "application/json"])
-
-    if (!request.isAuth) {
+function authHeaders(isAuth?: boolean): [string, string][] {
+    const headers: [string, string][] = []
+    if (!isAuth) {
         const token = localStorage.getItem("auth")
-        if (token) {
-            headers.push(["Authorization", token])
-        }
+        if (token) headers.push(["Authorization", token])
     }
+    return headers
+}
 
-    var path = request.path
+function buildPath(path: string, params?: any): string {
+    if (!params) return path
+    const query = new URLSearchParams(params)
+    return `${path}?${query.toString()}`
+}
 
-    if (request.params) {
-        const query = new URLSearchParams(request.params)
-        path = path + "?" + query.toString()
-    }
-
-    var data: BodyInit | null = null
-    if (request.data) {
-        data = JSON.stringify(request.data)
-    }
-    var requestOptions = {
-        method: request.method,
-        headers: headers,
-        body: data
-    }
-    const response = await fetch(path, requestOptions)
-    if (response.status == 401) {
+function handleUnauthorized(isAuth?: boolean) {
+    if (!isAuth) {
         localStorage.removeItem("auth")
         navigate("/login", { replace: true })
+    }
+}
+
+async function extractError(response: Response): Promise<string> {
+    try {
+        const json = await response.json()
+        return json["error"] ?? `Request failed (${response.status})`
+    } catch {
+        return `Request failed (${response.status})`
+    }
+}
+
+export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
+    const headers: [string, string][] = [
+        ["Content-Type", "application/json"],
+        ...authHeaders(request.isAuth),
+    ]
+
+    const body = request.data ? JSON.stringify(request.data) : null
+    const path = buildPath(request.path, request.params)
+
+    let response: Response
+    try {
+        response = await fetch(path, { method: request.method, headers, body })
+    } catch {
+        return { error: "Network error — check your connection." }
+    }
+
+    if (response.status === 401) {
+        handleUnauthorized(request.isAuth)
         return { error: "Not authorized" }
-    } else if (response.status == 200) {
-        const blob = await response.blob()
-        const disposition = response.headers.get('content-disposition')
-        var filename
-        if (disposition) {
-            filename = disposition.split('filename=')[1]?.replace(/"/g, '').trim()
-        } else {
-            filename = ''
+    }
+
+    if (response.status === 204) {
+        return {}
+    }
+
+    try {
+        const json = await response.json()
+        if (!response.ok) {
+            return { error: json["error"] ?? `Request failed (${response.status})` }
         }
-        return { value: { content: blob, name: filename } }
-    } else {
-        return { error: "Failed to load" }
+        return { value: json as T }
+    } catch {
+        return { error: "Invalid response from server" }
     }
 }
 
 export async function upload<T>(request: APIRequest): Promise<APIResponse<T>> {
-    var data = new FormData()
-    for (const item in request.data) {
-        console.log(`Item: ${item} `)
-        data.append(item, request.data[item])
+    const formData = new FormData()
+    for (const key in request.data) {
+        formData.append(key, request.data[key])
     }
 
-    var headers: HeadersInit = []
+    const headers = authHeaders(request.isAuth)
 
-    if (!request.isAuth) {
-        const token = localStorage.getItem("auth")
-        if (token) {
-            headers.push(["Authorization", token])
-        }
+    let response: Response
+    try {
+        response = await fetch(request.path, { method: request.method, headers, body: formData })
+    } catch {
+        return { error: "Network error — check your connection." }
     }
 
-    var path = request.path
-
-    var requestOptions = {
-        method: request.method,
-        headers: headers,
-        body: data
-    }
-    const response = await fetch(path, requestOptions)
-    if (response.status == 401) {
-        if (!request.isAuth) {
-            localStorage.removeItem("auth")
-            navigate("/login", { replace: true })
-        }
+    if (response.status === 401) {
+        handleUnauthorized(request.isAuth)
         return { error: "Not authorized" }
-    } else if (response.status == 204) { // No content
+    }
+
+    if (response.status === 204) {
         return {}
     }
-    const json = await response.json()
-    console.log("Response:\n", json)
-    const error = json["error"]
-    if (error) {
-        return { error: error }
-    }
 
-    return { value: json as T }
-}
-
-export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
-    var headers: HeadersInit = []
-    headers.push(["Content-Type", "application/json"])
-
-    if (!request.isAuth) {
-        const token = localStorage.getItem("auth")
-        if (token) {
-            headers.push(["Authorization", token])
-        }
-    }
-
-    var data: BodyInit | null = null
-    if (request.data) {
-        data = JSON.stringify(request.data)
-    }
-
-    var requestOptions = {
-        method: request.method,
-        headers: headers,
-        body: data
-    }
-
-    var path = request.path
-
-    if (request.params) {
-        const query = new URLSearchParams(request.params)
-        path = path + "?" + query.toString()
-    }
-
-    const response = await fetch(path, requestOptions)
-    if (response.status == 401) {
-        if (!request.isAuth) {
-            localStorage.removeItem("auth")
-            navigate("/login", { replace: true })
-        }
-        return { error: "Not authorized" }
-    } else if (response.status == 204) { // No content
-        return {}
-    }
     try {
         const json = await response.json()
-
-        const error = json["error"]
-        if (error || response.status != 200) {
-            console.log("Error response:\n", json)
-            return { error: error ?? "Request failed" }
+        if (!response.ok) {
+            return { error: json["error"] ?? `Request failed (${response.status})` }
         }
-
         return { value: json as T }
-    } catch (e) {
-        console.log("Failed to parse response as JSON")
+    } catch {
         return { error: "Invalid response from server" }
     }
+}
+
+export async function download(request: APIRequest): Promise<APIResponse<File>> {
+    const headers: [string, string][] = [
+        ["Content-Type", "application/json"],
+        ...authHeaders(request.isAuth),
+    ]
+
+    const body = request.data ? JSON.stringify(request.data) : null
+    const path = buildPath(request.path, request.params)
+
+    let response: Response
+    try {
+        response = await fetch(path, { method: request.method, headers, body })
+    } catch {
+        return { error: "Network error — check your connection." }
+    }
+
+    if (response.status === 401) {
+        handleUnauthorized(request.isAuth)
+        return { error: "Not authorized" }
+    }
+
+    if (!response.ok) {
+        return { error: await extractError(response) }
+    }
+
+    const blob = await response.blob()
+    const disposition = response.headers.get("content-disposition")
+    const filename = disposition
+        ? disposition.split("filename=")[1]?.replace(/"/g, "").trim() ?? ""
+        : ""
+
+    return { value: { content: blob, name: filename } }
 }

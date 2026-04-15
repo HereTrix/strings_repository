@@ -52,6 +52,11 @@ class StringTokenAPI(generics.GenericAPIView):
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        if StringToken.objects.filter(project=project, token=key).exists():
+            return JsonResponse({
+                'error': f"Token '{key}' already exists in this project."
+            }, status=status.HTTP_409_CONFLICT)
+
         token = StringToken()
         token.token = key
         token.comment = request.data['comment']
@@ -90,7 +95,7 @@ class StringTokenAPI(generics.GenericAPIView):
             token = StringToken.objects.get(
                 pk=token_id,
                 project__roles__user=user,
-                project__roles__role__in=ProjectRole.change_token_roles
+                project__roles__role__in=ProjectRole.change_participants_roles
             )
         except StringToken.DoesNotExist:
             return JsonResponse({

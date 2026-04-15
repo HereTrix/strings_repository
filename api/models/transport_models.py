@@ -10,6 +10,23 @@ class TranslationModel:
         model.plural_forms = plural_forms or {}
         return model
 
+    @classmethod
+    def from_bundle_map(cls, bundle_map):
+        """Build a TranslationModel from a TranslationBundleMap row.
+
+        Expects bundle_map to have select_related('token', 'language')
+        and prefetch_related('token__tags') already applied.
+        """
+        m = cls()
+        string_token = bundle_map.token
+        m.token = string_token.token
+        m.comment = string_token.comment
+        m.tags = [tag.tag for tag in string_token.tags.all()]
+        m.translation = bundle_map.value
+        m.code = bundle_map.language.code.lower()
+        m.plural_forms = {}
+        return m
+
     def __init__(self, token_model=None, code=None):
         self.plural_forms = {}
         if token_model:

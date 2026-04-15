@@ -1,5 +1,5 @@
 import { FC } from "react"
-import { Button, Stack, Toast, ToastContainer } from "react-bootstrap"
+import { Button, Modal } from "react-bootstrap"
 
 type ConfirmationAlertProps = {
     message: string | undefined
@@ -9,29 +9,16 @@ type ConfirmationAlertProps = {
 
 const ConfirmationAlert: FC<ConfirmationAlertProps> = ({ message, onDismiss, onConfirm }) => {
     return (
-        <ToastContainer className="p-3" position="middle-center">
-            <Toast show={message ? true : false} onClose={onDismiss} delay={5000}>
-                <Toast.Header>
-                    <strong className="me-auto error">Warning</strong>
-                </Toast.Header>
-                <Toast.Body>
-                    <Stack direction="vertical" className="gap-3">
-                        {message}
-                        <Stack direction="horizontal">
-                            <Button
-                                onClick={onDismiss}
-                            >Decline
-                            </Button>
-                            <Button
-                                className="btn-danger ms-auto"
-                                onClick={onConfirm}
-                            >Delete
-                            </Button>
-                        </Stack>
-                    </Stack>
-                </Toast.Body>
-            </Toast>
-        </ToastContainer>
+        <Modal show={!!message} onHide={onDismiss} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Confirm deletion</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>{message}</Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={onDismiss}>Cancel</Button>
+                <Button variant="danger" onClick={onConfirm}>Delete</Button>
+            </Modal.Footer>
+        </Modal>
     )
 }
 

@@ -55,33 +55,36 @@ const MarkdownField: FC<MarkdownFieldProps> = ({ value, onChange, rows = 3 }) =>
             onFocus={() => setActive(true)}
             onBlur={() => setActive(false)}
         >
-            {active && (
-                <Stack direction="horizontal" gap={1} className="mb-1">
-                    {COMMANDS.map(cmd => (
-                        <Button
-                            key={cmd.label}
-                            variant="outline-secondary"
-                            size="sm"
-                            title={cmd.tooltip}
-                            style={{
-                                fontStyle: cmd.label === 'I' ? 'italic' : 'normal',
-                                fontWeight: cmd.label === 'B' ? 'bold' : 'normal',
-                                textDecoration: cmd.label === 'U' ? 'underline' : 'none',
-                                minWidth: '2rem'
-                            }}
-                            onMouseDown={e => {
-                                // Prevent textarea from losing focus/selection before click fires
-                                e.preventDefault()
-                                if (textareaRef.current) {
-                                    applyTag(textareaRef.current, cmd.openTag, cmd.closeTag, onChange)
-                                }
-                            }}
-                        >
-                            {cmd.label}
-                        </Button>
-                    ))}
-                </Stack>
-            )}
+            <Stack
+                direction="horizontal"
+                gap={1}
+                className="mb-1"
+                style={{ visibility: active ? 'visible' : 'hidden' }}
+            >
+                {COMMANDS.map(cmd => (
+                    <Button
+                        key={cmd.label}
+                        variant="outline-secondary"
+                        size="sm"
+                        title={cmd.tooltip}
+                        style={{
+                            fontStyle: cmd.label === 'I' ? 'italic' : 'normal',
+                            fontWeight: cmd.label === 'B' ? 'bold' : 'normal',
+                            textDecoration: cmd.label === 'U' ? 'underline' : 'none',
+                            minWidth: '2rem'
+                        }}
+                        onMouseDown={e => {
+                            // Prevent textarea from losing focus/selection before click fires
+                            e.preventDefault()
+                            if (textareaRef.current) {
+                                applyTag(textareaRef.current, cmd.openTag, cmd.closeTag, onChange)
+                            }
+                        }}
+                    >
+                        {cmd.label}
+                    </Button>
+                ))}
+            </Stack>
             <textarea
                 ref={textareaRef}
                 className="form-control"

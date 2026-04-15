@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from "react"
-import Project from "../model/Project"
-import { Button, Dropdown, Form, Modal } from "react-bootstrap"
+import Project, { ProjectRole } from "../model/Project"
+import { Alert, Button, Dropdown, Form, Modal } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
 import ErrorAlert from "../UI/ErrorAlert"
 import { APIMethod, http, upload } from "../Utils/network"
@@ -18,15 +18,25 @@ type Inputs = {
     file: FileList
 }
 
+interface ImportResult {
+    imported: number
+    deprecated: number
+}
+
+const canDeprecateMissing = (role: ProjectRole) =>
+    role === ProjectRole.owner || role === ProjectRole.admin
+
 const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
 
     const navigate = useNavigate()
 
     const [error, setError] = useState<string>()
     const [tags, setTags] = useState<string[]>([])
+    const [result, setResult] = useState<ImportResult | undefined>()
 
     const [selectedTags, setSelectedTags] = useState<string[]>()
     const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(code)
+    const [deprecateMissing, setDeprecateMissing] = useState(false)
 
     const {
         register,
@@ -35,6 +45,7 @@ const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
     } = useForm<Inputs>()
 
     const onSubmit: SubmitHandler<Inputs> = async (data) => {
+        setResult(undefined)
 
         if (!selectedLanguage) {
             setError("Language should be selected")
@@ -43,26 +54,25 @@ const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
 
         if (!data.file) {
             setError("File should be selected")
+            return
         }
 
-        var tagToSend: string[] = []
-        if (selectedTags) {
-            tagToSend = selectedTags
-        }
+        const tagToSend: string[] = selectedTags ?? []
 
-        const result = await upload({
+        const result = await upload<ImportResult>({
             method: APIMethod.post,
             path: `/api/import`,
             data: {
                 "file": data.file[0],
                 "code": selectedLanguage,
                 "tags": tagToSend,
-                "project_id": project.id
+                "project_id": project.id,
+                "deprecate_missing": deprecateMissing ? "true" : "false",
             }
         })
 
         if (result.value) {
-            onHide()
+            setResult(result.value)
         } else {
             setError(result.error)
         }
@@ -127,12 +137,41 @@ const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
                             selected={selectedTags}
                             className="my-2"
                         />
+                        {canDeprecateMissing(project.role) && (
+                            <Form.Group className="my-2">
+                                <Form.Check
+                                    type="checkbox"
+                                    id="deprecate-missing"
+                                    label="Mark missing tokens as deprecated"
+                                    checked={deprecateMissing}
+                                    onChange={(e) => setDeprecateMissing(e.target.checked)}
+                                    disabled={!!selectedTags?.length}
+                                />
+                                {deprecateMissing && (
+                                    <Form.Text className="text-warning d-block">
+                                        All active tokens not present in the imported file will be marked as deprecated.
+                                        Cannot be used with tag filters.
+                                    </Form.Text>
+                                )}
+                                {!!selectedTags?.length && (
+                                    <Form.Text className="text-muted d-block">
+                                        Unavailable when tag filter is active.
+                                    </Form.Text>
+                                )}
+                            </Form.Group>
+                        )}
                         <Button
                             type="submit"
                             className="my-2"
                         >Import</Button>
                     </Form.Group>
                 </Form>
+                {result && (
+                    <Alert variant="success" className="mx-2">
+                        Imported {result.imported} translation{result.imported !== 1 ? 's' : ''}.
+                        {result.deprecated > 0 && ` Marked ${result.deprecated} token${result.deprecated !== 1 ? 's' : ''} as deprecated.`}
+                    </Alert>
+                )}
             </Modal.Body>
             {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </Modal>

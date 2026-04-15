@@ -5,6 +5,7 @@ from rest_framework import generics, status, permissions
 
 from api.file_processors.export_file_type import ExportFile
 from api.file_processors.file_processor import FileProcessor
+from api.models.bundle import TranslationBundle, TranslationBundleMap
 from api.models.language import Language
 from api.models.project import ProjectAccessToken
 from api.models.string_token import StringToken
@@ -158,12 +159,13 @@ class PluginExportAPI(generics.GenericAPIView):
         if error:
             return error
 
-        project_id = access.project.id
+        project = access.project
         user = access.user
 
         codes = request.POST.getlist('codes')
         export_type = request.POST.get('type')
         tags = request.POST.getlist('tags')
+        bundle_version = request.POST.get('bundle_version')
 
         try:
             file_type = ExportFile(export_type)
@@ -174,27 +176,82 @@ class PluginExportAPI(generics.GenericAPIView):
 
         if not codes:
             codes = list(Language.objects.filter(
-                project__pk=project_id
+                project=project
             ).values_list('code', flat=True))
 
-        tokens = StringToken.objects.filter(
-            project__pk=project_id,
-            project__roles__user=user
-        ).prefetch_related('translation', 'tags')
+        # Resolve export source:
+        # omitted or 'live' -> live translations  (default, development)
+        # 'active' -> active bundle (production CI/CD)
+        # '<version>' -> specific bundle (QA, rollback check)
 
-        for tag in tags:
-            tokens = tokens.filter(tags__tag=tag)
+        if bundle_version is None or bundle_version == 'live':
+            return _export_live(project, user, codes, tags, file_type)
 
-        processor = FileProcessor(type=file_type)
-
-        for code in codes:
-            try:
-                records = [TranslationModel(
-                    token_model=token, code=code) for token in tokens]
-                processor.append(records=records, code=code)
-            except Exception as e:
+        if bundle_version == 'active':
+            bundle = TranslationBundle.objects.filter(
+                project=project, is_active=True).first()
+            if not bundle:
                 return JsonResponse({
-                    'error': str(e)
-                }, status=status.HTTP_400_BAD_REQUEST)
+                    'error': (
+                        'No active bundle for this project. '
+                        'Activate a bundle first or use a specific version name.'
+                    )
+                }, status=status.HTTP_404_NOT_FOUND)
+            return _export_bundle(bundle, codes, file_type)
 
-        return processor.http_response()
+        # Specific version name
+        try:
+            bundle = TranslationBundle.objects.get(
+                project=project, version_name=bundle_version)
+        except TranslationBundle.DoesNotExist:
+            return JsonResponse({
+                'error': f"Bundle '{bundle_version}' not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        return _export_bundle(bundle, codes, file_type)
+
+
+def _export_live(project, user, codes, tags, file_type):
+    tokens = StringToken.objects.filter(
+        project=project,
+        project__roles__user=user,
+    ).prefetch_related('translation', 'tags')
+
+    for tag in tags:
+        tokens = tokens.filter(tags__tag=tag)
+
+    processor = FileProcessor(type=file_type)
+    for code in codes:
+        try:
+            records = [TranslationModel(token_model=t, code=code)
+                       for t in tokens]
+            processor.append(records=records, code=code)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return processor.http_response()
+
+
+def _export_bundle(bundle, codes, file_type):
+    upper_codes = [c.upper() for c in codes]
+    maps = (
+        bundle.maps
+        .select_related('translation__token', 'language')
+        .prefetch_related('translation__token__tags')
+        .filter(language__code__in=upper_codes)
+    )
+
+    by_language = {}
+    for m in maps:
+        code = m.language.code.lower()
+        by_language.setdefault(code, []).append(m)
+
+    processor = FileProcessor(type=file_type)
+    for code, bundle_maps in by_language.items():
+        records = [TranslationModel.from_bundle_map(m) for m in bundle_maps]
+        try:
+            processor.append(records=records, code=code)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return processor.http_response()

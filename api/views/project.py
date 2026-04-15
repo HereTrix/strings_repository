@@ -11,7 +11,6 @@ from api.models.translations import StringToken
 from api.paginators.string_token_paginator import TranslationsPagination
 from api.serializers.project import ProjectSerializer, CreateProjectSerializer, ProjectDetailSerializer
 from api.serializers.language import AvailableLanguageSerializer, LanguageSerializer
-from api.serializers.tag import TagSerializer
 from api.serializers.translation import StringTokenModelSerializer, StringTokenSerializer
 
 
@@ -129,12 +128,14 @@ class TranslationsListAPI(generics.ListAPIView):
         return context
 
 
-class ProjectTagsAPI(generics.ListAPIView):
+class ProjectTagsAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = TagSerializer
 
-    def get_queryset(self):
-        return Tag.objects.filter(
-            tokens__project__pk=self.kwargs['pk'],
-            tokens__project__roles__user=self.request.user
-        ).distinct()
+    def get(self, request, pk):
+        tags = list(
+            Tag.objects.filter(
+                tokens__project__pk=pk,
+                tokens__project__roles__user=request.user
+            ).distinct().values_list('tag', flat=True)
+        )
+        return JsonResponse(tags, safe=False)
