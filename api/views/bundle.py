@@ -1,7 +1,8 @@
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from rest_framework import generics, permissions, status
 
+from api.file_processors.compare_file import CompareFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.file_processors.file_processor import FileProcessor
 from api.models.bundle import TranslationBundle, TranslationBundleMap
@@ -214,76 +215,121 @@ class BundleCompareAPI(generics.GenericAPIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        from_data, err = _build_compare_dict(project, from_id)
+        diff, err = _compute_compare_diff(project, from_id, to_id)
         if err:
-            return error_response(f"'from': {err}", status.HTTP_404_NOT_FOUND)
+            return error_response(err, status.HTTP_404_NOT_FOUND)
 
-        to_data, err = _build_compare_dict(project, to_id)
+        return JsonResponse(diff)
+
+
+class BundleCompareExportAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        project = _get_project_for_member(pk, request.user)
+        if not project:
+            return error_response('Not found', status.HTTP_404_NOT_FOUND)
+
+        from_id = request.GET.get('from')
+        to_id = request.GET.get('to')
+        mode = request.GET.get('mode', 'diff')
+
+        if not from_id or not to_id:
+            return error_response(
+                "Both 'from' and 'to' query parameters are required.",
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        if mode not in ('diff', 'changes'):
+            return error_response(
+                "mode must be 'diff' or 'changes'.",
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        diff, err = _compute_compare_diff(project, from_id, to_id)
         if err:
-            return error_response(f"'to': {err}", status.HTTP_404_NOT_FOUND)
+            return error_response(err, status.HTTP_404_NOT_FOUND)
 
-        added = []
-        removed = []
-        changed = []
-        unchanged = 0
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        CompareFileWriter(diff=diff, mode=mode).write(response)
+        return response
 
-        all_keys = set(from_data) | set(to_data)
-        for key in all_keys:
-            token_key, lang_code = key
-            in_from = key in from_data
-            in_to = key in to_data
 
-            if in_from and not in_to:
-                removed.append({'token': token_key, 'language': lang_code})
-            elif not in_from and in_to:
-                added.append({'token': token_key, 'language': lang_code, 'value': to_data[key]})
-            elif from_data[key] != to_data[key]:
-                changed.append({
-                    'token': token_key,
-                    'language': lang_code,
-                    'from': from_data[key],
-                    'to': to_data[key],
-                })
-            else:
-                unchanged += 1
+def _compute_compare_diff(project, from_id, to_id):
+    """
+    Returns (diff_dict, error_string).
+    diff_dict keys: added, removed, changed, unchanged_count, new_tokens, deleted_tokens.
+    """
+    from_data, err = _build_compare_dict(project, from_id)
+    if err:
+        return None, f"'from': {err}"
 
-        # Token-level diff using the bundle's stored token list.
-        new_tokens = []
-        deleted_tokens = []
+    to_data, err = _build_compare_dict(project, to_id)
+    if err:
+        return None, f"'to': {err}"
 
-        from_bundle = None if from_id == 'live' else TranslationBundle.objects.filter(
-            id=int(from_id), project=project).first()
-        to_bundle = None if to_id == 'live' else TranslationBundle.objects.filter(
-            id=int(to_id), project=project).first()
+    added = []
+    removed = []
+    changed = []
+    unchanged = 0
 
-        if from_bundle is not None and to_id == 'live':
-            from_token_names = set(
-                from_bundle.maps.exclude(token_name='').values_list('token_name', flat=True).distinct()
-            )
-            live_token_names = set(
-                StringToken.objects.filter(project=project).values_list('token', flat=True)
-            )
-            new_tokens = sorted(live_token_names - from_token_names)
-            deleted_tokens = sorted(from_token_names - live_token_names)
+    for key in set(from_data) | set(to_data):
+        token_key, lang_code = key
+        in_from = key in from_data
+        in_to = key in to_data
 
-        elif to_bundle is not None and from_id == 'live':
-            to_token_names = set(
-                to_bundle.maps.exclude(token_name='').values_list('token_name', flat=True).distinct()
-            )
-            live_token_names = set(
-                StringToken.objects.filter(project=project).values_list('token', flat=True)
-            )
-            new_tokens = sorted(to_token_names - live_token_names)
-            deleted_tokens = sorted(live_token_names - to_token_names)
+        if in_from and not in_to:
+            removed.append({'token': token_key, 'language': lang_code, 'from': from_data[key]})
+        elif not in_from and in_to:
+            added.append({'token': token_key, 'language': lang_code, 'value': to_data[key]})
+        elif from_data[key] != to_data[key]:
+            changed.append({
+                'token': token_key,
+                'language': lang_code,
+                'from': from_data[key],
+                'to': to_data[key],
+            })
+        else:
+            unchanged += 1
 
-        return JsonResponse({
-            'added': added,
-            'removed': removed,
-            'changed': changed,
-            'unchanged_count': unchanged,
-            'new_tokens': new_tokens,
-            'deleted_tokens': deleted_tokens,
-        })
+    new_tokens = []
+    deleted_tokens = []
+
+    from_bundle = None if from_id == 'live' else TranslationBundle.objects.filter(
+        id=int(from_id), project=project).first()
+    to_bundle = None if to_id == 'live' else TranslationBundle.objects.filter(
+        id=int(to_id), project=project).first()
+
+    if from_bundle is not None and to_id == 'live':
+        from_token_names = set(
+            from_bundle.maps.exclude(token_name='').values_list('token_name', flat=True).distinct()
+        )
+        live_token_names = set(
+            StringToken.objects.filter(project=project).values_list('token', flat=True)
+        )
+        new_tokens = sorted(live_token_names - from_token_names)
+        deleted_tokens = sorted(from_token_names - live_token_names)
+
+    elif to_bundle is not None and from_id == 'live':
+        to_token_names = set(
+            to_bundle.maps.exclude(token_name='').values_list('token_name', flat=True).distinct()
+        )
+        live_token_names = set(
+            StringToken.objects.filter(project=project).values_list('token', flat=True)
+        )
+        new_tokens = sorted(to_token_names - live_token_names)
+        deleted_tokens = sorted(live_token_names - to_token_names)
+
+    return {
+        'added': added,
+        'removed': removed,
+        'changed': changed,
+        'unchanged_count': unchanged,
+        'new_tokens': new_tokens,
+        'deleted_tokens': deleted_tokens,
+    }, None
 
 
 def _build_compare_dict(project, source):
