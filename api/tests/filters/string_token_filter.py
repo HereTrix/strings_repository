@@ -71,9 +71,9 @@ class StringTokenFilterTestCase(TestCase):
         self.assertNotIn(self.token_a, result)
 
     def test_filter_status(self):
-        from api.models.translations import Translation
-        Translation.objects.filter(token=self.token_a).update(status='approved')
-        result = self._apply({'status': 'approved'})
+        self.token_a.status = 'deprecated'
+        self.token_a.save()
+        result = self._apply({'status': 'deprecated'})
         self.assertIn(self.token_a, result)
         self.assertNotIn(self.token_b, result)
 
