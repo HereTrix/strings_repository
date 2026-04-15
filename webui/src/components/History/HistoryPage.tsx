@@ -1,15 +1,16 @@
-import { FC, useState } from "react"
-import Project from "../model/Project"
-import { Button, Container, Form, Stack, Table } from "react-bootstrap"
-import { APIMethod, download, http } from "../Utils/network"
 import fileDownload from "js-file-download"
+import { FC, JSX, useState } from "react"
+import { Badge, Button, Container, Form, Spinner, Stack, Table } from "react-bootstrap"
+import { APIMethod, download, http } from "../Utils/network"
+import DiffView from "../UI/DiffView"
 import ErrorAlert from "../UI/ErrorAlert"
+import Project from "../model/Project"
 
 type HistoryPageProps = {
     project: Project
 }
 
-interface HistoryData {
+interface HistoryRecord {
     updated_at: string
     language: string
     token: string
@@ -19,46 +20,51 @@ interface HistoryData {
     new_value: string
 }
 
-const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
+const STATUS_VARIANT: Record<string, string> = {
+    approved: 'success',
+    in_review: 'warning',
+    new: 'secondary',
+}
 
-    const [error, setError] = useState<string>()
-    const [data, setData] = useState<Map<string, HistoryData[]>>()
+const formatDate = (iso: string) =>
+    new Date(iso).toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+    })
 
-    const [dateFrom, setDateFrom] = useState<string>()
-    const [dateTo, setDateTo] = useState<string>()
+const HistoryPage: FC<HistoryPageProps> = ({ project }): JSX.Element => {
+    const [error, setError] = useState<string | undefined>()
+    const [data, setData] = useState<Map<string, HistoryRecord[]> | undefined>()
+    const [loading, setLoading] = useState(false)
+    const [dateFrom, setDateFrom] = useState<string | undefined>()
+    const [dateTo, setDateTo] = useState<string | undefined>()
 
-    const requestParams = () => {
-        var params = new Map<string, string>()
-
-        if (dateFrom) {
-            params.set('from', dateFrom)
-        }
-
-        if (dateTo) {
-            params.set('to', dateTo)
-        }
-        return params
+    const params = () => {
+        const p: Record<string, string> = {}
+        if (dateFrom) p.from = dateFrom
+        if (dateTo) p.to = dateTo
+        return p
     }
 
     const loadHistory = async () => {
+        setLoading(true)
+        setError(undefined)
 
-        const result = await http<HistoryData[]>({
+        const result = await http<HistoryRecord[]>({
             method: APIMethod.get,
             path: `/api/project/${project.id}/history`,
-            params: requestParams()
+            params: params(),
         })
 
-        if (result.value) {
-            const grouped = new Map<string, HistoryData[]>();
+        setLoading(false)
 
-            result.value.forEach(obj => {
-                var value = grouped.get(obj.token)
-                if (!value) {
-                    value = []
-                }
-                value.push(obj)
-                grouped.set(obj.token, value);
-            });
+        if (result.value) {
+            const grouped = new Map<string, HistoryRecord[]>()
+            for (const record of result.value) {
+                const group = grouped.get(record.token) ?? []
+                group.push(record)
+                grouped.set(record.token, group)
+            }
             setData(grouped)
         } else {
             setError(result.error)
@@ -69,9 +75,8 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
         const result = await download({
             method: APIMethod.get,
             path: `/api/project/${project.id}/history/export`,
-            params: requestParams()
+            params: params(),
         })
-
         if (result.value) {
             fileDownload(result.value.content, result.value.name)
         } else {
@@ -80,58 +85,82 @@ const HistoryPage: FC<HistoryPageProps> = ({ project }) => {
     }
 
     return (
-        <>
-            <Container
-                className="d-flex justify-content-between align-items-end my-2">
-                <Stack direction="horizontal" gap={2} className="align-items-end">
-                    <Container>
-                        <label>From date:</label>
+        <Container className="mt-3">
+            <Stack direction="horizontal" gap={2} className="mb-3 align-items-end flex-wrap">
+                <Stack direction="horizontal" gap={2} className="align-items-end flex-wrap">
+                    <div>
+                        <Form.Label className="mb-1 small text-muted">From</Form.Label>
                         <Form.Control
                             type="date"
-                            onChange={(e) => setDateFrom(e.target.value)} />
-                    </Container>
-                    <Container>
-                        <label>To date:</label>
+                            size="sm"
+                            onChange={(e) => setDateFrom(e.target.value || undefined)}
+                        />
+                    </div>
+                    <div>
+                        <Form.Label className="mb-1 small text-muted">To</Form.Label>
                         <Form.Control
                             type="date"
-                            onChange={(e) => setDateTo(e.target.value)} />
-                    </Container>
-                    <Button onClick={loadHistory}>Show</Button>
+                            size="sm"
+                            onChange={(e) => setDateTo(e.target.value || undefined)}
+                        />
+                    </div>
+                    <Button size="sm" onClick={loadHistory} disabled={loading}>
+                        {loading ? <><Spinner size="sm" className="me-1" />Loading…</> : 'Load'}
+                    </Button>
                 </Stack>
-                <Button onClick={exportHistory}>Export history</Button>
-            </Container>
-            {data && [...data.keys()].map((key) => {
-                const value = data.get(key)
-                return <Container key={key}>
-                    <h2>{key}</h2>
-                    <Table>
-                        <thead>
+                <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    className="ms-auto"
+                    onClick={exportHistory}
+                >
+                    Export history
+                </Button>
+            </Stack>
+
+            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
+
+            {data && data.size === 0 && (
+                <p className="text-muted text-center py-4">No history found for the selected period.</p>
+            )}
+
+            {data && [...data.entries()].map(([token, records]) => (
+                <div key={token} className="mb-4">
+                    <h6 className="fw-semibold mb-2 pb-1 border-bottom">{token}</h6>
+                    <Table size="sm" hover responsive className="mb-0">
+                        <thead className="table-light">
                             <tr>
-                                <th>Updated at:</th>
+                                <th>Date</th>
                                 <th>Language</th>
-                                <th>Old translation</th>
-                                <th>New translation</th>
+                                <th>Change</th>
                                 <th>Editor</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {value && value.map((item) =>
-                                <tr key={item.token + item.updated_at}>
-                                    <td>{item.updated_at}</td>
-                                    <td>{item.language}</td>
-                                    <td>{item.old_value}</td>
-                                    <td>{item.new_value}</td>
-                                    <td>{item.editor}</td>
-                                    <td>{item.status}</td>
+                            {records.map((record) => (
+                                <tr key={record.token + record.updated_at}>
+                                    <td className="text-nowrap text-muted small">{formatDate(record.updated_at)}</td>
+                                    <td className="text-nowrap">{record.language}</td>
+                                    <td>
+                                        {record.old_value
+                                            ? <DiffView base={record.old_value} next={record.new_value} />
+                                            : <span className="small">{record.new_value}</span>
+                                        }
+                                    </td>
+                                    <td className="text-nowrap small">{record.editor}</td>
+                                    <td className="text-nowrap">
+                                        <Badge bg={STATUS_VARIANT[record.status] ?? 'secondary'} text={record.status === 'in_review' ? 'dark' : undefined}>
+                                            {record.status.replace('_', ' ')}
+                                        </Badge>
+                                    </td>
                                 </tr>
-                            )}
+                            ))}
                         </tbody>
                     </Table>
-                </Container>
-            })}
-            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
-        </>
+                </div>
+            ))}
+        </Container>
     )
 }
 
