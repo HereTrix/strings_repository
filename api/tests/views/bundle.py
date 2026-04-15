@@ -507,6 +507,127 @@ class BundleCompareAPITestCase(TestCase):
 
 
 #
+# BundleCompareExportAPI
+#
+
+class BundleCompareExportAPITestCase(TestCase):
+
+    def setUp(self):
+        self.owner = make_user('owner')
+        self.project = make_project('P', owner=self.owner)
+        self.lang = make_language(self.project, 'EN')
+        self.token_a = make_token(self.project, 'greeting')
+        self.token_b = make_token(self.project, 'farewell')
+        self.tr_a = make_translation(self.token_a, self.lang, 'Hello')
+        self.tr_b = make_translation(self.token_b, self.lang, 'Goodbye')
+        self.bundle = make_bundle(self.project, 'v1')
+        make_bundle_map(self.bundle, self.tr_a, 'Hello')
+        make_bundle_map(self.bundle, self.tr_b, 'Goodbye')
+        self.client = authed_client(self.owner)
+
+    def _url(self, **params):
+        from urllib.parse import urlencode
+        qs = urlencode(params)
+        return f'/api/project/{self.project.pk}/bundles/compare/export?{qs}'
+
+    def _xlsx_text(self, content):
+        """Extract all text from xlsx shared strings XML."""
+        import zipfile, re
+        zf = zipfile.ZipFile(io.BytesIO(content))
+        try:
+            xml = zf.read('xl/sharedStrings.xml').decode()
+        except KeyError:
+            return ''
+        return re.sub(r'<[^>]+>', ' ', xml)
+
+    def test_missing_params_returns_400(self):
+        resp = self.client.get(
+            f'/api/project/{self.project.pk}/bundles/compare/export')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_invalid_mode_returns_400(self):
+        resp = self.client.get(self._url(**{
+            'from': self.bundle.pk, 'to': 'live', 'mode': 'invalid'}))
+        self.assertEqual(resp.status_code, 400)
+
+    def test_invalid_bundle_returns_404(self):
+        resp = self.client.get(self._url(**{
+            'from': 9999, 'to': 'live', 'mode': 'diff'}))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_forbidden_for_non_member(self):
+        stranger = make_user('stranger')
+        resp = authed_client(stranger).get(self._url(**{
+            'from': self.bundle.pk, 'to': 'live', 'mode': 'diff'}))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_export_diff_returns_xlsx(self):
+        resp = self.client.get(self._url(**{
+            'from': self.bundle.pk, 'to': 'live', 'mode': 'diff'}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.get('Content-Type'),
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertIn('compare_diff.xlsx', resp.get('Content-Disposition', ''))
+
+    def test_export_changes_returns_xlsx(self):
+        resp = self.client.get(self._url(**{
+            'from': self.bundle.pk, 'to': 'live', 'mode': 'changes'}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('compare_changes.xlsx', resp.get('Content-Disposition', ''))
+
+    def test_export_diff_default_mode(self):
+        """Omitting mode defaults to diff."""
+        resp = self.client.get(self._url(**{
+            'from': self.bundle.pk, 'to': 'live'}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('compare_diff.xlsx', resp.get('Content-Disposition', ''))
+
+    def test_export_diff_contains_changed_token(self):
+        self.tr_a.translation = 'Hi'
+        self.tr_a.save()
+
+        resp = self.client.get(self._url(**{
+            'from': self.bundle.pk, 'to': 'live', 'mode': 'diff'}))
+        self.assertEqual(resp.status_code, 200)
+        text = self._xlsx_text(resp.content)
+        self.assertIn('greeting', text)
+        self.assertIn('Hello', text)
+        self.assertIn('Hi', text)
+
+    def test_export_changes_contains_changed_token(self):
+        self.tr_a.translation = 'Hi'
+        self.tr_a.save()
+
+        resp = self.client.get(self._url(**{
+            'from': self.bundle.pk, 'to': 'live', 'mode': 'changes'}))
+        self.assertEqual(resp.status_code, 200)
+        text = self._xlsx_text(resp.content)
+        self.assertIn('greeting', text)
+        self.assertIn('Hi', text)
+
+    def test_export_diff_contains_new_token(self):
+        new_tok = make_token(self.project, 'new_key')
+        make_translation(new_tok, self.lang, 'New value')
+
+        resp = self.client.get(self._url(**{
+            'from': self.bundle.pk, 'to': 'live', 'mode': 'diff'}))
+        text = self._xlsx_text(resp.content)
+        self.assertIn('new_key', text)
+
+    def test_export_bundle_to_bundle(self):
+        b2 = make_bundle(self.project, 'v2')
+        make_bundle_map(b2, self.tr_a, 'Hi')
+
+        resp = self.client.get(self._url(**{
+            'from': self.bundle.pk, 'to': b2.pk, 'mode': 'diff'}))
+        self.assertEqual(resp.status_code, 200)
+        text = self._xlsx_text(resp.content)
+        self.assertIn('greeting', text)
+
+
+#
 # BundleExportAPI
 #
 

@@ -1,5 +1,5 @@
 from django.urls import path
-from api.views.bundle import BundleActivateAPI, BundleCompareAPI, BundleDeactivateAPI, BundleDetailAPI, BundleExportAPI, BundleListCreateAPI
+from api.views.bundle import BundleActivateAPI, BundleCompareAPI, BundleCompareExportAPI, BundleDeactivateAPI, BundleDetailAPI, BundleExportAPI, BundleListCreateAPI
 from api.views.export import ExportAPI, ExportFormatsAPI
 from api.views.generic import *
 from api.views.history import ProjectHistoryAPI, ProjectHistoryExportAPI
@@ -48,6 +48,7 @@ urlpatterns = [
     # bundles
     path('project/<int:pk>/bundles', BundleListCreateAPI.as_view()),
     path('project/<int:pk>/bundles/compare', BundleCompareAPI.as_view()),
+    path('project/<int:pk>/bundles/compare/export', BundleCompareExportAPI.as_view()),
     path('project/<int:pk>/bundles/<int:bundle_id>', BundleDetailAPI.as_view()),
     path('project/<int:pk>/bundles/<int:bundle_id>/activate', BundleActivateAPI.as_view()),
     path('project/<int:pk>/bundles/<int:bundle_id>/deactivate', BundleDeactivateAPI.as_view()),

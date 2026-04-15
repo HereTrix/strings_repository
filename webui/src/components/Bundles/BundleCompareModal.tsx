@@ -1,6 +1,7 @@
+import fileDownload from "js-file-download"
 import { FC, JSX, useEffect, useState } from "react"
 import { Badge, Button, Dropdown, DropdownButton, ListGroup, Modal, Spinner, Stack } from "react-bootstrap"
-import { APIMethod, http } from "../Utils/network"
+import { APIMethod, download, http } from "../Utils/network"
 import { Bundle, BundleDiff } from "../model/Bundle"
 import DiffView from "../UI/DiffView"
 import Project from "../model/Project"
@@ -54,6 +55,17 @@ const BundleCompareModal: FC<BundleCompareModalProps> = ({ project, bundles, ini
     useEffect(() => {
         if (show) compare()
     }, [show, fromSource, toSource])
+
+    const exportCompare = async (mode: 'diff' | 'changes') => {
+        const result = await download({
+            method: APIMethod.get,
+            path: `/api/project/${project.id}/bundles/compare/export`,
+            params: { from: sourceId(fromSource), to: sourceId(toSource), mode },
+        })
+        if (result.value) {
+            fileDownload(result.value.content, result.value.name || `compare_${mode}.xlsx`)
+        }
+    }
 
     const otherBundles = bundles.filter(b => b.id !== (fromSource !== 'live' ? fromSource.id : -1))
 
@@ -230,6 +242,24 @@ const BundleCompareModal: FC<BundleCompareModalProps> = ({ project, bundles, ini
                 )}
             </Modal.Body>
             <Modal.Footer>
+                <Stack direction="horizontal" gap={2} className="me-auto">
+                    <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        disabled={!diff || loading}
+                        onClick={() => exportCompare('diff')}
+                    >
+                        Export diff
+                    </Button>
+                    <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        disabled={!diff || loading}
+                        onClick={() => exportCompare('changes')}
+                    >
+                        Export changes
+                    </Button>
+                </Stack>
                 <Button variant="secondary" onClick={onHide}>Close</Button>
             </Modal.Footer>
         </Modal>
