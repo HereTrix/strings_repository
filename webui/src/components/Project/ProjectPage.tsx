@@ -9,12 +9,13 @@ import StringTokensList from "../StringTokens/StringTokensList"
 import ExportPage from "../Translation/ExportPage"
 import HistoryPage from "../History/HistoryPage"
 import ImportPage from "../Translation/ImportPage"
+import BundlesPage from "../Bundles/BundlesPage"
 
 const ProjectPage = () => {
 
     const { id, tab } = useParams()
     const navigate = useNavigate()
-    const allowedTabs = ['languages', 'tokens', 'history', 'info']
+    const allowedTabs = ['languages', 'tokens', 'history', 'bundles', 'info']
     const getValidTab = (t: string | undefined | null) =>
         t && allowedTabs.includes(t) ? t : 'languages'
     const [activeTab, setActiveTab] = useState(getValidTab(tab))
@@ -90,6 +91,13 @@ const ProjectPage = () => {
                         key="history"
                     >
                         <HistoryPage project={project} />
+                    </Tab>
+                    <Tab
+                        eventKey="bundles"
+                        title="Bundles"
+                        key="bundles"
+                    >
+                        {activeTab === "bundles" && <BundlesPage project={project} />}
                     </Tab>
                     <Tab
                         eventKey="info"

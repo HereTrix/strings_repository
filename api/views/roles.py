@@ -35,12 +35,12 @@ class RolesAPI(generics.GenericAPIView):
                 'error': 'User is not a member of this project'
             }, status=status.HTTP_403_FORBIDDEN)
 
-        if role.role == ProjectRole.Role.admin:
-            data = ProjectRole.common_roles
-        elif role.role == ProjectRole.Role.owner:
+        if role.role == ProjectRole.Role.owner:
             data = [r.value for r in ProjectRole.Role]
+        elif role.role == ProjectRole.Role.admin:
+            data = ProjectRole.common_roles
         elif role.role == ProjectRole.Role.editor:
-            data = [ProjectRole.Role.translator, ProjectRole.Role.editor]
+            data = ProjectRole.translator_roles
         else:
             return JsonResponse({
                 'error': 'User is not allowed to set roles'
@@ -158,17 +158,19 @@ class ProjectInvitationAPI(generics.GenericAPIView):
 
         user_role = project.roles.get(user=user)
 
-        if user_role.role == ProjectRole.Role.admin:
+        if user_role.role == ProjectRole.Role.owner:
+            pass  # may invite any role
+        elif user_role.role == ProjectRole.Role.admin:
             if role not in ProjectRole.common_roles:
                 return JsonResponse({
                     'error': 'Unable to generate code'
                 }, status=status.HTTP_400_BAD_REQUEST)
-        elif user_role.role == ProjectRole.Role.translator:
+        elif user_role.role == ProjectRole.Role.editor:
             if role not in ProjectRole.translator_roles:
                 return JsonResponse({
                     'error': 'Unable to generate code'
                 }, status=status.HTTP_400_BAD_REQUEST)
-        elif user_role.role == ProjectRole.Role.editor:
+        else:
             return JsonResponse({
                 'error': 'Unable to generate code'
             }, status=status.HTTP_403_FORBIDDEN)

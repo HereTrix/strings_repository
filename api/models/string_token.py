@@ -18,6 +18,7 @@ class StringToken(models.Model):
     tags = models.ManyToManyField(Tag, related_name="tokens")
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.active)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         unique_together = ['token', 'project']

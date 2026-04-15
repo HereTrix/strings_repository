@@ -1,4 +1,5 @@
 from django.urls import path
+from api.views.bundle import BundleActivateAPI, BundleCompareAPI, BundleDeactivateAPI, BundleDetailAPI, BundleExportAPI, BundleListCreateAPI
 from api.views.export import ExportAPI, ExportFormatsAPI
 from api.views.generic import *
 from api.views.history import ProjectHistoryAPI, ProjectHistoryExportAPI
@@ -44,6 +45,13 @@ urlpatterns = [
     path('project/<int:pk>/webhooks/<int:webhook_id>', WebhookDetailAPI.as_view()),
     path('project/<int:pk>/webhooks/<int:webhook_id>/verify', WebhookVerifyAPI.as_view()),
     path('project/<int:pk>/webhooks/<int:webhook_id>/logs', WebhookLogsAPI.as_view()),
+    # bundles
+    path('project/<int:pk>/bundles', BundleListCreateAPI.as_view()),
+    path('project/<int:pk>/bundles/compare', BundleCompareAPI.as_view()),
+    path('project/<int:pk>/bundles/<int:bundle_id>', BundleDetailAPI.as_view()),
+    path('project/<int:pk>/bundles/<int:bundle_id>/activate', BundleActivateAPI.as_view()),
+    path('project/<int:pk>/bundles/<int:bundle_id>/deactivate', BundleDeactivateAPI.as_view()),
+    path('project/<int:pk>/bundles/<int:bundle_id>/export', BundleExportAPI.as_view()),
     path('project/<int:pk>', ProjectAPI.as_view()),
     path('projects/list', ProjectListAPI.as_view()),
     path('project', CreateProjectAPI.as_view()),

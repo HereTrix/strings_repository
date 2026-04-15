@@ -175,12 +175,10 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }
                 <Typeahead
                     id="tags-filter"
                     multiple
-                    labelKey="tags"
                     options={tags}
                     placeholder="Filter by tags"
                     onChange={(data) => filterTags(data as string[])}
                     selected={filteredTags}
-                    renderMenuItemChildren={(item) => <span>{item as string}</span>}
                 />
                 <SearchBar onSearch={onSearch} />
                 <OverlayTrigger

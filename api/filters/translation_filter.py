@@ -21,7 +21,11 @@ class TranslationTokenFilter(django_filters.FilterSet):
         return queryset
 
     def filter_status(self, queryset, name, value):
-        return queryset.filter(translation__status=value)
+        code = self.request.resolver_match.kwargs.get('code', '').upper()
+        return queryset.filter(
+            translation__status=value,
+            translation__language__code=code,
+        )
 
     class Meta:
         model = StringToken
