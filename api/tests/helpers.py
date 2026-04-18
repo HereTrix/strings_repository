@@ -4,8 +4,10 @@ Shared test helpers: user/project/language/token factories.
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
+import secrets
+
 from api.models.language import Language
-from api.models.project import Project, ProjectRole
+from api.models.project import Project, ProjectRole, ProjectAccessToken
 from api.models.translations import StringToken, Translation
 from api.models.tag import Tag
 
@@ -47,3 +49,13 @@ def authed_client(user):
     client = APIClient()
     client.force_authenticate(user=user)
     return client
+
+
+def make_access_token(project, user, permission=ProjectAccessToken.AccessTokenPermissions.write):
+    return ProjectAccessToken.objects.create(
+        token=secrets.token_hex(8),
+        permission=permission,
+        expiration=None,
+        user=user,
+        project=project,
+    )

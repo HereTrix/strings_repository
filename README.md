@@ -17,6 +17,7 @@ It provides a centralized place to manage translation keys, collaborate with tra
 * **Import & export** - import/export translations in multiple supported formats
 * **Translation bundles** - versioned snapshots of translations for safe production releases and rollbacks
 * **Machine translation** - DeepL, Google Translate, and Generic AI (any OpenAI-compatible REST API) integration
+* **MCP support** - AI-agent integration via Model Context Protocol for IDE-based key management and localization workflows
 * **Webhooks** - real-time event notifications to external services
 * **Full change history** - track all translation changes with an exportable history log
 * **Figma plugin** - integrate design workflows
@@ -108,6 +109,57 @@ Each webhook endpoint is configured with:
 | `import.completed`         | A file import completes                     |
 | `member.invited`           | A team member is invited                    |
 | `member.role_changed`      | A team member's role is changed             |
+
+## MCP Integration
+
+StringsRepository exposes a [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `POST /api/mcp`, enabling AI agents and IDE assistants (Claude Code, Cursor, VS Code) to manage localization keys without leaving the editor.
+
+### Authentication
+
+The endpoint uses project access tokens — the same tokens used by the CLI. Pass the token in the `Access-Token` request header.
+
+### Available tools
+
+| Tool | Description |
+| ---- | ----------- |
+| `get_project` | Get project info for the configured token |
+| `get_languages` | List all configured language codes |
+| `list_tokens` | List/search localization keys (by name or translation text) |
+| `get_token` | Get a key with all its translations across every language |
+| `create_token` | Create a new localization key |
+| `set_translation` | Create or update a translation for a key and language |
+| `search_similar_tokens` | Find existing keys similar to a given text (duplicate prevention) |
+| `suggest_token_key` | Suggest a key name derived from source text |
+| `get_token_naming_patterns` | Analyse the project's key naming conventions |
+| `batch_create_tokens` | Create multiple keys with translations in one call |
+
+### IDE setup (Claude Code)
+
+Create a project access token in the StringsRepository web UI, then add the server to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "strings-repository": {
+      "type": "http",
+      "url": "https://your-server/api/mcp",
+      "headers": {
+        "Access-Token": "your-project-access-token"
+      }
+    }
+  }
+}
+```
+
+### IDE setup via CLI proxy (stdio)
+
+If your IDE only supports stdio MCP transport, use the CLI in proxy mode after configuring it with your server URL and token:
+
+```bash
+strings mcp
+```
+
+See the [CLI repository](https://github.com/HereTrix/strings_repository_cli) for setup details.
 
 ## Machine Translation
 
