@@ -36,7 +36,7 @@ CORS_ALLOWED_ORIGINS = [
     'null'
 ]
 
-CORS_URLS_REGEX = r'^/api/plugin/.*$'
+CORS_URLS_REGEX = r'^/api/(plugin/.*|mcp)$'
 
 CORS_ALLOW_HEADERS = [
     'Access-Token',

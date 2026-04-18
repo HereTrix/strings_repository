@@ -5,6 +5,7 @@ from api.views.generic import *
 from api.views.history import ProjectHistoryAPI, ProjectHistoryExportAPI
 from api.views.import_api import ImportAPI
 from api.views.language import LanguageAPI, SetDefaultLanguageAPI
+from api.views.mcp import McpView
 from api.views.plugin import FetchLanguagesAPI, PluginExportAPI, PullAPI, PushAPI
 from api.views.plural_translation import PluralTranslationAPI
 from api.views.project import *
@@ -72,6 +73,8 @@ urlpatterns = [
     path('supported_formats', ExportFormatsAPI.as_view()),
     # plural translation
     path('plural', PluralTranslationAPI.as_view()),
+    # mcp
+    path('mcp', McpView.as_view()),
     # plugin
     path('plugin/export', PluginExportAPI.as_view()),
     path('plugin/pull', PullAPI.as_view()),
