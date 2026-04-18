@@ -60,13 +60,21 @@ class ProjectAccessToken(models.Model):
 class TranslationIntegration(models.Model):
     PROVIDER_DEEPL = 'deepl'
     PROVIDER_GOOGLE = 'google'
-    PROVIDER_CHOICES = [(PROVIDER_DEEPL, 'DeepL'),
-                        (PROVIDER_GOOGLE, 'Google Translate')]
+    PROVIDER_AI = 'ai'
+    PROVIDER_CHOICES = [
+        (PROVIDER_DEEPL, 'DeepL'),
+        (PROVIDER_GOOGLE, 'Google Translate'),
+        (PROVIDER_AI, 'Generic AI'),
+    ]
 
     project = models.OneToOneField(
         Project, on_delete=models.CASCADE, related_name='integration')
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
     api_key = models.BinaryField()
+    endpoint_url = models.CharField(max_length=500, blank=True, default='')
+    payload_template = models.TextField(blank=True, default='')
+    response_path = models.CharField(max_length=200, blank=True, default='')
+    auth_header = models.CharField(max_length=100, blank=True, default='Authorization')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
