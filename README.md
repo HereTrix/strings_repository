@@ -16,7 +16,7 @@ It provides a centralized place to manage translation keys, collaborate with tra
 * **Custom tags** - organize and group translations using custom tags
 * **Import & export** - import/export translations in multiple supported formats
 * **Translation bundles** - versioned snapshots of translations for safe production releases and rollbacks
-* **Machine translation** - DeepL and Google Translate integration
+* **Machine translation** - DeepL, Google Translate, and Generic AI (any OpenAI-compatible REST API) integration
 * **Webhooks** - real-time event notifications to external services
 * **Full change history** - track all translation changes with an exportable history log
 * **Figma plugin** - integrate design workflows
@@ -111,7 +111,9 @@ Each webhook endpoint is configured with:
 
 ## Machine Translation
 
-DeepL and Google Translate can be configured per project to auto-translate string keys. An API key for the chosen provider is stored encrypted at rest and can be verified before use.
+DeepL, Google Translate, and any OpenAI-compatible AI provider can be configured per project to auto-translate string keys. An API key for the chosen provider is stored encrypted at rest and can be verified before use.
+
+The **Generic AI** option lets you connect any REST-based LLM without additional dependencies. Provide an endpoint URL, a JSON payload template (using `{{text}}`, `{{target_lang}}`, and optionally `{{source_lang}}` placeholders), and a dot-notation response path to extract the translated text (e.g. `choices.0.message.content`). Built-in presets are available for OpenAI / DeepSeek, Claude, and Ollama (local).
 
 ## Configuration
 
@@ -142,7 +144,29 @@ https://docs.djangoproject.com/en/5.0/ref/databases/
 docker pull ghcr.io/heretrix/strings_repository:main
 ```
 
-Then run the container with the required environment variables configured.
+Run with environment variables passed directly:
+
+```bash
+docker run -d -p 8080:8080 \
+  -e APP_SECRET_KEY=your-secret-key \
+  -e ALLOWED_HOSTS=yourdomain.com \
+  -e DB_ENGINE=postgresql \
+  -e DB_NAME=stringsdb \
+  -e DB_HOST=db \
+  -e DB_PORT=5432 \
+  -e DB_USER=dbuser \
+  -e DB_PASSWORD=dbpassword \
+  -e DJANGO_SUPERUSER_USERNAME=admin \
+  -e DJANGO_SUPERUSER_EMAIL=admin@example.com \
+  -e DJANGO_SUPERUSER_PASSWORD=adminpassword \
+  ghcr.io/heretrix/strings_repository:main
+```
+
+Or use an env file:
+
+```bash
+docker run -d -p 8080:8080 --env-file .env ghcr.io/heretrix/strings_repository:main
+```
 
 ### Manual installation
 

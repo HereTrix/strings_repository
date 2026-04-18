@@ -83,4 +83,4 @@ class IntegrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TranslationIntegration
-        fields = ['provider', 'api_key']
+        fields = ['provider', 'api_key', 'endpoint_url', 'payload_template', 'response_path', 'auth_header']
