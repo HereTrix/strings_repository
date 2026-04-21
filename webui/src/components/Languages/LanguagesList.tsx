@@ -1,8 +1,8 @@
 import { FC, JSX, useEffect, useState } from "react"
-import { Badge, Button, ListGroup, Stack } from "react-bootstrap"
+import { Badge, Button, ListGroup, ProgressBar, Stack } from "react-bootstrap"
 import { useNavigate } from "react-router-dom"
 import AddLaguagePage from "./AddLaguagePage"
-import Language from "../model/Language"
+import Language, { LanguageProgress } from "../model/Language"
 import Project, { ProjectRole } from "../model/Project"
 import { APIMethod, http } from "../Utils/network"
 import OptionalImage from "../UI/OptionalImage"
@@ -17,12 +17,13 @@ type LanguageListItemProp = {
     language: Language
     project_id: number
     canManage: boolean
+    progress?: LanguageProgress
     onDelete: () => void
     onSetDefault: () => void
     onNavigate: () => void
 }
 
-const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, canManage, onDelete, onSetDefault, onNavigate }): JSX.Element => {
+const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, canManage, progress, onDelete, onSetDefault, onNavigate }): JSX.Element => {
 
     return (
         <ListGroup.Item
@@ -31,10 +32,22 @@ const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, canM
             onClick={onNavigate}
             className="d-flex justify-content-between align-items-center"
             key={language.code}>
-            <Stack direction="horizontal" gap={2}>
-                <OptionalImage src={language.img} alt={language.code} width={50} height={38} />
-                <label>{language.name}</label>
-                {language.is_default && <Badge bg="primary">Default</Badge>}
+            <Stack direction="vertical" gap={2}>
+                <Stack direction="horizontal" gap={2}>
+                    <OptionalImage src={language.img} alt={language.code} width={50} height={38} />
+                    <label>{language.name}</label>
+                    {language.is_default && <Badge bg="primary">Default</Badge>}
+                </Stack>
+                {progress && (
+                    <div style={{ width: '200px' }}>
+                        <ProgressBar
+                            now={progress.percent}
+                            label={`${progress.percent}%`}
+                            variant={progress.percent >= 80 ? 'success' : progress.percent >= 40 ? 'warning' : 'danger'}
+                        />
+                        <small className="text-muted">{progress.translated}/{progress.total}</small>
+                    </div>
+                )}
             </Stack>
             <Stack direction="horizontal" gap={2}>
                 {canManage && !language.is_default && (
@@ -59,6 +72,7 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
 
     const [error, setError] = useState<string>()
     const [languages, setLanguages] = useState<Language[]>()
+    const [progress, setProgress] = useState<Record<string, LanguageProgress>>({})
     const [showDialog, setShowDialog] = useState(false)
     const [deletionItem, setDeletionItem] = useState<Language>()
 
@@ -75,6 +89,7 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
             setError(result.error)
         } else {
             load()
+            fetchProgress()
         }
     }
 
@@ -87,6 +102,7 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
             setError(result.error)
         } else {
             load()
+            fetchProgress()
         }
     }
 
@@ -102,8 +118,19 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
         }
     }
 
+    const fetchProgress = async () => {
+        const result = await http<Record<string, LanguageProgress>>({
+            method: APIMethod.get,
+            path: `/api/project/${project.id}/progress`,
+        })
+        if (result.value) {
+            setProgress(result.value)
+        }
+    }
+
     useEffect(() => {
         load()
+        fetchProgress()
     }, [])
 
     return (
@@ -117,6 +144,7 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
                         language={language}
                         project_id={project.id}
                         canManage={canManage}
+                        progress={progress[language.code]}
                         onDelete={() => setDeletionItem(language)}
                         onSetDefault={() => setDefault(language)}
                         onNavigate={() => navigate(`/project/${project.id}/language/${language.code.toLowerCase()}`)}
