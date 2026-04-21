@@ -1,12 +1,14 @@
 import { use, useEffect, useState } from 'react';
 import LogoutButton from './Logout';
-import { Container, Nav, Navbar, Image, Dropdown } from 'react-bootstrap';
+import { Button, Container, Nav, Navbar, Image, Dropdown } from 'react-bootstrap';
 import { APIMethod, http } from './Utils/network';
 import Profile from './model/Profile';
 import OptionalImage from './UI/OptionalImage';
+import { useTheme } from '../hooks/useTheme';
 
 const NavBar = () => {
 
+    const { theme, toggleTheme } = useTheme()
     const [profile, setProfile] = useState<Profile>()
 
     const fetchProfile = async () => {
@@ -54,6 +56,11 @@ const NavBar = () => {
                         <Nav.Link href='/'>Dashboard</Nav.Link>
                     </Nav>
                     <Nav>
+                        <Nav.Item className="d-flex align-items-center me-2">
+                            <Button variant="outline-secondary" size="sm" onClick={toggleTheme}>
+                                {theme === 'dark' ? '☀ Light' : '☾ Dark'}
+                            </Button>
+                        </Nav.Item>
                         <Dropdown>
                             <Dropdown.Toggle variant="info" className='bg-transparent border-0 p-0 d-flex align-items-end'>
                                 {profile &&
