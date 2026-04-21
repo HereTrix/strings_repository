@@ -7,7 +7,7 @@ from api.languages.langcoder import LANGUAGE_CODE_KEY, Langcoder
 from api.models.language import Language
 from api.models.project import Project, ProjectRole
 from api.models.tag import Tag
-from api.models.translations import StringToken
+from api.models.translations import StringToken, Translation
 from api.paginators.string_token_paginator import TranslationsPagination
 from api.serializers.project import ProjectSerializer, CreateProjectSerializer, ProjectDetailSerializer
 from api.serializers.language import AvailableLanguageSerializer, LanguageSerializer
@@ -126,6 +126,32 @@ class TranslationsListAPI(generics.ListAPIView):
         ).first()
         context['default_code'] = default_lang.code if default_lang else None
         return context
+
+
+class LanguageProgressAPI(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            project = Project.objects.get(pk=pk, roles__user=request.user)
+        except Project.DoesNotExist:
+            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        total = StringToken.objects.filter(project=project, status='active').count()
+        result = {}
+        for language in project.languages.all():
+            translated = Translation.objects.filter(
+                token__project=project,
+                token__status='active',
+                language=language,
+            ).exclude(translation='').count()
+            percent = round(translated / total * 100, 1) if total > 0 else 0.0
+            result[language.code] = {
+                'translated': translated,
+                'total': total,
+                'percent': percent,
+            }
+        return JsonResponse(result)
 
 
 class ProjectTagsAPI(generics.GenericAPIView):

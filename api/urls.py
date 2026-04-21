@@ -32,6 +32,7 @@ urlpatterns = [
     path('project/<int:pk>/languages', LanguageListAPI.as_view()),
     path('project/<int:pk>/tokens', StringTokenListAPI.as_view()),
     path('project/<int:pk>/tags', ProjectTagsAPI.as_view()),
+    path('project/<int:pk>/progress', LanguageProgressAPI.as_view()),
     path('project/<int:pk>/invite', ProjectInvitationAPI.as_view()),
     path('project/<int:pk>/translations/<str:code>',
          TranslationsListAPI.as_view()),
