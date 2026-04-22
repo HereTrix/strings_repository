@@ -27,6 +27,8 @@ COPY --from=frontend --chown=1000:1000 /app/webui/static/ /app/webui/static/
 COPY --from=frontend --chown=1000:1000 /app/webui/templates/ /app/webui/templates/
 
 RUN mkdir -p /app/static && chown -R 1000:1000 /app
+RUN mkdir -p /app/tmp && chown -R 1000:1000 /app/tmp
+ENV TMPDIR=/app/tmp
 
 USER 1000:1000
 
