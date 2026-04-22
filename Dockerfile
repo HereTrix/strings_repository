@@ -12,7 +12,7 @@ RUN npm run build
 # Stage 2: Backend / final image
 # ──────────────────────────────────────────────
 FROM python:3.14.4-slim AS backend
-RUN apk upgrade --no-cache
+RUN apt-get update && apt-get install -y 
 WORKDIR /app
 
 # Install Python dependencies
