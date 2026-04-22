@@ -12,8 +12,16 @@ RUN npm run build
 # Stage 2: Backend / final image
 # ──────────────────────────────────────────────
 FROM python:3.14.4-slim AS backend
-RUN apt-get update && apt-get install -y 
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TMPDIR=/app/tmp
+
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt ./
@@ -26,18 +34,16 @@ COPY --chown=1000:1000 . /app/
 COPY --from=frontend --chown=1000:1000 /app/webui/static/ /app/webui/static/
 COPY --from=frontend --chown=1000:1000 /app/webui/templates/ /app/webui/templates/
 
-RUN mkdir -p /app/static && chown -R 1000:1000 /app
-RUN mkdir -p /app/tmp && chown -R 1000:1000 /app/tmp
-ENV TMPDIR=/app/tmp
+RUN mkdir -p /app/static /app/tmp \
+    && chmod -R 777 /app/tmp /app/static
 
-USER 1000:1000
+# entrypoint script
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 8080
 
-CMD python manage.py collectstatic --noinput \
-    && python manage.py migrate \
-    && (python manage.py createsuperuser --noinput || true) \
-    && gunicorn repository.wsgi:application --bind 0.0.0.0:8080 --workers 4 --tmp-upload-dir /app/tmp
+ENTRYPOINT ["/entrypoint.sh"]
 
 HEALTHCHECK --interval=30s --timeout=3s \
     CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
