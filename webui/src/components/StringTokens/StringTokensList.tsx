@@ -1,9 +1,9 @@
 import { FC, useCallback, useEffect, useState } from "react"
-import StringToken, { getStatusName, getStatusVariant, STATUS_OPTIONS } from "../model/StringToken"
-import PaginatedResponse from "../model/PaginatedResponse"
-import Project from "../model/Project"
-import { Badge, Button, Card, Container, ListGroup } from "react-bootstrap"
-import { APIMethod, http } from "../Utils/network"
+import StringToken, { getStatusName, getStatusVariant, STATUS_OPTIONS } from "../../types/StringToken"
+import PaginatedResponse from "../../types/PaginatedResponse"
+import Project, { ProjectRole } from "../../types/Project"
+import { Badge, Button, Card, Container, Dropdown, ListGroup } from "react-bootstrap"
+import { APIMethod, http } from "../../utils/network"
 import AddTokenPage from "./AddTokenPage"
 import ErrorAlert from "../UI/ErrorAlert"
 import InfiniteScroll from "react-infinite-scroll-component"
@@ -12,6 +12,8 @@ import FilterBar, { StatusOption } from "../UI/FilterBar"
 import AddTokenTagPage from "./AddTokenTagPage"
 import StringTokenListItem from "./StringTokenListItem"
 import { usePagination, PAGE_LIMIT } from "../../hooks/usePagination"
+import ScopeManager from "./ScopeManager"
+import Scope from "../../types/Scope"
 
 type StringTokenProps = {
     project: Project
@@ -22,13 +24,16 @@ type Filters = {
     query: string
     status: string
     untranslated: boolean
+    scope: number | undefined
 }
 
 const StringTokensList: FC<StringTokenProps> = ({ project }) => {
-    const [filters, setFilters] = useState<Filters>({ tags: [], query: '', status: 'all', untranslated: false })
+    const [filters, setFilters] = useState<Filters>({ tags: [], query: '', status: 'all', untranslated: false, scope: undefined })
     const { items: tokens, offset, hasMore, setHasMore, total, handleResponse, setItems: setTokens } = usePagination<StringToken>()
     const [showDialog, setShowDialog] = useState(false)
+    const [showScopeManager, setShowScopeManager] = useState(false)
     const [tags, setTags] = useState<string[]>([])
+    const [scopes, setScopes] = useState<Scope[]>([])
     const [selectedToken, setSelectedToken] = useState<StringToken>()
     const [error, setError] = useState<string>()
     const [deletionItem, setDeletionItem] = useState<StringToken>()
@@ -43,6 +48,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         if (filters.query) params.q = filters.query
         if (filters.untranslated) params.untranslated = 'true'
         else if (filters.status !== 'all') params.status = filters.status
+        if (filters.scope !== undefined) params.scope = String(filters.scope)
 
         params.offset = `${pageOffset}`
         params.limit = `${PAGE_LIMIT}`
@@ -66,6 +72,14 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         else setError(result.error)
     }, [project.id])
 
+    const fetchScopes = useCallback(async () => {
+        const result = await http<Scope[]>({
+            method: APIMethod.get,
+            path: `/api/project/${project.id}/scopes`,
+        })
+        if (result.value) setScopes(result.value)
+    }, [project.id])
+
     useEffect(() => {
         fetchData(0)
     }, [fetchData])
@@ -73,6 +87,10 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     useEffect(() => {
         fetchTags()
     }, [fetchTags])
+
+    useEffect(() => {
+        fetchScopes()
+    }, [fetchScopes])
 
     const deleteToken = async (token: StringToken) => {
         setDeletionItem(undefined)
@@ -117,6 +135,8 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
         }))
     ]
 
+    const activeScopeName = scopes.find(s => s.id === filters.scope)?.name
+
     return (
         <Container>
             <Button onClick={() => setShowDialog(true)} className="my-3">
@@ -134,13 +154,46 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                 onTagsChange={(newTags) => setFilters(f => ({ ...f, tags: newTags }))}
                 onSearch={(query) => setFilters(f => ({ ...f, query }))}
                 extraControls={
-                    <Button
-                        variant={filters.untranslated ? 'danger' : 'outline-danger'}
-                        size="sm"
-                        onClick={() => setFilters(f => ({ ...f, untranslated: !f.untranslated }))}
-                    >
-                        Untranslated
-                    </Button>
+                    <>
+                        {(project.role === ProjectRole.owner || project.role === ProjectRole.admin) && (
+                            <Button
+                                size="sm"
+                                variant="outline-secondary"
+                                onClick={() => setShowScopeManager(true)}
+                            >
+                                Manage Scopes
+                            </Button>
+                        )}
+                        <Dropdown>
+                            <Dropdown.Toggle variant="outline-secondary" size="sm">
+                                {activeScopeName ?? 'Scope'}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                <Dropdown.Item
+                                    active={filters.scope === undefined}
+                                    onClick={() => setFilters(f => ({ ...f, scope: undefined }))}
+                                >
+                                    All
+                                </Dropdown.Item>
+                                {scopes.map(scope => (
+                                    <Dropdown.Item
+                                        key={scope.id}
+                                        active={filters.scope === scope.id}
+                                        onClick={() => setFilters(f => ({ ...f, scope: scope.id }))}
+                                    >
+                                        {scope.name}
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
+                        <Button
+                            variant={filters.untranslated ? 'danger' : 'outline-danger'}
+                            size="sm"
+                            onClick={() => setFilters(f => ({ ...f, untranslated: !f.untranslated }))}
+                        >
+                            Untranslated
+                        </Button>
+                    </>
                 }
             />
 
@@ -197,6 +250,12 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                         fetchTags()
                         setSelectedToken(undefined)
                     }}
+                />
+            }
+            {showScopeManager &&
+                <ScopeManager
+                    project={project}
+                    onHide={() => { setShowScopeManager(false); fetchScopes() }}
                 />
             }
             {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}

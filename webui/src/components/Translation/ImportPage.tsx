@@ -1,9 +1,9 @@
 import { FC, useEffect, useState } from "react"
-import Project, { ProjectRole } from "../model/Project"
+import Project, { ProjectRole } from "../../types/Project"
 import { Alert, Button, Dropdown, Form, Modal } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
 import ErrorAlert from "../UI/ErrorAlert"
-import { APIMethod, http, upload } from "../Utils/network"
+import { APIMethod, http, upload } from "../../utils/network"
 import { Typeahead } from "react-bootstrap-typeahead"
 import { useNavigate } from "react-router-dom"
 

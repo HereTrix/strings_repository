@@ -8,6 +8,7 @@ class TranslationTokenFilter(django_filters.FilterSet):
     tags = django_filters.CharFilter(method='filter_tags')
     status = django_filters.CharFilter(method='filter_status')
     untranslated = django_filters.BooleanFilter(method='filter_untranslated')
+    scope = django_filters.NumberFilter(field_name='scopes__id')
 
     def filter_query(self, queryset, name, value):
         return queryset.filter(
@@ -38,4 +39,4 @@ class TranslationTokenFilter(django_filters.FilterSet):
 
     class Meta:
         model = StringToken
-        fields = ['q', 'tags', 'status', 'untranslated']
+        fields = ['q', 'tags', 'status', 'untranslated', 'scope']

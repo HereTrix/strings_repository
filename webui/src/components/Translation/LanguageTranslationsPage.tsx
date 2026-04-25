@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react"
-import { Button, Container, ProgressBar, Stack } from "react-bootstrap"
+import { Button, ButtonGroup, Container, ProgressBar, Stack } from "react-bootstrap"
 import { useNavigate, useParams } from "react-router-dom"
-import { APIMethod, http } from "../Utils/network"
-import Project from "../model/Project"
-import { LanguageProgress } from "../model/Language"
+import { APIMethod, http } from "../../utils/network"
+import Project from "../../types/Project"
+import { LanguageProgress } from "../../types/Language"
+import Scope from "../../types/Scope"
 import ErrorAlert from "../UI/ErrorAlert"
 import ExportPage from "./ExportPage"
 import OptionalImage from "../UI/OptionalImage"
 import TranslationPage from "./TranslationPage"
+import ScopesGallery from "../StringTokens/ScopesGallery"
 
 const LanguageTranslationsPage = () => {
     const navigate = useNavigate()
@@ -17,6 +19,8 @@ const LanguageTranslationsPage = () => {
 
     const [project, setProject] = useState<Project>()
     const [progress, setProgress] = useState<LanguageProgress>()
+    const [viewMode, setViewMode] = useState<'all' | 'scopes'>('all')
+    const [selectedScope, setSelectedScope] = useState<Scope>()
 
     const [error, setError] = useState<string>()
 
@@ -56,6 +60,16 @@ const LanguageTranslationsPage = () => {
         setShowExport(true)
     }
 
+    const switchToAll = () => {
+        setViewMode('all')
+        setSelectedScope(undefined)
+    }
+
+    const switchToScopes = () => {
+        setViewMode('scopes')
+        setSelectedScope(undefined)
+    }
+
     const language = project?.languages.find(l => l.code.toLowerCase() === code?.toLowerCase())
     return (
         <Container>
@@ -74,16 +88,58 @@ const LanguageTranslationsPage = () => {
                             variant={progress.percent >= 80 ? 'success' : progress.percent >= 40 ? 'warning' : 'danger'}
                         />
                     )}
+                    <ButtonGroup size="sm">
+                        <Button
+                            variant={viewMode === 'all' ? 'primary' : 'outline-primary'}
+                            onClick={switchToAll}
+                        >
+                            All
+                        </Button>
+                        <Button
+                            variant={viewMode === 'scopes' ? 'primary' : 'outline-primary'}
+                            onClick={switchToScopes}
+                        >
+                            By Scope
+                        </Button>
+                    </ButtonGroup>
                 </Stack>
                 {project && <Button onClick={onExport}>Export</Button>}
             </Container>
-            {project_id && code &&
+
+            {viewMode === 'scopes' && selectedScope && (
+                <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    className="mb-2"
+                    onClick={() => setSelectedScope(undefined)}
+                >
+                    ← Back to scopes
+                </Button>
+            )}
+
+            {project_id && code && viewMode === 'all' &&
                 <TranslationPage
                     project_id={project_id}
                     code={code}
                     project={project}
                 />
             }
+            {viewMode === 'scopes' && !selectedScope && project_id && (
+                <ScopesGallery
+                    project_id={project_id}
+                    onScopeSelect={setSelectedScope}
+                />
+            )}
+            {viewMode === 'scopes' && selectedScope && project_id && code && (
+                <TranslationPage
+                    project_id={project_id}
+                    code={code}
+                    project={project}
+                    scopeId={selectedScope.id}
+                    scope={selectedScope}
+                />
+            )}
+
             {project &&
                 <ExportPage
                     project={project}

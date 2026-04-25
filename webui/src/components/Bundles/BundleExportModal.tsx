@@ -2,11 +2,11 @@ import fileDownload from "js-file-download"
 import { FC, JSX, useEffect, useState } from "react"
 import { Button, Dropdown, Modal, Stack } from "react-bootstrap"
 import { Typeahead } from "react-bootstrap-typeahead"
-import { APIMethod, download, http } from "../Utils/network"
-import { Bundle } from "../model/Bundle"
-import Language from "../model/Language"
+import { APIMethod, download, http } from "../../utils/network"
+import { Bundle } from "../../types/Bundle"
+import Language from "../../types/Language"
 import OptionalImage from "../UI/OptionalImage"
-import Project from "../model/Project"
+import Project from "../../types/Project"
 
 type BundleExportModalProps = {
     project: Project

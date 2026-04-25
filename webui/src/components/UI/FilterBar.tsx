@@ -1,8 +1,8 @@
 import { FC, Fragment, ReactNode } from "react"
 import { Badge, Button, Dropdown, OverlayTrigger, Stack } from "react-bootstrap"
-import { Typeahead } from "react-bootstrap-typeahead"
 import SearchBar from "./SearchBar"
 import HelpPopover from "./HelpPopover"
+import TagFilter from "./TagFilter"
 
 export type StatusOption = {
     label: string
@@ -70,13 +70,11 @@ const FilterBar: FC<FilterBarProps> = ({
                 </Dropdown>
             </Stack>
             {extraControls}
-            <Typeahead
+            <TagFilter
                 id={typeaheadId}
-                multiple
-                options={tags}
-                placeholder="Filter by tags"
-                onChange={(data) => onTagsChange(data as string[])}
+                tags={tags}
                 selected={selectedTags}
+                onChange={onTagsChange}
             />
             <SearchBar onSearch={onSearch} />
             <OverlayTrigger trigger="click" placement="left" overlay={HelpPopover}>

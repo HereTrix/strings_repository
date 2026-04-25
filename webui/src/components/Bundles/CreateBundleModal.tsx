@@ -1,8 +1,8 @@
 import { FC, JSX, useState } from "react"
 import { Button, Form, Modal } from "react-bootstrap"
-import { APIMethod, http } from "../Utils/network"
-import { Bundle } from "../model/Bundle"
-import Project from "../model/Project"
+import { APIMethod, http } from "../../utils/network"
+import { Bundle } from "../../types/Bundle"
+import Project from "../../types/Project"
 
 type CreateBundleModalProps = {
     project: Project

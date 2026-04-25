@@ -1,8 +1,8 @@
 import { FC, useState } from "react"
 import { Button, Modal } from "react-bootstrap"
-import { APIMethod, http } from "../Utils/network"
+import { APIMethod, http } from "../../utils/network"
 import { Typeahead } from "react-bootstrap-typeahead"
-import StringToken from "../model/StringToken"
+import StringToken from "../../types/StringToken"
 import ErrorAlert from "../UI/ErrorAlert"
 
 type AddTokenTagPageProps = {

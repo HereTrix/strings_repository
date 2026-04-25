@@ -1,7 +1,7 @@
 import { Button, Container, Dropdown, Form, ListGroup, ListGroupItem, Modal, Stack } from "react-bootstrap";
-import Project from "../model/Project";
+import Project from "../../types/Project";
 import { FC, useEffect, useState } from "react";
-import { APIMethod, http } from "../Utils/network";
+import { APIMethod, http } from "../../utils/network";
 import ErrorAlert from "../UI/ErrorAlert";
 
 type AccessTokenProps = {

@@ -13,6 +13,10 @@ RUN npm run build
 # ──────────────────────────────────────────────
 FROM python:3.14.4-slim AS backend
 
+# DB selects which database driver to install.
+# Accepted values: all (default), postgresql, mysql, sqlite
+ARG DB=all
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     TMPDIR=/app/tmp
@@ -20,14 +24,25 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    gcc \
-    wget \
+        wget \
+        gcc \
+    && if [ "$DB" = "postgresql" ] || [ "$DB" = "all" ]; then \
+           apt-get install -y libpq-dev; \
+       fi \
+    && if [ "$DB" = "mysql" ] || [ "$DB" = "all" ]; then \
+           apt-get install -y default-libmysqlclient-dev; \
+       fi \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements*.txt ./
+RUN pip install --no-cache-dir -r requirements.txt \
+    && if [ "$DB" = "postgresql" ] || [ "$DB" = "all" ]; then \
+           pip install --no-cache-dir -r requirements-postgresql.txt; \
+       fi \
+    && if [ "$DB" = "mysql" ] || [ "$DB" = "all" ]; then \
+           pip install --no-cache-dir -r requirements-mysql.txt; \
+       fi
 
 # Copy application source
 COPY --chown=1000:1000 . /app/
@@ -36,8 +51,8 @@ COPY --chown=1000:1000 . /app/
 COPY --from=frontend --chown=1000:1000 /app/webui/static/ /app/webui/static/
 COPY --from=frontend --chown=1000:1000 /app/webui/templates/ /app/webui/templates/
 
-RUN mkdir -p /app/static /app/tmp \
-    && chmod -R 777 /app/tmp /app/static
+RUN mkdir -p /app/static /app/tmp /app/media \
+    && chmod -R 777 /app/tmp /app/static /app/media
 
 # entrypoint script
 COPY docker/entrypoint.sh /entrypoint.sh

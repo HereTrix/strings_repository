@@ -1,8 +1,8 @@
 import { Badge, Button, Collapse, Container, Dropdown, ListGroup, Stack } from "react-bootstrap"
-import { getStatusVariant, STATUS_OPTIONS } from "../model/StringToken"
+import { getStatusVariant, STATUS_OPTIONS } from "../../types/StringToken"
 import TagsContainer from "../UI/TagsContainer"
 import { FC, useState } from "react"
-import StringToken from "../model/StringToken"
+import StringToken from "../../types/StringToken"
 import TokenTranslationsView from "./TokenTranslationsView"
 
 type StringTokenItemProps = {

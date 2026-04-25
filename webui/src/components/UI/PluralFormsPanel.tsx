@@ -1,7 +1,7 @@
 import { Button, Stack } from "react-bootstrap"
-import { PLURAL_FORM_ORDER, PluralForms } from "../model/Translation"
+import { PLURAL_FORM_ORDER, PluralForms } from "../../types/Translation"
 import { FC, useState } from "react"
-import { APIMethod, http } from "../Utils/network"
+import { APIMethod, http } from "../../utils/network"
 import DiffView from "./DiffView"
 
 type PluralFormsPanelProps = {

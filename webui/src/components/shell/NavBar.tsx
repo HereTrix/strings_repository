@@ -1,10 +1,10 @@
 import { use, useEffect, useState } from 'react';
 import LogoutButton from './Logout';
 import { Button, Container, Nav, Navbar, Image, Dropdown } from 'react-bootstrap';
-import { APIMethod, http } from './Utils/network';
-import Profile from './model/Profile';
-import OptionalImage from './UI/OptionalImage';
-import { useTheme } from '../hooks/useTheme';
+import { APIMethod, http } from '../../utils/network';
+import Profile from '../../types/Profile';
+import OptionalImage from '../UI/OptionalImage';
+import { useTheme } from '../../hooks/useTheme';
 
 const NavBar = () => {
 

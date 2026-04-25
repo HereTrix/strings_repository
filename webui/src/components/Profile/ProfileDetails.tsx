@@ -1,8 +1,8 @@
 import { FC, useState } from "react"
 import { Button, Container, Form, Row } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
-import Profile from "../model/Profile"
-import { APIMethod, http } from "../Utils/network"
+import Profile from "../../types/Profile"
+import { APIMethod, http } from "../../utils/network"
 
 type Inputs = {
     email: string

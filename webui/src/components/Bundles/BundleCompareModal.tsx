@@ -1,10 +1,10 @@
 import fileDownload from "js-file-download"
 import { FC, JSX, useEffect, useState } from "react"
 import { Badge, Button, Dropdown, DropdownButton, ListGroup, Modal, Spinner, Stack } from "react-bootstrap"
-import { APIMethod, download, http } from "../Utils/network"
-import { Bundle, BundleDiff } from "../model/Bundle"
+import { APIMethod, download, http } from "../../utils/network"
+import { Bundle, BundleDiff } from "../../types/Bundle"
 import DiffView from "../UI/DiffView"
-import Project from "../model/Project"
+import Project from "../../types/Project"
 
 type BundleCompareModalProps = {
     project: Project

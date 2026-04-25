@@ -1,10 +1,10 @@
 import fileDownload from "js-file-download";
 import { FC, JSX, useEffect, useState } from "react";
 import { Button, Col, Dropdown, DropdownButton, Modal, Row, Stack } from "react-bootstrap";
-import { download, APIMethod, http } from "../Utils/network";
-import Project from "../model/Project";
+import { download, APIMethod, http } from "../../utils/network";
+import Project from "../../types/Project";
 import { Typeahead } from "react-bootstrap-typeahead";
-import Language from "../model/Language";
+import Language from "../../types/Language";
 import OptionalImage from "../UI/OptionalImage";
 
 type ExportPageProps = {

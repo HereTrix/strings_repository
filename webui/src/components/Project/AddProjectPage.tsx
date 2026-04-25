@@ -1,7 +1,7 @@
 import { FC, useState } from "react"
 import { Button, Container, Form, Modal, ModalBody, Row } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
-import { APIMethod, http } from "../Utils/network"
+import { APIMethod, http } from "../../utils/network"
 
 type Inputs = {
     projectName: string

@@ -1,6 +1,6 @@
 import { FC, useState } from "react"
 import { Button, Container, Dropdown, Modal, Row } from "react-bootstrap"
-import { APIMethod, http } from "../Utils/network"
+import { APIMethod, http } from "../../utils/network"
 
 type InviteUserPage = {
     projectId: number

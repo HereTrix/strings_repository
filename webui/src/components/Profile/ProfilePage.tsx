@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { APIMethod, http } from "../Utils/network"
-import Profile from "../model/Profile"
+import { APIMethod, http } from "../../utils/network"
+import Profile from "../../types/Profile"
 import CollapseSection from "../UI/CollapseSection"
 import PasswordPage from "./PasswordPage"
 import ProfileDetailsPage from "./ProfileDetails"
