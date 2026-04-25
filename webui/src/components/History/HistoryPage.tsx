@@ -1,10 +1,10 @@
 import fileDownload from "js-file-download"
 import { FC, JSX, useState } from "react"
 import { Badge, Button, Container, Form, Spinner, Stack, Table } from "react-bootstrap"
-import { APIMethod, download, http } from "../Utils/network"
+import { APIMethod, download, http } from "../../utils/network"
 import DiffView from "../UI/DiffView"
 import ErrorAlert from "../UI/ErrorAlert"
-import Project from "../model/Project"
+import Project from "../../types/Project"
 
 type HistoryPageProps = {
     project: Project

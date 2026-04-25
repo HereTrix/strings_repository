@@ -12,6 +12,7 @@ from api.views.project import *
 from api.views.integration import IntegrationAPI, MachineTranslateAPI, VerifyIntegrationAPI
 from api.views.roles import ProjectAccessTokenAPI, ProjectInvitationAPI, ProjectParticipantsAPI, RolesAPI
 from api.views.translation import StringTokenAPI, StringTokenStatusAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI, TranslationStatusAPI
+from api.views.scope import ScopeDetailAPI, ScopeImageAPI, ScopeListCreateAPI, ScopeTokensAPI
 from api.views.webhook import WebhookDetailAPI, WebhookEventsAPI, WebhookListAPI, WebhookLogsAPI, WebhookVerifyAPI
 from knox.views import LogoutView
 
@@ -33,6 +34,10 @@ urlpatterns = [
     path('project/<int:pk>/tokens', StringTokenListAPI.as_view()),
     path('project/<int:pk>/tags', ProjectTagsAPI.as_view()),
     path('project/<int:pk>/progress', LanguageProgressAPI.as_view()),
+    path('project/<int:pk>/scopes', ScopeListCreateAPI.as_view()),
+    path('project/<int:pk>/scopes/<int:scope_id>', ScopeDetailAPI.as_view()),
+    path('project/<int:pk>/scopes/<int:scope_id>/tokens', ScopeTokensAPI.as_view()),
+    path('project/<int:pk>/scopes/<int:scope_id>/image', ScopeImageAPI.as_view()),
     path('project/<int:pk>/invite', ProjectInvitationAPI.as_view()),
     path('project/<int:pk>/translations/<str:code>',
          TranslationsListAPI.as_view()),

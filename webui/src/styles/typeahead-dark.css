@@ -1,0 +1,31 @@
+/* Dark-mode overrides for react-bootstrap-typeahead.
+   Bootstrap handles .dropdown-menu and .form-control automatically via
+   data-bs-theme; only the token pills and the bare inner <input> need help. */
+
+[data-bs-theme="dark"] .rbt-token {
+    background-color: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary-text-emphasis);
+    border: 1px solid var(--bs-primary-border-subtle);
+}
+
+[data-bs-theme="dark"] .rbt-token-active {
+    background-color: var(--bs-primary);
+    color: #fff;
+    border-color: var(--bs-primary);
+}
+
+/* The bare <input> inside the multi-value container doesn't carry .form-control */
+[data-bs-theme="dark"] .rbt-input-multi input {
+    background-color: transparent;
+    color: var(--bs-body-color);
+}
+
+/* Close (×) button on tokens */
+[data-bs-theme="dark"] .rbt-token .rbt-token-remove-button {
+    color: var(--bs-primary-text-emphasis);
+}
+
+/* Clear-all button */
+[data-bs-theme="dark"] .rbt-aux .rbt-close {
+    color: var(--bs-secondary-color);
+}

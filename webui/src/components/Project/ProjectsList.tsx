@@ -1,7 +1,7 @@
 import { FC, JSX, useEffect, useState } from "react";
 import { Container, ListGroup, Tabs, Tab, Button, Stack, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { http, APIMethod } from "../Utils/network";
+import { http, APIMethod } from "../../utils/network";
 import AddProjectPage from "./AddProjectPage";
 import ErrorAlert from "../UI/ErrorAlert";
 import ConfirmationAlert from "../UI/ConfirmationAlert";

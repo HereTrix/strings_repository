@@ -1,6 +1,6 @@
 import { Button, Container } from "react-bootstrap"
 import { useNavigate } from "react-router-dom"
-import { APIMethod, http } from "./Utils/network"
+import { APIMethod, http } from "../../utils/network"
 
 const LogoutButton = () => {
 

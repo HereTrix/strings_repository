@@ -1,10 +1,10 @@
 import { FC, JSX, useEffect, useState } from "react"
 import { Badge, Button, ListGroup, ProgressBar, Stack } from "react-bootstrap"
 import { useNavigate } from "react-router-dom"
-import AddLaguagePage from "./AddLaguagePage"
-import Language, { LanguageProgress } from "../model/Language"
-import Project, { ProjectRole } from "../model/Project"
-import { APIMethod, http } from "../Utils/network"
+import AddLanguagePage from "./AddLanguagePage"
+import Language, { LanguageProgress } from "../../types/Language"
+import Project, { ProjectRole } from "../../types/Project"
+import { APIMethod, http } from "../../utils/network"
 import OptionalImage from "../UI/OptionalImage"
 import ErrorAlert from "../UI/ErrorAlert"
 import ConfirmationAlert from "../UI/ConfirmationAlert"
@@ -151,7 +151,7 @@ const LanguagesList: FC<LanguagesProps> = ({ project }) => {
                         key={language.code}
                     />)}
             </ListGroup>
-            <AddLaguagePage
+            <AddLanguagePage
                 show={showDialog}
                 project_id={project.id}
                 onHide={() => setShowDialog(false)}

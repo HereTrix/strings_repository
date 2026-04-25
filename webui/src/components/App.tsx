@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { history } from './Utils/history'
-import { setNavigate } from './Utils/navigation';
-const LoginPage = React.lazy(() => import("./LoginPage"))
-const HomePage = React.lazy(() => import("./HomePage"))
+import { history } from '../utils/history'
+import { setNavigate } from '../utils/navigation';
+const LoginPage = React.lazy(() => import("./pages/LoginPage"))
+const HomePage = React.lazy(() => import("./pages/HomePage"))
 const RequireAuth = React.lazy(() => import("./Auth/PrivateRoute"))
-const PageNotFound = React.lazy(() => import("./PageNotFound"))
+const PageNotFound = React.lazy(() => import("./pages/PageNotFound"))
 const ProjectPage = React.lazy(() => import("./Project/ProjectPage"))
 const ProfilePage = React.lazy(() => import('./Profile/ProfilePage'))
-const ActivateUserPage = React.lazy(() => import('./ActivateUserPage'))
+const ActivateUserPage = React.lazy(() => import('./pages/ActivateUserPage'))
 const LanguageTranslationsPage = React.lazy(() => import('./Translation/LanguageTranslationsPage'))
 
 function NavigationRegister() {

@@ -1,6 +1,6 @@
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { history } from "../Utils/history";
-import NavBar from "../NavBar";
+import { history } from "../../utils/history";
+import NavBar from "../shell/NavBar";
 import { JSX } from "react";
 
 function RequireAuth({ children }: { children: JSX.Element }) {

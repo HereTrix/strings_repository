@@ -14,6 +14,7 @@ It provides a centralized place to manage translation keys, collaborate with tra
 * **Translation management** - create, update, and track translation status for each string key
 * **Plural forms** - full CLDR plural form support (zero, one, two, few, many, other)
 * **Custom tags** - organize and group translations using custom tags
+* **Scopes** - group string keys into named scopes with optional context images; translators browse translations by scope in a visual gallery
 * **Import & export** - import/export translations in multiple supported formats
 * **Translation bundles** - versioned snapshots of translations for safe production releases and rollbacks
 * **Machine translation** - DeepL, Google Translate, and Generic AI (any OpenAI-compatible REST API) integration
@@ -175,18 +176,23 @@ Before installation, configure the required environment variables.
 | --------------------------- | -------------------------------------------------------- |
 | `APP_SECRET_KEY`            | Django secret key (any random string)                    |
 | `ALLOWED_HOSTS`             | Allowed hosts separated by commas, or empty to allow all |
-| `DB_ENGINE`                 | Database engine (`mysql`, `postgresql`, `sqlite3`, etc.) |
-| `DB_NAME`                   | Database name                                            |
-| `DB_HOST`                   | Database host (optional for SQLite)                      |
-| `DB_PORT`                   | Database port (optional for SQLite)                      |
-| `DB_USER`                   | Database user (optional for SQLite)                      |
-| `DB_PASSWORD`               | Database password (optional for SQLite)                  |
+| `DB_ENGINE`                 | Database engine — see table below                        |
+| `DB_NAME`                   | Database name (or file path for SQLite)                  |
+| `DB_HOST`                   | Database host (not required for SQLite)                  |
+| `DB_PORT`                   | Database port (not required for SQLite)                  |
+| `DB_USER`                   | Database user (not required for SQLite)                  |
+| `DB_PASSWORD`               | Database password (not required for SQLite)              |
 | `DJANGO_SUPERUSER_USERNAME` | Admin username                                           |
 | `DJANGO_SUPERUSER_EMAIL`    | Admin email                                              |
 | `DJANGO_SUPERUSER_PASSWORD` | Admin password                                           |
 
-For supported database engines see:
-https://docs.djangoproject.com/en/5.0/ref/databases/
+### Supported databases
+
+| `DB_ENGINE` value | Database             | Driver (bundled)         |
+| ----------------- | -------------------- | ------------------------ |
+| `sqlite3`         | SQLite               | built-in                 |
+| `postgresql`      | PostgreSQL 12+       | `psycopg` (v3)           |
+| `mysql`           | MySQL 8+ / MariaDB   | `mysqlclient`            |
 
 ## Installation
 
@@ -196,10 +202,37 @@ https://docs.djangoproject.com/en/5.0/ref/databases/
 docker pull ghcr.io/heretrix/strings_repository:main
 ```
 
+#### Building a leaner image
+
+By default the image bundles drivers for all supported databases. If you build the image yourself you can include only the driver you need via the `DB` build argument:
+
+| `DB` value     | Installed drivers         | Use when               |
+| -------------- | ------------------------- | ---------------------- |
+| `all` (default)| PostgreSQL + MySQL        | pre-built / unknown    |
+| `sqlite`       | none (built-in)           | SQLite only            |
+| `postgresql`   | psycopg (v3)              | PostgreSQL             |
+| `mysql`        | mysqlclient               | MySQL / MariaDB        |
+
+```bash
+# PostgreSQL-only image (~30 MB smaller than the default)
+docker build --build-arg DB=postgresql -t strings-repository .
+
+# MySQL/MariaDB-only image
+docker build --build-arg DB=mysql -t strings-repository .
+
+# SQLite only (smallest image, no native libraries)
+docker build --build-arg DB=sqlite -t strings-repository .
+```
+
+The pre-built image published to `ghcr.io` always uses `DB=all` so no rebuild is needed when pulling it.
+
+#### docker run
+
 Run with environment variables passed directly:
 
 ```bash
 docker run -d -p 8080:8080 \
+  -v media_data:/app/media \
   -e APP_SECRET_KEY=your-secret-key \
   -e ALLOWED_HOSTS=yourdomain.com \
   -e DB_ENGINE=postgresql \
@@ -214,17 +247,17 @@ docker run -d -p 8080:8080 \
   ghcr.io/heretrix/strings_repository:main
 ```
 
+The `-v media_data:/app/media` mount keeps uploaded scope images and other user files across container updates. Without it uploads are lost when the container is replaced.
+
 Or use an env file:
 
 ```bash
-docker run -d -p 8080:8080 --env-file .env ghcr.io/heretrix/strings_repository:main
+docker run -d -p 8080:8080 -v media_data:/app/media --env-file .env ghcr.io/heretrix/strings_repository:main
 ```
 
 ### Manual installation
 
 Requires **Node.js (npm)** and **Python (pip)**.
-
-SQLite is used by default.
 
 ```bash
 cd webui
@@ -233,7 +266,19 @@ npm run build
 
 cd ..
 pip install -r requirements.txt
+```
 
+Then install the driver for your database (SQLite needs none — it is built into Python):
+
+```bash
+# PostgreSQL
+pip install -r requirements-postgresql.txt
+
+# MySQL / MariaDB
+pip install -r requirements-mysql.txt
+```
+
+```bash
 python manage.py makemigrations api
 python manage.py migrate
 python manage.py createsuperuser

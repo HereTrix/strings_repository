@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from "react"
 import { Alert, Badge, Button, Form, Spinner, Stack } from "react-bootstrap"
-import Project, { ProjectRole } from "../model/Project"
-import { APIMethod, http } from "../Utils/network"
+import Project, { ProjectRole } from "../../types/Project"
+import { APIMethod, http } from "../../utils/network"
 import ErrorAlert from "../UI/ErrorAlert"
 
 type Provider = {

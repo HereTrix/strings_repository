@@ -1,11 +1,11 @@
 import { Badge, Button, Dropdown, ListGroup, Row, Spinner, Stack } from "react-bootstrap"
 import PluralFormsPanel from "../UI/PluralFormsPanel"
 import DiffView from "../UI/DiffView"
-import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, PluralForms, TranslationModel } from "../model/Translation"
+import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, PluralForms, TranslationModel } from "../../types/Translation"
 import { FC, useEffect, useRef, useState } from "react"
 import TagsContainer from "../UI/TagsContainer"
 import MarkdownField from "../UI/MarkdownField"
-import { APIMethod, http } from "../Utils/network"
+import { APIMethod, http } from "../../utils/network"
 
 type TranslationListItemProps = {
     translation: TranslationModel

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { APIMethod, http } from "../Utils/network"
+import { APIMethod, http } from "../../utils/network"
 import { Button, Container, Stack, Tab, Tabs } from "react-bootstrap"
-import Project, { ProjectRole } from "../model/Project"
+import Project, { ProjectRole } from "../../types/Project"
 import ProjectInfo from "./ProjectInfo"
 import LanguagesList from "../Languages/LanguagesList"
 import StringTokensList from "../StringTokens/StringTokensList"
@@ -10,12 +10,13 @@ import ExportPage from "../Translation/ExportPage"
 import HistoryPage from "../History/HistoryPage"
 import ImportPage from "../Translation/ImportPage"
 import BundlesPage from "../Bundles/BundlesPage"
+import ScopeManager from "../StringTokens/ScopeManager"
 
 const ProjectPage = () => {
 
     const { id, tab } = useParams()
     const navigate = useNavigate()
-    const allowedTabs = ['languages', 'tokens', 'history', 'bundles', 'info']
+    const allowedTabs = ['languages', 'tokens', 'scopes', 'history', 'bundles', 'info']
     const getValidTab = (t: string | undefined | null) =>
         t && allowedTabs.includes(t) ? t : 'languages'
     const [activeTab, setActiveTab] = useState(getValidTab(tab))
@@ -83,6 +84,15 @@ const ProjectPage = () => {
                             key="tokens"
                         >
                             {activeTab === "tokens" && <StringTokensList project={project} />}
+                        </Tab>
+                    }
+                    {(project.role === ProjectRole.owner || project.role === ProjectRole.admin) &&
+                        <Tab
+                            eventKey="scopes"
+                            title="Scopes"
+                            key="scopes"
+                        >
+                            {activeTab === "scopes" && <ScopeManager project={project} />}
                         </Tab>
                     }
                     <Tab

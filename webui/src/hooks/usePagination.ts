@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import PaginatedResponse from "../components/model/PaginatedResponse"
+import PaginatedResponse from "../types/PaginatedResponse"
 
 export const PAGE_LIMIT = 20
 

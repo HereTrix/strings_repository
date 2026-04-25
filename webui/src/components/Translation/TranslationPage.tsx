@@ -1,12 +1,13 @@
 import { FC, useCallback, useEffect, useState } from "react"
-import { APIMethod, http } from "../Utils/network"
-import Translation, { getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel, UNTRANSLATED_FILTER } from "../model/Translation"
-import { Badge, Card, Container, ListGroup } from "react-bootstrap"
-import PaginatedResponse from "../model/PaginatedResponse"
+import { APIMethod, http } from "../../utils/network"
+import Translation, { getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel, UNTRANSLATED_FILTER } from "../../types/Translation"
+import { Badge, Card, Container, ListGroup, Modal } from "react-bootstrap"
+import PaginatedResponse from "../../types/PaginatedResponse"
 import ErrorAlert from "../UI/ErrorAlert"
 import InfiniteScroll from "react-infinite-scroll-component"
 import TranslationListItem from "./TranslationListItem"
-import Project from "../model/Project"
+import Project from "../../types/Project"
+import Scope from "../../types/Scope"
 import FilterBar, { StatusOption } from "../UI/FilterBar"
 import { usePagination, PAGE_LIMIT } from "../../hooks/usePagination"
 
@@ -14,6 +15,8 @@ type TranslationPageProps = {
     project_id: string
     code: string
     project?: Project
+    scopeId?: number
+    scope?: Scope
 }
 
 type Filters = {
@@ -22,9 +25,10 @@ type Filters = {
     status: string
 }
 
-const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }) => {
+const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project, scopeId, scope }) => {
     const defaultLanguageCode = project?.languages.find(l => l.is_default)?.code
     const [filters, setFilters] = useState<Filters>({ tags: [], query: '', status: 'all' })
+    const [lightboxUrl, setLightboxUrl] = useState<string>()
     const { items: translations, offset, hasMore, setHasMore, total, handleResponse, setItems: setTranslations } = usePagination<TranslationModel>()
     const [tags, setTags] = useState<string[]>([])
     const [error, setError] = useState<string>()
@@ -36,6 +40,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }
         if (filters.query) params.q = filters.query
         if (filters.status === UNTRANSLATED_FILTER) params.untranslated = 'true'
         else if (filters.status !== 'all') params.status = filters.status
+        if (scopeId !== undefined) params.scope = String(scopeId)
 
         params.offset = `${pageOffset}`
         params.limit = `${PAGE_LIMIT}`
@@ -48,7 +53,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }
 
         if (result.value) handleResponse(result.value, pageOffset)
         else { setHasMore(false); setError(result.error) }
-    }, [filters, project_id, code, handleResponse, setHasMore])
+    }, [filters, project_id, code, scopeId, handleResponse, setHasMore])
 
     const fetchTags = useCallback(async () => {
         const result = await http<string[]>({
@@ -131,6 +136,51 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project }
 
     return (
         <Container>
+            {scope && (
+                <Card className="mb-3 border-0 bg-body-tertiary">
+                    <Card.Body className="py-2 px-3">
+                        <div className="fw-semibold mb-1">{scope.name}</div>
+                        {scope.description && (
+                            <div className="text-muted small mb-2">{scope.description}</div>
+                        )}
+                        {scope.images.length > 0 && (
+                            <div className="d-flex flex-wrap gap-2">
+                                {scope.images.map(img => (
+                                    <img
+                                        key={img.id}
+                                        src={img.url}
+                                        alt=""
+                                        style={{
+                                            height: 64,
+                                            maxWidth: 140,
+                                            objectFit: 'cover',
+                                            borderRadius: 6,
+                                            cursor: 'pointer',
+                                            border: '1px solid var(--bs-border-color)',
+                                        }}
+                                        onClick={() => setLightboxUrl(img.url)}
+                                        title="Click to enlarge"
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </Card.Body>
+                </Card>
+            )}
+
+            {lightboxUrl && (
+                <Modal show onHide={() => setLightboxUrl(undefined)} size="xl" centered>
+                    <Modal.Header closeButton />
+                    <Modal.Body className="p-0 text-center">
+                        <img
+                            src={lightboxUrl}
+                            alt=""
+                            style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
+                        />
+                    </Modal.Body>
+                </Modal>
+            )}
+
             <FilterBar
                 typeaheadId="translations-tags-filter"
                 statusOptions={statusOptions}

@@ -10,4 +10,4 @@ django-environ==0.13.0
 django-filter==25.2
 gunicorn==25.3.0
 cryptography==46.0.7
-psycopg==3.3.3
+Pillow==12.2.0

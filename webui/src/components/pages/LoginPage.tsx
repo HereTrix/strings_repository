@@ -2,8 +2,8 @@ import { useState } from "react"
 import { Button, Container, Form, Toast, ToastContainer } from "react-bootstrap";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { APIMethod, http } from "./Utils/network";
-import ErrorAlert from "./UI/ErrorAlert";
+import { APIMethod, http } from "../../utils/network";
+import ErrorAlert from "../UI/ErrorAlert";
 
 type Inputs = {
     login: string

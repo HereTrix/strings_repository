@@ -1,19 +1,19 @@
 import { FC, useEffect, useState } from "react"
 import { Button, Col, Modal, Row, Stack } from "react-bootstrap"
-import { APIMethod, http } from "../Utils/network"
-import Language from "../model/Language"
+import { APIMethod, http } from "../../utils/network"
+import Language from "../../types/Language"
 import { Typeahead } from "react-bootstrap-typeahead"
 import OptionalImage from "../UI/OptionalImage"
 import ErrorAlert from "../UI/ErrorAlert"
 
-type AddLaguagePageProps = {
+type AddLanguagePageProps = {
     project_id: number
     show: boolean
     onHide: () => void
     onSuccess: () => void
 }
 
-const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onSuccess }) => {
+const AddLanguagePage: FC<AddLanguagePageProps> = ({ project_id, show, onHide, onSuccess }) => {
 
     const [error, setError] = useState<string>()
     const [available, setAvailable] = useState<Language[]>([])
@@ -93,4 +93,4 @@ const AddLaguagePage: FC<AddLaguagePageProps> = ({ project_id, show, onHide, onS
     )
 }
 
-export default AddLaguagePage
+export default AddLanguagePage
