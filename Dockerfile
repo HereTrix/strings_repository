@@ -26,6 +26,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
         wget \
         gcc \
+        pkg-config \
     && if [ "$DB" = "postgresql" ] || [ "$DB" = "all" ]; then \
            apt-get install -y libpq-dev; \
        fi \
