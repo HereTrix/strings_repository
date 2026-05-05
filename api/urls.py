@@ -16,6 +16,10 @@ from api.views.scope import ScopeDetailAPI, ScopeImageAPI, ScopeListCreateAPI, S
 from api.views.two_fa import TwoFASetupAPI, TwoFAVerifyAPI, TwoFADeleteAPI, TwoFALoginAPI
 from api.views.webhook import WebhookDetailAPI, WebhookEventsAPI, WebhookListAPI, WebhookLogsAPI, WebhookVerifyAPI
 from api.views.ai_provider import AIProviderAPI
+from api.views.passkey import (
+    PasskeyRegisterBeginAPI, PasskeyRegisterCompleteAPI,
+    PasskeyAuthBeginAPI, PasskeyAuthCompleteAPI, PasskeyDeleteAPI,
+)
 from api.views.verification import (
     VerificationListCreateAPI,
     VerificationCountAPI,
@@ -101,6 +105,12 @@ urlpatterns = [
     path('2fa/verify', TwoFAVerifyAPI.as_view()),
     path('2fa/login', TwoFALoginAPI.as_view()),
     path('2fa', TwoFADeleteAPI.as_view()),
+    # passkeys
+    path('passkey/register/begin', PasskeyRegisterBeginAPI.as_view()),
+    path('passkey/register/complete', PasskeyRegisterCompleteAPI.as_view()),
+    path('passkey/auth/begin', PasskeyAuthBeginAPI.as_view()),
+    path('passkey/auth/complete', PasskeyAuthCompleteAPI.as_view()),
+    path('passkey/<int:pk>', PasskeyDeleteAPI.as_view()),
     # mcp
     path('mcp', McpView.as_view()),
     # plugin
