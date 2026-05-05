@@ -13,3 +13,4 @@ cryptography==46.0.7
 Pillow==12.2.0
 django-otp==1.7.0
 qrcode[pil]==8.2.0
+django-q2==1.7.4

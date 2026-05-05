@@ -18,6 +18,8 @@ It provides a centralized place to manage translation keys, collaborate with tra
 * **Import & export** - import/export translations in multiple supported formats
 * **Translation bundles** - versioned snapshots of translations for safe production releases and rollbacks
 * **Machine translation** - DeepL, Google Translate, and Generic AI (any OpenAI-compatible REST API) integration
+* **AI translation verification** - async quality audits powered by any OpenAI-compatible or Anthropic-compatible provider; source quality and translation accuracy modes with per-check selection, scope/tag filtering, suggestion review, and one-click apply
+* **Two-factor authentication (2FA)** - TOTP-based 2FA per user account; project owners can require 2FA for all project members
 * **MCP support** - AI-agent integration via Model Context Protocol for IDE-based key management and localization workflows
 * **Webhooks** - real-time event notifications to external services
 * **Full change history** - track all translation changes with an exportable history log
@@ -110,6 +112,7 @@ Each webhook endpoint is configured with:
 | `import.completed`         | A file import completes                     |
 | `member.invited`           | A team member is invited                    |
 | `member.role_changed`      | A team member's role is changed             |
+| `verification.completed`   | An AI verification job finishes (any status) |
 
 ## MCP Integration
 
@@ -167,6 +170,33 @@ See the [CLI repository](https://github.com/HereTrix/strings_repository_cli) for
 DeepL, Google Translate, and any OpenAI-compatible AI provider can be configured per project to auto-translate string keys. An API key for the chosen provider is stored encrypted at rest and can be verified before use.
 
 The **Generic AI** option lets you connect any REST-based LLM without additional dependencies. Provide an endpoint URL, a JSON payload template (using `{{text}}`, `{{target_lang}}`, and optionally `{{source_lang}}` placeholders), and a dot-notation response path to extract the translated text (e.g. `choices.0.message.content`). Built-in presets are available for OpenAI / DeepSeek, Claude, and Ollama (local).
+
+## Two-Factor Authentication (2FA)
+
+Users can enable TOTP-based 2FA on their account via **Profile → Security**. Any standard authenticator app (Google Authenticator, Authy, etc.) can be used to scan the QR code. Backup codes are generated at setup time.
+
+Project owners can enforce 2FA across their entire team. When enabled, any member without active 2FA will receive a `403` on all project API calls until they complete setup. The requirement can be toggled in **Project → Info → Security Settings**.
+
+## AI Translation Verification
+
+AI verification runs quality audits on your translations using any OpenAI-compatible or Anthropic-compatible provider (including self-hosted models via a custom endpoint URL). The provider is configured per-project in **Project → Info → AI Provider**.
+
+### Modes
+
+| Mode | What is checked | Target language required |
+| ---- | --------------- | ------------------------ |
+| **Source Quality** | Source/default language strings for spelling, grammar, tone, punctuation, capitalisation, and placeholder format | No |
+| **Translation Accuracy** | Translations from the source language to a selected target language for semantic accuracy, placeholder preservation, omissions/additions, grammar, and tone match | Yes |
+
+### How it works
+
+1. **Configure an AI provider** — go to **Project → Info → AI Provider**, select a provider type (OpenAI-compatible or Anthropic-compatible), enter the model name and API key. Leave the endpoint URL blank to use the default. Built-in presets are available for OpenAI, Claude, and Ollama.
+2. **Run a verification** — in the **Verify** tab, click **Run Verification**. Select a mode, optionally filter by scope, tags, or "new only" (Mode 2), choose which checks to include, and click **Estimate strings** to preview API token usage before submitting.
+3. **Review results** — the job runs asynchronously; the tab polls for status every 5 seconds. Each result row shows a severity badge (`ok` / `warning` / `error`), a word-level diff of the current value vs. the AI suggestion, and the reason.
+4. **Apply suggestions** — editors, admins, and owners can select individual suggestions, adjust the text inline, and apply them as standard translation updates with full history tracking. Applying any suggestion marks the report read-only.
+5. **Comment** — any project member can add comments to individual suggestions for discussion.
+
+Reports are capped per project (default: 10; configurable by the project owner). When the cap is reached, the oldest report is deleted automatically. Admins and owners can delete any report manually. A `verification.completed` webhook event fires when each job finishes.
 
 ## Configuration
 

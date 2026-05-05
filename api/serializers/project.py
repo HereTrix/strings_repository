@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from api.models.project import Project, ProjectAccessToken, ProjectRole, TranslationIntegration
+from api.models.project import Project, ProjectAccessToken, ProjectRole, TranslationIntegration, ProjectAIProvider
 from api.serializers.language import LanguageSerializer
 from api.models.transport_models import APIProject
 
@@ -66,6 +66,10 @@ class ProjectAccessTokenSerializer(serializers.ModelSerializer):
 class ProjectDetailSerializer(serializers.ModelSerializer):
     languages = LanguageSerializer(many=True, read_only=True)
     role = serializers.SerializerMethodField()
+    has_ai_provider = serializers.SerializerMethodField()
+
+    def get_has_ai_provider(self, obj):
+        return ProjectAIProvider.objects.filter(project=obj).exists()
 
     def get_role(self, obj):
         user = self.context['request'].user
@@ -85,10 +89,23 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
                 )
         return value
 
+    def validate_description(self, value):
+        request = self.context.get('request')
+        if request and self.instance:
+            try:
+                role = self.instance.roles.get(user=request.user)
+            except Exception:
+                raise serializers.ValidationError("Not allowed.")
+            if role.role not in [ProjectRole.Role.owner, ProjectRole.Role.admin]:
+                raise serializers.ValidationError(
+                    "Only project admins and owners can change the description."
+                )
+        return value
+
     class Meta:
         model = Project
         fields = ['id', 'name', 'description',
-                  'languages', 'role', 'require_2fa']
+                  'languages', 'role', 'require_2fa', 'has_ai_provider']
 
 
 class IntegrationSerializer(serializers.ModelSerializer):

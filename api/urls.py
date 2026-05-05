@@ -15,6 +15,14 @@ from api.views.translation import StringTokenAPI, StringTokenStatusAPI, StringTo
 from api.views.scope import ScopeDetailAPI, ScopeImageAPI, ScopeListCreateAPI, ScopeTokensAPI
 from api.views.two_fa import TwoFASetupAPI, TwoFAVerifyAPI, TwoFADeleteAPI, TwoFALoginAPI
 from api.views.webhook import WebhookDetailAPI, WebhookEventsAPI, WebhookListAPI, WebhookLogsAPI, WebhookVerifyAPI
+from api.views.ai_provider import AIProviderAPI
+from api.views.verification import (
+    VerificationListCreateAPI,
+    VerificationCountAPI,
+    VerificationDetailAPI,
+    VerificationApplyAPI,
+    VerificationCommentAPI,
+)
 from knox.views import LogoutView
 
 urlpatterns = [
@@ -61,6 +69,14 @@ urlpatterns = [
     path('project/<int:pk>/bundles/<int:bundle_id>/activate', BundleActivateAPI.as_view()),
     path('project/<int:pk>/bundles/<int:bundle_id>/deactivate', BundleDeactivateAPI.as_view()),
     path('project/<int:pk>/bundles/<int:bundle_id>/export', BundleExportAPI.as_view()),
+    # AI provider
+    path('project/<int:pk>/ai-provider', AIProviderAPI.as_view()),
+    # Verification — count MUST be before <report_id> to avoid integer-match conflict
+    path('project/<int:pk>/verify/count', VerificationCountAPI.as_view()),
+    path('project/<int:pk>/verify', VerificationListCreateAPI.as_view()),
+    path('project/<int:pk>/verify/<int:report_id>', VerificationDetailAPI.as_view()),
+    path('project/<int:pk>/verify/<int:report_id>/apply', VerificationApplyAPI.as_view()),
+    path('project/<int:pk>/verify/<int:report_id>/comments', VerificationCommentAPI.as_view()),
     path('project/<int:pk>', ProjectAPI.as_view()),
     path('projects/list', ProjectListAPI.as_view()),
     path('project', CreateProjectAPI.as_view()),

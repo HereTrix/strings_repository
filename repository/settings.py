@@ -68,7 +68,8 @@ INSTALLED_APPS = [
     'api',
     'django_otp',
     'django_otp.plugins.otp_totp',
-    'webui'
+    'webui',
+    'django_q',
 ]
 
 MIDDLEWARE = [
@@ -191,4 +192,14 @@ REST_FRAMEWORK = {
         'api.permissions.ProjectTwoFAPermission',
     ],
     'EXCEPTION_HANDLER': 'api.exception_handler.custom_exception_handler',
+}
+
+Q_CLUSTER = {
+    'name': 'strings_repository',
+    'workers': 2,
+    'timeout': 300,
+    'retry': 0,
+    'save_limit': 100,
+    'orm': 'default',
+    'sync': False,
 }

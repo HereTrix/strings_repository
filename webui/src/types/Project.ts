@@ -14,6 +14,8 @@ interface Project {
     languages: Language[]
     role: ProjectRole
     require_2fa: boolean
+    has_ai_provider: boolean
+    verification_cap?: number
 }
 
 export default Project
