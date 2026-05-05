@@ -53,6 +53,7 @@ It provides a centralized place to manage translation keys, collaborate with tra
 | `properties`   | Java                          | `.properties` |
 | `po`           | Portable Object               | `.po`         |
 | `mo`           | Binary MO                     | `.mo`         |
+| `csv`          | CSV                           | `.csv`        |
 
 ## Translation Bundles
 
