@@ -60,7 +60,6 @@ module.exports = (env, argv) => {
         template: "public/index.html",
         filename: path.resolve(__dirname, "templates/site/index.html"),
       }),
-      new webpack.HotModuleReplacementPlugin(),
     ],
     watch: isDev,
   }
