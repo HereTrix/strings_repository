@@ -1,8 +1,8 @@
-import random
-import string
+import secrets
 from datetime import datetime
 
 from django.http import JsonResponse
+from django.utils import timezone
 from rest_framework import generics, permissions, status
 
 from api import dispatcher
@@ -11,16 +11,15 @@ from api.serializers.project import ProjectAccessTokenSerializer, ProjectPartici
 
 
 def generate_token(length=16):
-    return ''.join(random.choices(string.ascii_letters, k=length))
+    return secrets.token_urlsafe(length)
 
 
 def delete_expired_tokens(tokens):
-    now = datetime.now()
+    now = timezone.now()
     return [token for token in tokens if not (token.expiration and token.expiration < now)]
 
 
 class RolesAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         user = request.user
@@ -50,7 +49,6 @@ class RolesAPI(generics.GenericAPIView):
 
 
 class ProjectParticipantsAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         user = request.user
@@ -143,7 +141,6 @@ class ProjectParticipantsAPI(generics.GenericAPIView):
 
 
 class ProjectInvitationAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         user = request.user
@@ -193,7 +190,6 @@ class ProjectInvitationAPI(generics.GenericAPIView):
 
 
 class ProjectAccessTokenAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         user = request.user

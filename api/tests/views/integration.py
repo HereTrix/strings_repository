@@ -285,3 +285,43 @@ class ExistingDeepLUnaffectedTestCase(TestCase):
         }, format='json')
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['provider'], 'deepl')
+
+
+class GenericAISSRFTestCase(TestCase):
+    """VULN-3: SSRF guard in GenericAI provider."""
+
+    def setUp(self):
+        import socket
+        from api.crypto import encrypt
+        from api.models.project import TranslationIntegration
+        self.owner = make_user('ssrf_owner')
+        self.project = make_project(owner=self.owner)
+        self.client = authed_client(self.owner)
+        self.client.post(f'/api/project/{self.project.pk}/integration', {
+            'provider': 'ai',
+            'api_key': 'sk-test',
+            'endpoint_url': 'https://10.0.0.1/v1/chat',
+            'payload_template': OPENAI_TEMPLATE,
+            'response_path': 'choices.0.message.content',
+        }, format='json')
+        from api.models.language import Language
+        Language.objects.create(code='EN', project=self.project)
+        from api.models.translations import StringToken
+        StringToken.objects.create(token='greeting', project=self.project)
+
+    def _mock_addr(self, ip):
+        import socket
+        return [(socket.AF_INET, socket.SOCK_STREAM, 0, '', (ip, 0))]
+
+    def test_generic_ai_blocked_for_private_url(self):
+        with patch('socket.getaddrinfo', return_value=self._mock_addr('10.0.0.1')), \
+             patch('api.translation_providers.generic_ai.urllib.request.urlopen') as mock_urlopen:
+            resp = self.client.post(
+                f'/api/project/{self.project.pk}/machine-translate',
+                {'token': 'greeting', 'target_lang': 'FR', 'source_lang': 'EN'},
+                format='json',
+            )
+        mock_urlopen.assert_not_called()
+        self.assertIn(resp.status_code, [400, 500])
+        body = resp.json()
+        self.assertTrue('error' in body or 'detail' in body)

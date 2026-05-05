@@ -14,9 +14,9 @@ from api.serializers.language import AvailableLanguageSerializer, LanguageSerial
 from api.serializers.translation import StringTokenModelSerializer, StringTokenSerializer
 
 
-class ProjectAPI(generics.RetrieveDestroyAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+class ProjectAPI(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectDetailSerializer
+    http_method_names = ['get', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         return Project.objects.filter(
@@ -34,7 +34,6 @@ class ProjectAPI(generics.RetrieveDestroyAPIView):
 
 
 class CreateProjectAPI(generics.CreateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = CreateProjectSerializer
 
     def perform_create(self, serializer):
@@ -48,7 +47,6 @@ class CreateProjectAPI(generics.CreateAPIView):
 
 
 class ProjectListAPI(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ProjectSerializer
 
     def get_queryset(self):
@@ -58,7 +56,6 @@ class ProjectListAPI(generics.ListAPIView):
 
 
 class ProjectAvailableLanguagesAPI(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = AvailableLanguageSerializer
 
     def get_queryset(self):
@@ -82,7 +79,6 @@ class ProjectAvailableLanguagesAPI(generics.ListAPIView):
 
 
 class LanguageListAPI(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = LanguageSerializer
 
     def get_queryset(self):
@@ -93,7 +89,6 @@ class LanguageListAPI(generics.ListAPIView):
 
 
 class StringTokenListAPI(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = StringTokenSerializer
     pagination_class = TranslationsPagination
     filterset_class = StringTokenFilter
@@ -106,7 +101,6 @@ class StringTokenListAPI(generics.ListAPIView):
 
 
 class TranslationsListAPI(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = StringTokenModelSerializer
     pagination_class = TranslationsPagination
     filterset_class = TranslationTokenFilter
@@ -129,7 +123,6 @@ class TranslationsListAPI(generics.ListAPIView):
 
 
 class LanguageProgressAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         try:
@@ -155,7 +148,6 @@ class LanguageProgressAPI(generics.GenericAPIView):
 
 
 class ProjectTagsAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         tags = list(

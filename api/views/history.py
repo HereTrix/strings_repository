@@ -8,7 +8,6 @@ from api.serializers.history import HistorySerializer
 
 
 class ProjectHistoryAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         user = request.user
@@ -41,15 +40,12 @@ class ProjectHistoryAPI(generics.GenericAPIView):
             serializer = HistorySerializer(records, many=True)
             return JsonResponse(serializer.data, safe=False)
         except Exception as e:
-            print(e)
             return JsonResponse({
                 'error': e
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProjectHistoryExportAPI(generics.GenericAPIView):
-
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         user = request.user

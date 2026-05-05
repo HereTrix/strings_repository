@@ -1,6 +1,5 @@
-import datetime
-
 from django.http import JsonResponse
+from django.utils import timezone
 from rest_framework import generics, status, permissions
 
 from api.file_processors.export_file_type import ExportFile
@@ -26,7 +25,7 @@ def validate_access_token(token):
             'error': 'No access'
         }, status=status.HTTP_403_FORBIDDEN)
 
-    if access.expiration and access.expiration < datetime.datetime.now():
+    if access.expiration and access.expiration < timezone.now():
         access.delete()
         return None, JsonResponse({
             'error': 'No access'

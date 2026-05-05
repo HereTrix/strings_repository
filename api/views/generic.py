@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.contrib.auth.models import User
+from django_otp import user_has_device
 from api.models.project import Invitation, ProjectRole
 from api.serializers.users import UserSerializer, LoginSerializer
 from rest_framework import generics, permissions, status
@@ -17,6 +18,12 @@ class SignInAPI(generics.GenericAPIView):
             serializer.is_valid(raise_exception=True)
             user = serializer.validated_data
             token = AuthToken.objects.create(user)
+
+            if user_has_device(user, confirmed=True):
+                return JsonResponse(
+                    {'2fa_required': True, 'token': token[1]},
+                    status=202,
+                )
 
             return JsonResponse({
                 "user": UserSerializer(user, context=self.get_serializer_context()).data,
@@ -60,7 +67,9 @@ class ProfileAPI(generics.GenericAPIView):
             return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = UserSerializer(user)
-        return JsonResponse(serializer.data)
+        data = serializer.data
+        data['has_2fa'] = user_has_device(user, confirmed=True)
+        return JsonResponse(data)
 
     def post(self, request):
         email = request.data['email']

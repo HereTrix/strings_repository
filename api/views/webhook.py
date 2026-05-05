@@ -75,7 +75,6 @@ def _get_project_for_admin(pk: int, user) -> Project | None:
 
 
 class WebhookListAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         project = _get_project_for_admin(pk, request.user)
@@ -124,7 +123,6 @@ class WebhookListAPI(generics.GenericAPIView):
 
 
 class WebhookDetailAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def _get_endpoint(self, pk: int, webhook_id: int, user):
         project = _get_project_for_admin(pk, user)
@@ -190,7 +188,6 @@ class WebhookDetailAPI(generics.GenericAPIView):
 
 
 class WebhookVerifyAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk, webhook_id):
         project = _get_project_for_admin(pk, request.user)
@@ -230,7 +227,6 @@ class WebhookVerifyAPI(generics.GenericAPIView):
 
 
 class WebhookLogsAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk, webhook_id):
         project = _get_project_for_admin(pk, request.user)
@@ -257,7 +253,6 @@ class WebhookLogsAPI(generics.GenericAPIView):
 
 class WebhookEventsAPI(generics.GenericAPIView):
     """Returns the list of all supported event types."""
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         return JsonResponse(WebhookEndpoint.EVENTS, safe=False)

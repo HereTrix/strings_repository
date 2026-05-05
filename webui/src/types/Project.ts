@@ -13,6 +13,7 @@ interface Project {
     description: string | null
     languages: Language[]
     role: ProjectRole
+    require_2fa: boolean
 }
 
 export default Project

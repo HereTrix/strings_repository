@@ -24,7 +24,6 @@ def _get_project_admin(user, pk):
 
 
 class ScopeListCreateAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         project, err = _get_project_member(request.user, pk)
@@ -48,7 +47,6 @@ class ScopeListCreateAPI(generics.GenericAPIView):
 
 
 class ScopeDetailAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def patch(self, request, pk, scope_id):
         project, err = _get_project_admin(request.user, pk)
@@ -71,7 +69,6 @@ class ScopeDetailAPI(generics.GenericAPIView):
 
 
 class ScopeTokensAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def _get_scope(self, user, pk, scope_id):
         project, err = _get_project_admin(user, pk)
@@ -103,7 +100,6 @@ class ScopeTokensAPI(generics.GenericAPIView):
 
 class ScopeImageAPI(generics.GenericAPIView):
     """POST: upload a new image to a scope. DELETE: remove a specific image by id."""
-    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser]
 
     def _get_scope(self, user, pk, scope_id):

@@ -8,7 +8,7 @@ from api.models.transport_models import APIProject
 class CreateProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ['name', 'description']
+        fields = ['name', 'description', 'require_2fa']
 
 
 class APIProjectSerializer(serializers.ModelSerializer):
@@ -47,11 +47,10 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'description', 'role']
+        fields = ['id', 'name', 'description', 'role', 'require_2fa']
 
     def get_role(self, obj):
         user = self.context.get('user')
-        print(user)
         if not user:
             return None
         role_obj = obj.roles.filter(user=user).first()
@@ -73,9 +72,23 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
         role = obj.roles.get(user=user)
         return role.role
 
+    def validate_require_2fa(self, value):
+        request = self.context.get('request')
+        if request and self.instance:
+            try:
+                role = self.instance.roles.get(user=request.user)
+            except Exception:
+                raise serializers.ValidationError("Not allowed.")
+            if role.role != ProjectRole.Role.owner:
+                raise serializers.ValidationError(
+                    "Only project owners can change the 2FA requirement."
+                )
+        return value
+
     class Meta:
         model = Project
-        fields = ['id', 'name', 'description', 'languages', 'role']
+        fields = ['id', 'name', 'description',
+                  'languages', 'role', 'require_2fa']
 
 
 class IntegrationSerializer(serializers.ModelSerializer):
@@ -83,4 +96,5 @@ class IntegrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TranslationIntegration
-        fields = ['provider', 'api_key', 'endpoint_url', 'payload_template', 'response_path', 'auth_header']
+        fields = ['provider', 'api_key', 'endpoint_url',
+                  'payload_template', 'response_path', 'auth_header']

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+import warnings
 from pathlib import Path
 from .app_env import env_value
 
@@ -24,16 +25,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env_value('APP_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_value('DEBUG', default=False)
 
-allowed = env_value('ALLOWED_HOSTS')
-if allowed:
-    ALLOWED_HOSTS = allowed.split(',')
+_allowed_hosts_raw = env_value('ALLOWED_HOSTS', default='')
+if _allowed_hosts_raw:
+    ALLOWED_HOSTS = [h.strip()
+                     for h in _allowed_hosts_raw.split(',') if h.strip()]
 else:
-    ALLOWED_HOSTS = ['*']
+    warnings.warn(
+        "ALLOWED_HOSTS env var is not set. Defaulting to ['localhost', '127.0.0.1']. "
+        "Set ALLOWED_HOSTS in production.",
+        stacklevel=2,
+    )
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 CORS_ALLOWED_ORIGINS = [
-    'null'
+    o.strip() for o in env_value('CORS_ORIGINS', default='').split(',') if o.strip()
 ]
 
 CORS_URLS_REGEX = r'^/api/(plugin/.*|mcp)$'
@@ -59,17 +66,19 @@ INSTALLED_APPS = [
     'django_filters',
     'knox',
     'api',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     'webui'
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -177,4 +186,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'knox.auth.TokenAuthentication',
     ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+        'api.permissions.ProjectTwoFAPermission',
+    ],
+    'EXCEPTION_HANDLER': 'api.exception_handler.custom_exception_handler',
 }

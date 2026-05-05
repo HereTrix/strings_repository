@@ -9,7 +9,6 @@ PLURAL_FORMS = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
 
 class PluralTranslationAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def put(self, request):
         user = request.user
