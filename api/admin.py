@@ -3,11 +3,12 @@ from django.contrib import admin
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from api.models.bundle import TranslationBundle
 from api.models.language import Language
-from api.models.project import Project, ProjectRole
+from api.models.project import Project, ProjectRole, ProjectAIProvider
 from api.models.string_token import StringToken
 from api.models.tag import Tag
 from api.models.translations import Translation
 from api.models.users import TwoFAVerification, BackupCode
+from api.models.verification import VerificationReport, VerificationComment
 
 admin.site.register(ProjectRole)
 admin.site.register(Project)
@@ -30,3 +31,22 @@ class BackupCodeAdmin(admin.ModelAdmin):
     list_display = ['user', 'used', 'created_at']
     list_filter = ['used']
     search_fields = ['user__username', 'user__email']
+
+
+@admin.register(ProjectAIProvider)
+class ProjectAIProviderAdmin(admin.ModelAdmin):
+    list_display = ['project', 'provider_type', 'model_name', 'created_at']
+    search_fields = ['project__name']
+
+
+@admin.register(VerificationReport)
+class VerificationReportAdmin(admin.ModelAdmin):
+    list_display = ['id', 'project', 'mode', 'status', 'target_language', 'created_at']
+    list_filter = ['status', 'mode']
+    search_fields = ['project__name']
+
+
+@admin.register(VerificationComment)
+class VerificationCommentAdmin(admin.ModelAdmin):
+    list_display = ['id', 'report', 'token_key', 'author', 'created_at']
+    search_fields = ['token_key', 'text']

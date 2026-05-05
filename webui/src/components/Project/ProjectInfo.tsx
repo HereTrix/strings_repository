@@ -5,16 +5,72 @@ import { APIMethod, http } from "../../utils/network"
 import Participant from "../../types/Participant"
 import InviteUserPage from "./InviteUserPage"
 import AccessTokenPage from "./AccessToken"
+import AIProviderSettings from "./AIProviderSettings"
 import IntegrationSettings from "./IntegrationSettings"
 import WebhookSettings from "./WebhookSettings"
 import CollapseSection from "../UI/CollapseSection"
 import ErrorAlert from "../UI/ErrorAlert"
 
-type ProjectInfoProps = {
+type DescriptionEditorProps = {
     project: Project
+    onSaved: (desc: string) => void
 }
 
-const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
+const DescriptionEditor: FC<DescriptionEditorProps> = ({ project, onSaved }) => {
+    const [editing, setEditing] = useState(false)
+    const [value, setValue] = useState(project.description ?? '')
+    const [saving, setSaving] = useState(false)
+    const [error, setError] = useState<string>()
+
+    const save = async () => {
+        setSaving(true)
+        setError(undefined)
+        const result = await http({
+            method: APIMethod.patch,
+            path: `/api/project/${project.id}`,
+            data: { description: value },
+        })
+        setSaving(false)
+        if (result.error) {
+            setError(result.error)
+        } else {
+            setEditing(false)
+            onSaved(value)
+        }
+    }
+
+    if (!editing) {
+        return (
+            <Button variant="link" size="sm" className="p-0 ms-2" onClick={() => setEditing(true)}>
+                Edit
+            </Button>
+        )
+    }
+
+    return (
+        <Stack gap={2} style={{ maxWidth: 500 }} className="mt-2">
+            <Form.Control
+                as="textarea"
+                rows={3}
+                value={value}
+                onChange={e => setValue(e.target.value)}
+                size="sm"
+            />
+            <Stack direction="horizontal" gap={2}>
+                <Button size="sm" onClick={save} disabled={saving}>Save</Button>
+                <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button>
+            </Stack>
+            {error && <span className="text-danger small">{error}</span>}
+        </Stack>
+    )
+}
+
+type ProjectInfoProps = {
+    project: Project
+    onProviderChange?: () => void
+}
+
+const ProjectInfo: FC<ProjectInfoProps> = ({ project, onProviderChange }) => {
 
     const [error, setError] = useState<string>()
     const [participants, setParticipants] = useState<Participant[]>()
@@ -22,6 +78,7 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
     const [accessToken, setAccessToken] = useState<boolean>(false)
     const [roles, setRoles] = useState<string[]>([])
     const [require2fa, setRequire2fa] = useState(project.require_2fa)
+    const [description, setDescription] = useState(project.description)
 
     const loadParticipants = async () => {
         const data = await http<Participant[]>({
@@ -89,7 +146,16 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
                 </Stack>
             }
 
-            <label>{project.description ? project.description : "No description"}</label>
+            <span>
+                {description ? description : "No description"}
+                {(project.role === ProjectRole.owner || project.role === ProjectRole.admin) && (
+                    <DescriptionEditor project={project} onSaved={(desc) => setDescription(desc)} />
+                )}
+            </span>
+
+            <CollapseSection title="AI Provider">
+                <AIProviderSettings project={project} onProviderChange={onProviderChange} />
+            </CollapseSection>
 
             <CollapseSection title="Translation Integration">
                 <IntegrationSettings project={project} />

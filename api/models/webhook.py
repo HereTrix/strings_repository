@@ -18,6 +18,7 @@ class WebhookEndpoint(models.Model):
         'import.completed',
         'member.invited',
         'member.role_changed',
+        'verification.completed',
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='webhooks')

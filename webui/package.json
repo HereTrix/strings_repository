@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.tsx",
   "scripts": {
-    "dev": "webpack --mode development --watch --stats-error-details",
+    "dev": "webpack --mode development --env development --watch --stats-error-details",
     "build": "webpack --mode production --env production",
     "typecheck": "tsc --noEmit",
     "test": "jest",

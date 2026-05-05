@@ -15,6 +15,9 @@ if [ "$DJANGO_SUPERUSER_USERNAME" ] && [ "$DJANGO_SUPERUSER_PASSWORD" ]; then
     || true
 fi
 
+echo "Starting qcluster..."
+python manage.py qcluster &
+
 echo "Starting gunicorn..."
 exec gunicorn repository.wsgi:application \
   --bind 0.0.0.0:8080 \
