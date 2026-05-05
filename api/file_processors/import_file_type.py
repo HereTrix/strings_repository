@@ -11,3 +11,4 @@ class ImportFile(enum.Enum):
     po = 'po'
     mo = 'mo'
     xcstrings = 'xcstrings'
+    csv = 'csv'

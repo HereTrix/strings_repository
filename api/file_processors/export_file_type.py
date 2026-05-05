@@ -13,6 +13,7 @@ class ExportFile(enum.Enum):
     properties = 'properties'
     po = 'po'
     mo = 'mo'
+    csv = 'csv'
 
     def file_extension(self):
         match self:
@@ -38,6 +39,8 @@ class ExportFile(enum.Enum):
                 return '.po'
             case ExportFile.mo:
                 return '.mo'
+            case ExportFile.csv:
+                return '.csv'
 
     def vendor(self):
         match self:
@@ -63,3 +66,5 @@ class ExportFile(enum.Enum):
                 return 'Portable Object'
             case ExportFile.mo:
                 return 'Binary MO'
+            case ExportFile.csv:
+                return 'CSV'

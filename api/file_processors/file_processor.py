@@ -1,5 +1,6 @@
 from api.file_processors.android_resources import AndroidResourceFileWriter, AndroidResourceFileReader
 from api.file_processors.common_json_file import CommonJSONFileReader
+from api.file_processors.csv_file import CSVFileReader, CSVFileWriter
 from api.file_processors.dotnet_file import DotNetFileReader, DotNetFileWriter
 from api.file_processors.excel_file import ExcelFileWriter, ExcelSingleSheetFileWriter
 from api.file_processors.export_file_type import ExportFile
@@ -26,6 +27,7 @@ WRITER_MAP = {
     ExportFile.properties: PropertiesFileWriter,
     ExportFile.po: POFileWriter,
     ExportFile.mo: MOFileWriter,
+    ExportFile.csv: CSVFileWriter,
 }
 
 
@@ -58,6 +60,7 @@ READER_MAP = {
     ImportFile.properties.name: PropertiesFileReader,
     ImportFile.po.name: POFileReader,
     ImportFile.mo.name: MOFileReader,
+    ImportFile.csv.name: CSVFileReader,
 }
 
 
