@@ -32,7 +32,6 @@ const AddLanguagePage: FC<AddLanguagePageProps> = ({ project_id, show, onHide, o
             data: { "project": project_id, "code": language.code }
         })
 
-        console.log(result)
         if (result.error) {
             setError(result.error)
         } else {

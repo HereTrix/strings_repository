@@ -1,8 +1,9 @@
 import { useState } from "react"
-import { Button, Container, Form, Toast, ToastContainer } from "react-bootstrap";
+import { Alert, Button, Container, Form, Spinner, Toast, ToastContainer } from "react-bootstrap";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { APIMethod, http } from "../../utils/network";
+import { base64urlToBuffer, bufferToBase64url, serializeAssertionCredential } from "../../utils/webauthn";
 import ErrorAlert from "../UI/ErrorAlert";
 import Profile from "../../types/Profile";
 
@@ -18,12 +19,16 @@ type LoginResponse = {
     expired?: string
 }
 
+const webAuthnSupported = typeof window !== 'undefined' && !!window.PublicKeyCredential
+
 const LoginPage = () => {
 
     const navigate = useNavigate()
 
     const [validated, setValidated] = useState(false)
     const [error, setError] = useState<string>()
+    const [passkeyLoading, setPasskeyLoading] = useState(false)
+    const [passkeyError, setPasskeyError] = useState<string | null>(null)
 
     const {
         register,
@@ -42,7 +47,6 @@ const LoginPage = () => {
 
         const error = result.error
         if (error) {
-            console.log(error)
             setError(error)
             return
         }
@@ -61,6 +65,70 @@ const LoginPage = () => {
             navigate("/", { replace: true })
         }
 
+    }
+
+    const handlePasskeyLogin = async () => {
+        setPasskeyLoading(true)
+        setPasskeyError(null)
+
+        const beginRes = await http<{ publicKey: any }>({
+            isAuth: true,
+            method: APIMethod.post,
+            path: '/api/passkey/auth/begin',
+            data: {},
+        })
+
+        if (beginRes.error || !beginRes.value) {
+            setPasskeyError('Could not start passkey login.')
+            setPasskeyLoading(false)
+            return
+        }
+
+        let credential: Credential | null
+        try {
+            const keyString = beginRes.value.publicKey
+            const opts = JSON.parse(keyString)
+            const requestOptions: CredentialRequestOptions = {
+                publicKey: {
+                    ...opts,
+                    challenge: base64urlToBuffer(opts.challenge),
+                    allowCredentials: (opts.allowCredentials || []).map((c: any) => ({
+                        ...c,
+                        id: base64urlToBuffer(c.id),
+                    })),
+                },
+            }
+
+            credential = await navigator.credentials.get(requestOptions)
+        } catch {
+            setPasskeyError('Passkey sign-in was cancelled.')
+            setPasskeyLoading(false)
+            return
+        }
+
+        if (!credential) {
+            setPasskeyError('Passkey sign-in was cancelled.')
+            setPasskeyLoading(false)
+            return
+        }
+
+        const credJson = serializeAssertionCredential(credential as PublicKeyCredential)
+
+        const completeRes = await http<{ token: string }>({
+            isAuth: true,
+            method: APIMethod.post,
+            path: '/api/passkey/auth/complete',
+            data: { credential: credJson },
+        })
+
+        if (completeRes.error || !completeRes.value) {
+            setPasskeyError(completeRes.error || 'Passkey sign-in failed.')
+            setPasskeyLoading(false)
+            return
+        }
+
+        localStorage.setItem('auth', 'Token ' + completeRes.value.token)
+        navigate('/', { replace: true })
     }
 
     const onUserActivate = () => {
@@ -94,6 +162,20 @@ const LoginPage = () => {
                         <Form.Group className="my-2">
                             <Button onClick={onUserActivate} className="btn-light shadow-sm my-2">Activate user</Button>
                         </Form.Group>
+                        {webAuthnSupported && (
+                            <>
+                                <hr />
+                                <Button
+                                    variant="outline-secondary"
+                                    className="w-100"
+                                    onClick={handlePasskeyLogin}
+                                    disabled={passkeyLoading}
+                                >
+                                    {passkeyLoading ? <Spinner animation="border" size="sm" /> : 'Sign in with passkey'}
+                                </Button>
+                                {passkeyError && <Alert variant="danger" className="mt-2">{passkeyError}</Alert>}
+                            </>
+                        )}
                     </Form.Group>
                 </Form >
             </Container>

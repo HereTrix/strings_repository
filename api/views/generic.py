@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django_otp import user_has_device
 from api.models.project import Invitation, ProjectRole
+from api.models.users import PasskeyCredential
 from api.serializers.users import UserSerializer, LoginSerializer
 from rest_framework import generics, permissions, status
 from knox.models import AuthToken
@@ -69,6 +70,11 @@ class ProfileAPI(generics.GenericAPIView):
         serializer = UserSerializer(user)
         data = serializer.data
         data['has_2fa'] = user_has_device(user, confirmed=True)
+        passkeys = PasskeyCredential.objects.filter(user=user).values('id', 'name', 'created_at')
+        data['passkeys'] = [
+            {'id': p['id'], 'name': p['name'], 'created_at': p['created_at'].isoformat()}
+            for p in passkeys
+        ]
         return JsonResponse(data)
 
     def post(self, request):

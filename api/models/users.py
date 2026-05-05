@@ -1,6 +1,7 @@
 import hashlib
 import secrets as _secrets
 
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -54,3 +55,30 @@ class BackupCode(models.Model):
             code.save(update_fields=['used'])
             return True
         return False
+
+
+class PasskeyCredential(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='passkey_credentials',
+    )
+    credential_id = models.BinaryField(unique=True)
+    public_key = models.BinaryField()
+    sign_count = models.PositiveIntegerField(default=0)
+    name = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+
+class PasskeyChallenge(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+    )
+    challenge = models.BinaryField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+import importlib
 import warnings
 from pathlib import Path
 from .app_env import env_value
@@ -71,6 +72,9 @@ INSTALLED_APPS = [
     'webui',
     'django_q',
 ]
+
+if DEBUG and importlib.util.find_spec("django_extensions") is not None:
+    INSTALLED_APPS += ["django_extensions"]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -193,6 +197,10 @@ REST_FRAMEWORK = {
     ],
     'EXCEPTION_HANDLER': 'api.exception_handler.custom_exception_handler',
 }
+
+WEBAUTHN_RP_ID = env_value('WEBAUTHN_RP_ID', default='localhost')
+WEBAUTHN_RP_NAME = env_value('WEBAUTHN_RP_NAME', default='StringsRepository')
+WEBAUTHN_ORIGIN = env_value('WEBAUTHN_ORIGIN', default=None)
 
 Q_CLUSTER = {
     'name': 'strings_repository',

@@ -7,7 +7,7 @@ from api.models.project import Project, ProjectRole, ProjectAIProvider
 from api.models.string_token import StringToken
 from api.models.tag import Tag
 from api.models.translations import Translation
-from api.models.users import TwoFAVerification, BackupCode
+from api.models.users import TwoFAVerification, BackupCode, PasskeyCredential, PasskeyChallenge
 from api.models.verification import VerificationReport, VerificationComment
 
 admin.site.register(ProjectRole)
@@ -44,6 +44,21 @@ class VerificationReportAdmin(admin.ModelAdmin):
     list_display = ['id', 'project', 'mode', 'status', 'target_language', 'created_at']
     list_filter = ['status', 'mode']
     search_fields = ['project__name']
+
+
+@admin.register(PasskeyCredential)
+class PasskeyCredentialAdmin(admin.ModelAdmin):
+    list_display = ['user', 'name', 'sign_count', 'created_at']
+    search_fields = ['user__username', 'name']
+    list_filter = ['created_at']
+    readonly_fields = ['credential_id', 'public_key', 'sign_count', 'created_at']
+
+
+@admin.register(PasskeyChallenge)
+class PasskeyChallengeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'created_at']
+    list_filter = ['created_at']
+    readonly_fields = ['challenge', 'created_at']
 
 
 @admin.register(VerificationComment)

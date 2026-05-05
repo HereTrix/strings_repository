@@ -78,3 +78,7 @@ webui/templates/site/index.html
 settings.local.json
 plans/
 media/
+*.pem
+*.crt
+*.key
+run.sh
