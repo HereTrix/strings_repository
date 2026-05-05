@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from "react"
 import Project, { ProjectRole } from "../../types/Project"
-import { Button, Col, Dropdown, ListGroup, ListGroupItem, Stack } from "react-bootstrap"
+import { Button, Col, Dropdown, Form, ListGroup, ListGroupItem, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../../utils/network"
 import Participant from "../../types/Participant"
 import InviteUserPage from "./InviteUserPage"
@@ -21,6 +21,7 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
     const [inviteUser, setInviteUser] = useState<boolean>(false)
     const [accessToken, setAccessToken] = useState<boolean>(false)
     const [roles, setRoles] = useState<string[]>([])
+    const [require2fa, setRequire2fa] = useState(project.require_2fa)
 
     const loadParticipants = async () => {
         const data = await http<Participant[]>({
@@ -97,6 +98,33 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project }) => {
             <CollapseSection title="Webhooks">
                 <WebhookSettings project={project} />
             </CollapseSection>
+
+            {project.role === ProjectRole.owner && (
+                <CollapseSection title="Security Settings">
+                    <Form.Check
+                        type="switch"
+                        id="require-2fa-toggle"
+                        label="Require 2FA for all project members"
+                        checked={require2fa}
+                        onChange={async (e) => {
+                            const newValue = e.target.checked
+                            const result = await http({
+                                method: APIMethod.patch,
+                                path: `/api/project/${project.id}`,
+                                data: { require_2fa: newValue }
+                            })
+                            if (result.error) {
+                                setError(result.error)
+                            } else {
+                                setRequire2fa(newValue)
+                            }
+                        }}
+                    />
+                    <Form.Text className="text-muted">
+                        When enabled, all project members must have 2FA active to access this project.
+                    </Form.Text>
+                </CollapseSection>
+            )}
 
             <CollapseSection title="Participants">
                 {participants &&

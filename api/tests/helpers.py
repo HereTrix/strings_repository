@@ -16,8 +16,8 @@ def make_user(username='user', password='pass1234X'):
     return User.objects.create_user(username=username, password=password)
 
 
-def make_project(name='TestProject', owner=None):
-    project = Project.objects.create(name=name, description='desc')
+def make_project(name='TestProject', owner=None, require_2fa=False):
+    project = Project.objects.create(name=name, description='desc', require_2fa=require_2fa)
     if owner:
         ProjectRole.objects.create(user=owner, project=project, role=ProjectRole.Role.owner)
     return project

@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-ro
 import { history } from '../utils/history'
 import { setNavigate } from '../utils/navigation';
 const LoginPage = React.lazy(() => import("./pages/LoginPage"))
+const TwoFALoginPage = React.lazy(() => import("./Auth/TwoFALoginPage"))
+const TwoFARequiredPage = React.lazy(() => import("./Auth/TwoFARequiredPage"))
 const HomePage = React.lazy(() => import("./pages/HomePage"))
 const RequireAuth = React.lazy(() => import("./Auth/PrivateRoute"))
 const PageNotFound = React.lazy(() => import("./pages/PageNotFound"))
@@ -28,6 +30,8 @@ function App() {
       <NavigationRegister />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/2fa-login" element={<TwoFALoginPage />} />
+        <Route path="/2fa-required" element={<RequireAuth><TwoFARequiredPage /></RequireAuth>} />
         <Route path="/activate" element={<ActivateUserPage />} />
         <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
         <Route path="/project/:id/:tab?" element={<RequireAuth><ProjectPage /></RequireAuth>} />

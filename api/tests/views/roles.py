@@ -230,3 +230,108 @@ class ProjectAccessTokenAPITestCase(TestCase):
             format='json'
         )
         self.assertEqual(resp.status_code, 400)
+
+
+class GenerateTokenTestCase(TestCase):
+    """VULN-1: secure token generation."""
+
+    def test_generate_token_is_not_empty(self):
+        from api.views.roles import generate_token
+        self.assertTrue(generate_token())
+
+    def test_generate_token_minimum_length(self):
+        from api.views.roles import generate_token
+        self.assertGreaterEqual(len(generate_token()), 16)
+
+    def test_generate_token_uniqueness(self):
+        from api.views.roles import generate_token
+        tokens = [generate_token() for _ in range(100)]
+        self.assertEqual(len(set(tokens)), 100)
+
+    def test_invitation_code_uses_secrets(self):
+        owner = make_user('inv_owner')
+        project = make_project('InvProj', owner=owner)
+        resp = authed_client(owner).post(
+            f'/api/project/{project.pk}/invite',
+            {'role': 'editor'},
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        code = resp.json()['code']
+        self.assertGreater(len(code), 16)
+
+    def test_access_token_uses_secrets(self):
+        owner = make_user('at_owner')
+        project = make_project('ATProj', owner=owner)
+        resp = authed_client(owner).post(
+            f'/api/project/{project.pk}/access_token',
+            {'permission': 'read'},
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        token_val = resp.json()['token']
+        self.assertGreater(len(token_val), 16)
+
+
+class ValidateAccessTokenTestCase(TestCase):
+    """VULN-8: timezone-aware expiration in validate_access_token."""
+
+    def setUp(self):
+        from api.models.project import ProjectAccessToken
+        from api.tests.helpers import make_access_token
+        self.owner = make_user('plugin_owner')
+        self.project = make_project('PluginProj', owner=self.owner)
+
+    def _make_token(self, expiration=None):
+        from api.models.project import ProjectAccessToken
+        import secrets
+        return ProjectAccessToken.objects.create(
+            token=secrets.token_urlsafe(8),
+            permission=ProjectAccessToken.AccessTokenPermissions.read,
+            expiration=expiration,
+            user=self.owner,
+            project=self.project,
+        )
+
+    def test_validate_access_token_valid_no_expiry(self):
+        from api.views.plugin import validate_access_token
+        pat = self._make_token(expiration=None)
+        access, error = validate_access_token(pat.token)
+        self.assertIsNotNone(access)
+        self.assertIsNone(error)
+
+    def test_validate_access_token_future_expiry_valid(self):
+        from api.views.plugin import validate_access_token
+        from django.utils import timezone
+        from datetime import timedelta
+        future = timezone.now() + timedelta(days=1)
+        pat = self._make_token(expiration=future)
+        access, error = validate_access_token(pat.token)
+        self.assertIsNotNone(access)
+        self.assertIsNone(error)
+
+    def test_validate_access_token_expired_returns_403(self):
+        from api.views.plugin import validate_access_token
+        from django.utils import timezone
+        from datetime import timedelta
+        past = timezone.now() - timedelta(days=1)
+        pat = self._make_token(expiration=past)
+        access, error = validate_access_token(pat.token)
+        self.assertIsNone(access)
+        self.assertIsNotNone(error)
+        self.assertEqual(error.status_code, 403)
+
+    def test_delete_expired_tokens_filters_correctly(self):
+        from api.views.roles import delete_expired_tokens
+        from django.utils import timezone
+        from datetime import timedelta
+        expired = self._make_token(expiration=timezone.now() - timedelta(days=1))
+        valid = self._make_token(expiration=timezone.now() + timedelta(days=1))
+        no_exp = self._make_token(expiration=None)
+        from api.models.project import ProjectAccessToken
+        tokens = list(ProjectAccessToken.objects.filter(project=self.project))
+        result = delete_expired_tokens(tokens)
+        result_pks = {t.pk for t in result}
+        self.assertIn(valid.pk, result_pks)
+        self.assertIn(no_exp.pk, result_pks)
+        self.assertNotIn(expired.pk, result_pks)

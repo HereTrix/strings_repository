@@ -4,6 +4,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { APIMethod, http } from "../../utils/network";
 import ErrorAlert from "../UI/ErrorAlert";
+import Profile from "../../types/Profile";
 
 type Inputs = {
     login: string
@@ -12,6 +13,9 @@ type Inputs = {
 
 type LoginResponse = {
     token: string
+    '2fa_required'?: true
+    user?: Profile
+    expired?: string
 }
 
 const LoginPage = () => {
@@ -43,9 +47,17 @@ const LoginPage = () => {
             return
         }
 
-        const token = result.value?.token
-        if (token) {
-            localStorage.setItem("auth", "Token " + token)
+        const value = result.value
+        if (!value) return
+
+        if (value['2fa_required']) {
+            localStorage.setItem("auth", "Token " + value.token)
+            navigate("/2fa-login", { replace: true })
+            return
+        }
+
+        if (value.token) {
+            localStorage.setItem("auth", "Token " + value.token)
             navigate("/", { replace: true })
         }
 

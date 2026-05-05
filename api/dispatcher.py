@@ -7,6 +7,8 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
+from api.url_validation import validate_url_for_outbound
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,6 +45,12 @@ def _send_webhook(endpoint_id: int, event_type: str, payload: dict):
             pass
 
     url = decrypt(endpoint.url)
+    try:
+        validate_url_for_outbound(url)
+    except ValueError as e:
+        logger.warning('Webhook endpoint %s blocked by SSRF guard: %s', endpoint_id, e)
+        return
+
     log = WebhookDeliveryLog(endpoint=endpoint, event_type=event_type, payload_sent=payload)
 
     try:

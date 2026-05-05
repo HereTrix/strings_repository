@@ -7,6 +7,7 @@ from api.models.transport_models import TranslationModel
 
 
 class ExportFormatsAPI(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         result = [{'type': file.value, 'name': file.vendor(), 'extension': file.file_extension()}
@@ -15,7 +16,6 @@ class ExportFormatsAPI(generics.GenericAPIView):
 
 
 class ExportAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         try:
@@ -39,7 +39,6 @@ class ExportAPI(generics.GenericAPIView):
                 )
 
                 lang_codes = [lang.code for lang in languages]
-                print(lang_codes)
 
             processor = FileProcessor(type=file_type)
 

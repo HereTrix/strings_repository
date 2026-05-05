@@ -6,6 +6,7 @@ import { APIMethod, http } from "../../utils/network"
 type Inputs = {
     projectName: string
     description: string
+    require_2fa: boolean
 }
 
 type AddProjectProps = {
@@ -29,7 +30,7 @@ const AddProjectPage: FC<AddProjectProps> = ({ show, onHide, onSuccess }) => {
         const result = await http({
             method: APIMethod.post,
             path: "api/project",
-            data: { "name": data.projectName, "description": data.description }
+            data: { "name": data.projectName, "description": data.description, "require_2fa": data.require_2fa ?? false }
         })
 
         if (result.error) {
@@ -61,6 +62,14 @@ const AddProjectPage: FC<AddProjectProps> = ({ show, onHide, onSuccess }) => {
                             as="textarea"
                             placeholder="Enter project description"
                             {...register("description")} />
+                    </Form.Group>
+                    <Form.Group className="my-2">
+                        <Form.Check
+                            type="switch"
+                            id="require-2fa-switch"
+                            label="Require 2FA for all project members"
+                            {...register("require_2fa")}
+                        />
                     </Form.Group>
                     {error && <Form.Label>{error}</Form.Label>}
                     <Button type="submit" className="my-2">

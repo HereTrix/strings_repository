@@ -6,6 +6,7 @@ class Project(models.Model):
     id = models.AutoField('id', primary_key=True)
     name = models.CharField("Name", max_length=200, unique=True)
     description = models.TextField("Description", blank=True)
+    require_2fa = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -36,7 +37,7 @@ class ProjectRole(models.Model):
 
 class Invitation(models.Model):
     id = models.AutoField('id', primary_key=True)
-    code = models.CharField(max_length=16, unique=True)
+    code = models.CharField(max_length=64, unique=True)
     role = models.CharField(max_length=10, choices=ProjectRole.Role.choices)
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='invitations')
@@ -47,7 +48,7 @@ class ProjectAccessToken(models.Model):
         write = 'write'
         read = 'read'
 
-    token = models.CharField(max_length=16, unique=True)
+    token = models.CharField(max_length=64, unique=True)
     permission = models.CharField(
         max_length=10, choices=AccessTokenPermissions.choices)
     expiration = models.DateTimeField(null=True)

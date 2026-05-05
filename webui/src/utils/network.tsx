@@ -48,6 +48,10 @@ function handleUnauthorized(isAuth?: boolean) {
     }
 }
 
+function handleTwoFARequired() {
+    navigate("/2fa-required", { replace: true })
+}
+
 async function extractError(response: Response): Promise<string> {
     try {
         const json = await response.json()
@@ -84,6 +88,10 @@ export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
 
     try {
         const json = await response.json()
+        if (response.status === 403 && json["code"] === "2fa_required") {
+            handleTwoFARequired()
+            return { error: json["error"] }
+        }
         if (!response.ok) {
             return { error: json["error"] ?? `Request failed (${response.status})` }
         }
@@ -119,6 +127,10 @@ export async function upload<T>(request: APIRequest): Promise<APIResponse<T>> {
 
     try {
         const json = await response.json()
+        if (response.status === 403 && json["code"] === "2fa_required") {
+            handleTwoFARequired()
+            return { error: json["error"] }
+        }
         if (!response.ok) {
             return { error: json["error"] ?? `Request failed (${response.status})` }
         }

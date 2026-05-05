@@ -600,3 +600,80 @@ class ViewEventDispatchTestCase(TestCase):
             }, format='json')
         event_types = [c.kwargs.get('event_type') or c.args[1] for c in mock_dispatch.call_args_list]
         self.assertIn('member.role_changed', event_types)
+
+
+class WebhookSSRFTestCase(TestCase):
+    """VULN-2: SSRF guard in webhook dispatcher."""
+
+    def setUp(self):
+        self.user = make_user('owner')
+        self.project = make_project('P', owner=self.user)
+
+    def _make_thread_sync(self):
+        def sync_thread(target, args=(), kwargs=None, daemon=False):
+            m = MagicMock()
+            m.start = lambda: target(*args)
+            return m
+        return patch('api.dispatcher.threading.Thread', side_effect=sync_thread)
+
+    def _mock_addr(self, ip):
+        import socket
+        return [(socket.AF_INET, socket.SOCK_STREAM, 0, '', (ip, 0))]
+
+    def test_webhook_fires_for_public_url(self):
+        from api.crypto import encrypt
+        endpoint = make_webhook(self.project, url='https://example.com/hook', events=['translation.created'])
+
+        mock_resp = MagicMock()
+        mock_resp.__enter__ = lambda s: s
+        mock_resp.__exit__ = MagicMock(return_value=False)
+        mock_resp.status = 200
+
+        with patch('socket.getaddrinfo', return_value=self._mock_addr('8.8.8.8')), \
+             patch('api.dispatcher.urllib.request.urlopen', return_value=mock_resp) as mock_urlopen, \
+             self._make_thread_sync():
+            from api.dispatcher import dispatch_event
+            dispatch_event(self.project.pk, 'translation.created', {'key': 'val'})
+
+        mock_urlopen.assert_called_once()
+
+    def test_webhook_blocked_for_private_url(self):
+        make_webhook(self.project, url='https://internal.corp/hook', events=['translation.created'])
+
+        with patch('socket.getaddrinfo', return_value=self._mock_addr('192.168.1.1')), \
+             patch('api.dispatcher.urllib.request.urlopen') as mock_urlopen, \
+             self._make_thread_sync():
+            from api.dispatcher import dispatch_event
+            dispatch_event(self.project.pk, 'translation.created', {})
+
+        mock_urlopen.assert_not_called()
+
+    def test_webhook_blocked_for_file_scheme(self):
+        from api.crypto import encrypt
+        from api.models.webhook import WebhookEndpoint
+        endpoint = WebhookEndpoint.objects.create(
+            project=self.project,
+            title='Bad',
+            url=encrypt('file:///etc/passwd'),
+            events=['translation.created'],
+            is_active=True,
+        )
+
+        with patch('api.dispatcher.urllib.request.urlopen') as mock_urlopen, \
+             self._make_thread_sync():
+            from api.dispatcher import dispatch_event
+            dispatch_event(self.project.pk, 'translation.created', {})
+
+        mock_urlopen.assert_not_called()
+
+    def test_webhook_blocked_for_dns_failure(self):
+        import socket
+        make_webhook(self.project, url='https://nonexistent.invalid/hook', events=['translation.created'])
+
+        with patch('socket.getaddrinfo', side_effect=socket.gaierror('nxdomain')), \
+             patch('api.dispatcher.urllib.request.urlopen') as mock_urlopen, \
+             self._make_thread_sync():
+            from api.dispatcher import dispatch_event
+            dispatch_event(self.project.pk, 'translation.created', {})
+
+        mock_urlopen.assert_not_called()

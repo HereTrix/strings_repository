@@ -13,6 +13,7 @@ from api.views.integration import IntegrationAPI, MachineTranslateAPI, VerifyInt
 from api.views.roles import ProjectAccessTokenAPI, ProjectInvitationAPI, ProjectParticipantsAPI, RolesAPI
 from api.views.translation import StringTokenAPI, StringTokenStatusAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI, TranslationStatusAPI
 from api.views.scope import ScopeDetailAPI, ScopeImageAPI, ScopeListCreateAPI, ScopeTokensAPI
+from api.views.two_fa import TwoFASetupAPI, TwoFAVerifyAPI, TwoFADeleteAPI, TwoFALoginAPI
 from api.views.webhook import WebhookDetailAPI, WebhookEventsAPI, WebhookListAPI, WebhookLogsAPI, WebhookVerifyAPI
 from knox.views import LogoutView
 
@@ -79,6 +80,11 @@ urlpatterns = [
     path('supported_formats', ExportFormatsAPI.as_view()),
     # plural translation
     path('plural', PluralTranslationAPI.as_view()),
+    # 2FA
+    path('2fa/setup', TwoFASetupAPI.as_view()),
+    path('2fa/verify', TwoFAVerifyAPI.as_view()),
+    path('2fa/login', TwoFALoginAPI.as_view()),
+    path('2fa', TwoFADeleteAPI.as_view()),
     # mcp
     path('mcp', McpView.as_view()),
     # plugin

@@ -14,8 +14,8 @@ else:
     env = os.environ
 
 
-def env_value(key):
+def env_value(key, default=None):
     if use_env:
-        return env(key)
+        return env(key, default=default)
     else:
-        return env.get(key)
+        return env.get(key, default)

@@ -60,7 +60,6 @@ RESERVED_VERSION_NAMES = {'active', 'live'}
 
 
 class BundleListCreateAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         project = _get_project_for_member(pk, request.user)
@@ -123,7 +122,6 @@ class BundleListCreateAPI(generics.GenericAPIView):
 
 
 class BundleDetailAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def _get_bundle(self, pk, bundle_id, user, admin_only=False):
         getter = _get_project_for_admin if admin_only else _get_project_for_member
@@ -160,7 +158,6 @@ class BundleDetailAPI(generics.GenericAPIView):
 
 
 class BundleActivateAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk, bundle_id):
         project = _get_project_for_admin(pk, request.user)
@@ -181,7 +178,6 @@ class BundleActivateAPI(generics.GenericAPIView):
 
 
 class BundleDeactivateAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk, bundle_id):
         project = _get_project_for_admin(pk, request.user)
@@ -199,7 +195,6 @@ class BundleDeactivateAPI(generics.GenericAPIView):
 
 
 class BundleCompareAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         project = _get_project_for_member(pk, request.user)
@@ -223,7 +218,6 @@ class BundleCompareAPI(generics.GenericAPIView):
 
 
 class BundleCompareExportAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         project = _get_project_for_member(pk, request.user)
@@ -358,7 +352,6 @@ def _build_compare_dict(project, source):
 
 
 class BundleExportAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk, bundle_id):
         project = _get_project_for_member(pk, request.user)

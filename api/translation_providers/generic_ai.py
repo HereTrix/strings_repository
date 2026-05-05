@@ -3,6 +3,7 @@ import urllib.error
 import urllib.request
 
 from api.translation_providers.base import TranslationProvider
+from api.url_validation import validate_url_for_outbound
 
 
 class GenericAIProvider(TranslationProvider):
@@ -21,6 +22,11 @@ class GenericAIProvider(TranslationProvider):
         self.auth_header = auth_header or 'Authorization'
 
     def translate(self, text: str, target_lang: str, source_lang: str | None = None) -> str:
+        try:
+            validate_url_for_outbound(self.endpoint_url)
+        except ValueError as e:
+            raise RuntimeError(f'Invalid endpoint URL: {e}') from e
+
         rendered = (
             self.payload_template
             .replace('{{text}}', text)

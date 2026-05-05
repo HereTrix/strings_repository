@@ -14,7 +14,6 @@ from api.models.transport_models import TranslationModel
 
 
 class ImportAPI(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser]
 
     def post(self, request):

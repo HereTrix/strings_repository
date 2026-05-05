@@ -11,7 +11,6 @@ from api.serializers.language import LanguageSerializer
 class LanguageAPI(generics.GenericAPIView):
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         user = request.user
@@ -102,7 +101,6 @@ class LanguageAPI(generics.GenericAPIView):
 
 
 class SetDefaultLanguageAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def put(self, request, pk, code):
         try:

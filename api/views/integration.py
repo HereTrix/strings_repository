@@ -58,7 +58,6 @@ def _integration_response(integration: TranslationIntegration) -> dict:
 
 
 class IntegrationAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         project = Project.objects.filter(
@@ -141,7 +140,6 @@ class IntegrationAPI(generics.GenericAPIView):
 
 
 class VerifyIntegrationAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         project = Project.objects.filter(
@@ -168,7 +166,6 @@ class VerifyIntegrationAPI(generics.GenericAPIView):
 
 
 class MachineTranslateAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         project = Project.objects.filter(

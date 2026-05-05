@@ -24,7 +24,6 @@ def create_history_record(project, token_name, record_status, user):
 
 
 class StringTokenAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         user = request.user
@@ -124,7 +123,6 @@ class StringTokenAPI(generics.GenericAPIView):
 
 
 class TranslationAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         user = request.user
@@ -201,7 +199,6 @@ class TranslationAPI(generics.GenericAPIView):
 
 
 class TranslationStatusAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def put(self, request):
         user = request.user
@@ -272,7 +269,6 @@ class TranslationStatusAPI(generics.GenericAPIView):
 
 
 class StringTokenTagAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         user = request.user
@@ -299,7 +295,6 @@ class StringTokenTagAPI(generics.GenericAPIView):
 
 
 class StringTokenStatusAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def put(self, request, pk):
         user = request.user
@@ -341,7 +336,6 @@ class StringTokenStatusAPI(generics.GenericAPIView):
 
 
 class StringTokenTranslationsAPI(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
         user = request.user
