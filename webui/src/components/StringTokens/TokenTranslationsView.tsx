@@ -114,7 +114,6 @@ const TokenTranslationsView: FC<TokenTranslationsPageProps> = ({ project_id, tok
     const [error, setError] = useState<string>()
 
     const updateInList = (code: string, changes: Partial<TokenTranslation>) => {
-        console.log('Updating translation in list', code, changes, translations)
         setTranslations(prev => prev?.map(t => t.code === code ? { ...t, ...changes } : t))
     }
 

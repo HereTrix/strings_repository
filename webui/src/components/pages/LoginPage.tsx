@@ -47,7 +47,6 @@ const LoginPage = () => {
 
         const error = result.error
         if (error) {
-            console.log(error)
             setError(error)
             return
         }
