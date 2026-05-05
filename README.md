@@ -216,6 +216,8 @@ Before installation, configure the required environment variables.
 | `DJANGO_SUPERUSER_USERNAME` | Admin username                                           |
 | `DJANGO_SUPERUSER_EMAIL`    | Admin email                                              |
 | `DJANGO_SUPERUSER_PASSWORD` | Admin password                                           |
+| `WEBAUTHN_RP_ID`            | Webauth ID (your domain)                                 |
+| `WEBAUTHN_RP_NAME`          | Webauth display name (StringsRepository by default)      |
 
 ### Supported databases
 
@@ -275,6 +277,8 @@ docker run -d -p 8080:8080 \
   -e DJANGO_SUPERUSER_USERNAME=admin \
   -e DJANGO_SUPERUSER_EMAIL=admin@example.com \
   -e DJANGO_SUPERUSER_PASSWORD=adminpassword \
+  -e WEBAUTHN_RP_ID=your.domain \
+  -e WEBAUTHN_RP_NAME=StringsRepository \
   ghcr.io/heretrix/strings_repository:main
 ```
 
