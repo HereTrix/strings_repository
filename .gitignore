@@ -77,3 +77,4 @@ webui/static/site
 webui/templates/site/index.html
 settings.local.json
 plans/
+media/
