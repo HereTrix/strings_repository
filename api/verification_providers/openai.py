@@ -8,12 +8,23 @@ from api.verification_providers.base import VerificationProvider
 DEFAULT_ENDPOINT = 'https://api.openai.com/v1/chat/completions'
 
 
-def _build_system_prompt(checks: list[str], project_description: str, custom_instruction: str = '') -> str:
+def _build_system_prompt(checks: list[str], project_description: str, custom_instruction: str = '', glossary_terms: list[dict] = ()) -> str:
     checks_str = ', '.join(checks)
     role = custom_instruction if custom_instruction else 'You are a translation quality reviewer.'
     desc_part = f'\nProject context: {project_description}' if project_description else ''
+    glossary_part = ''
+    if glossary_terms:
+        lines = []
+        for gt in glossary_terms:
+            pt = gt.get('preferred_translation', '')
+            cs = ' (case-sensitive)' if gt.get('case_sensitive') else ''
+            if pt:
+                lines.append(f'  - "{gt["term"]}"{cs} → "{pt}"')
+            else:
+                lines.append(f'  - "{gt["term"]}"{cs} (no preferred translation for this language)')
+        glossary_part = '\nGLOSSARY TERMS (must be respected in translations):\n' + '\n'.join(lines)
     return (
-        f'{role}{desc_part}\n'
+        f'{role}{desc_part}{glossary_part}\n'
         f'Checks to perform: {checks_str}\n'
         'You will receive a JSON array of items to review. '
         'Return ONLY a valid JSON array. '
@@ -73,21 +84,33 @@ def _parse_response(content: str) -> list[dict]:
     raise RuntimeError(f'Unexpected AI response: {parsed}')
 
 
+def _parse_glossary_response(content: str) -> list[dict]:
+    parsed = json.loads(content)
+    if isinstance(parsed, dict):
+        for key in ('terms', 'glossary', 'results', 'items', 'data'):
+            if isinstance(parsed.get(key), list):
+                return parsed[key]
+    if isinstance(parsed, list):
+        return parsed
+    raise RuntimeError(f'Unexpected glossary response shape: {type(parsed)}')
+
+
 class OpenAIVerificationProvider(VerificationProvider):
-    def __init__(self, api_key: str, endpoint_url: str, model_name: str, timeout: int = 120, verification_instructions: str = ''):
+    def __init__(self, api_key: str, endpoint_url: str, model_name: str, timeout: int = 120, verification_instructions: str = '', glossary_extraction_instructions: str = ''):
         self.api_key = api_key
         self.endpoint_url = endpoint_url or DEFAULT_ENDPOINT
         self.model_name = model_name
         self.timeout = timeout
         self.verification_instructions = verification_instructions
+        self.glossary_extraction_instructions = glossary_extraction_instructions
 
-    def verify(self, items: list[dict], checks: list[str], project_description: str) -> list[dict]:
+    def verify(self, items: list[dict], checks: list[str], project_description: str, glossary_terms=()) -> list[dict]:
         try:
             validate_url_for_outbound(self.endpoint_url)
         except ValueError as e:
             raise RuntimeError(f'Invalid endpoint URL: {e}') from e
 
-        system_prompt = _build_system_prompt(checks, project_description, self.verification_instructions)
+        system_prompt = _build_system_prompt(checks, project_description, self.verification_instructions, glossary_terms)
         user_message = _build_user_message(items)
 
         payload = {
@@ -118,3 +141,47 @@ class OpenAIVerificationProvider(VerificationProvider):
         content = raw.get('choices', [{}])[0].get(
             'message', {}).get('content', '')
         return _parse_response(content)
+
+    def extract_glossary(self, strings: list[str], project_description: str) -> list[dict]:
+        try:
+            validate_url_for_outbound(self.endpoint_url)
+        except ValueError as e:
+            raise RuntimeError(f'Invalid endpoint URL: {e}') from e
+
+        role = self.glossary_extraction_instructions if self.glossary_extraction_instructions else 'You are a localization expert.'
+        desc_part = f'\nProject context: {project_description}' if project_description else ''
+        system_prompt = (
+            f'{role}{desc_part}\n'
+            'Analyze the provided list of source strings and identify terms that should be in a translation glossary: '
+            'product names, technical terms, UI labels, or phrases requiring consistent translation.\n'
+            'Respond with ONLY a JSON array — no markdown, no prose. '
+            'Each object must have keys: '
+            '"term" (str, the source-language term), '
+            '"definition" (str, a brief explanation, may be empty string), '
+            '"translations" (array of {language_code: str, preferred_translation: str} — may be empty array).\n'
+            'Return between 5 and 30 terms. Do not include trivial common words.'
+        )
+        payload = {
+            'model': self.model_name,
+            'messages': [
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': json.dumps(strings, ensure_ascii=False)},
+            ],
+            'response_format': {'type': 'json_object'},
+        }
+        req = urllib.request.Request(
+            self.endpoint_url,
+            data=json.dumps(payload).encode(),
+            headers={
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': 'application/json',
+            },
+            method='POST',
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=90) as response:
+                raw = json.loads(response.read())
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
+        content = raw.get('choices', [{}])[0].get('message', {}).get('content', '')
+        return _parse_glossary_response(content)

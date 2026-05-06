@@ -5,6 +5,12 @@ interface Translation {
 
 export type PluralForms = Partial<Record<'zero' | 'one' | 'two' | 'few' | 'many' | 'other', string>>
 
+export interface GlossaryHint {
+    term: string
+    definition: string
+    preferred_translation: string
+}
+
 export interface TranslationModel {
     token: string
     translation: string | undefined
@@ -12,6 +18,7 @@ export interface TranslationModel {
     status: string
     plural_forms?: PluralForms
     default_translation?: string
+    glossary_hints?: GlossaryHint[]
 }
 
 export const PLURAL_FORM_ORDER: Array<keyof PluralForms> = ['zero', 'one', 'two', 'few', 'many', 'other']

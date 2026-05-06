@@ -350,12 +350,37 @@ class StringTokenTranslationsAPI(generics.GenericAPIView):
                 'error': 'Token not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
+        languages = list(token.project.languages.all())
+        languages.sort(key=lambda l: (0 if l.is_default else 1, l.code))
+
+        default_lang = next((l for l in languages if l.is_default), None)
+        default_translation_text = ''
+        if default_lang:
+            dt = token.translation.filter(language=default_lang).first()
+            default_translation_text = dt.translation if dt else ''
+
+        from api.models.glossary import GlossaryTerm
+        glossary_terms = GlossaryTerm.objects.filter(
+            project=token.project
+        ).prefetch_related('translations')
+        source = default_translation_text or token.token
+        glossary_hints = []
+        for gt in glossary_terms:
+            term = gt.term
+            found = term in source if gt.case_sensitive else term.lower() in source.lower()
+            if found:
+                glossary_hints.append({
+                    'term': term,
+                    'definition': gt.definition,
+                })
+
         data = []
-        for lang in token.project.languages.all():
+        for lang in languages:
             translation = token.translation.filter(language=lang).first()
             data.append({
                 'code': lang.code,
                 'img': Langcoder.flag(lang.code),
+                'is_default': lang.is_default,
                 'translation': translation.translation if translation else '',
                 'status': translation.status if translation else Translation.Status.new,
                 'plural_forms': {
@@ -364,4 +389,4 @@ class StringTokenTranslationsAPI(generics.GenericAPIView):
                 } if translation else {},
             })
 
-        return JsonResponse(data, safe=False)
+        return JsonResponse({'translations': data, 'glossary_hints': glossary_hints})

@@ -55,6 +55,7 @@ class StringTokenModelSerializer(serializers.Serializer):
     status = serializers.SerializerMethodField()
     plural_forms = serializers.SerializerMethodField()
     default_translation = serializers.SerializerMethodField()
+    glossary_hints = serializers.SerializerMethodField()
 
     def _get_translation_obj(self, obj):
         code = self.context.get('code', '').upper()
@@ -84,6 +85,26 @@ class StringTokenModelSerializer(serializers.Serializer):
             return None
         t = obj.translation.filter(language__code=default_code).first()
         return t.translation if t else None
+
+    def get_glossary_hints(self, obj):
+        glossary_terms = self.context.get('glossary_terms', [])
+        if not glossary_terms:
+            return []
+        source = self.get_default_translation(obj) or obj.token
+        hints = []
+        for gt in glossary_terms:
+            term = gt['term']
+            if gt['case_sensitive']:
+                found = term in source
+            else:
+                found = term.lower() in source.lower()
+            if found:
+                hints.append({
+                    'term': term,
+                    'definition': gt['definition'],
+                    'preferred_translation': gt['preferred_translation'],
+                })
+        return hints
 
 
 class SimplifiedStringTokenSerializer(serializers.Serializer):

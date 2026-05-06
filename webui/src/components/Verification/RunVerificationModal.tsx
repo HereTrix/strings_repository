@@ -34,7 +34,10 @@ const RunVerificationModal: FC<RunVerificationModalProps> = ({ show, project, on
     }, [])
 
     useEffect(() => {
-        setChecks(MODE_CHECKS[mode].map(c => c.key))
+        const defaultChecks = MODE_CHECKS[mode]
+            .filter(c => c.key !== 'glossary_compliance' || project.has_glossary_terms)
+            .map(c => c.key)
+        setChecks(defaultChecks)
         setEstimatedCount(null)
     }, [mode])
 
@@ -162,14 +165,16 @@ const RunVerificationModal: FC<RunVerificationModalProps> = ({ show, project, on
                             <Button variant="link" size="sm" className="p-0" onClick={() => setChecks(MODE_CHECKS[mode].map(c => c.key))}>Select all</Button>
                             <Button variant="link" size="sm" className="p-0" onClick={() => setChecks([])}>Deselect all</Button>
                         </Stack>
-                        {MODE_CHECKS[mode].map(check => (
-                            <Form.Check
-                                key={check.key}
-                                label={check.label}
-                                checked={checks.includes(check.key)}
-                                onChange={() => toggleCheck(check.key)}
-                            />
-                        ))}
+                        {MODE_CHECKS[mode]
+                            .filter(check => check.key !== 'glossary_compliance' || project.has_glossary_terms)
+                            .map(check => (
+                                <Form.Check
+                                    key={check.key}
+                                    label={check.label}
+                                    checked={checks.includes(check.key)}
+                                    onChange={() => toggleCheck(check.key)}
+                                />
+                            ))}
                     </div>
 
                     <Stack direction="horizontal" gap={2} className="align-items-center">

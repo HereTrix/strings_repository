@@ -16,6 +16,7 @@ interface Project {
     require_2fa: boolean
     has_ai_provider: boolean
     verification_cap?: number
+    has_glossary_terms: boolean
 }
 
 export default Project

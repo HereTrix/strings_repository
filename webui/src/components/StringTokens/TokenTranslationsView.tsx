@@ -1,9 +1,9 @@
-import { ChangeEventHandler, FC, useRef, useState } from "react"
+import { FC, useRef, useState } from "react"
 import { APIMethod, http } from "../../utils/network"
-import TokenTranslation from "../../types/TokenTranslation"
+import TokenTranslation, { TokenTranslationsResponse } from "../../types/TokenTranslation"
 import { Badge, Button, Container, Dropdown, ListGroup, Stack } from "react-bootstrap"
 import OptionalImage from "../UI/OptionalImage"
-import { EDITABLE_STATUSES, PluralForms, getStatusName, getStatusVariant } from "../../types/Translation"
+import { EDITABLE_STATUSES, GlossaryHint, PluralForms, getStatusName, getStatusVariant } from "../../types/Translation"
 import StringToken from "../../types/StringToken"
 import PluralFormsPanel from "../UI/PluralFormsPanel"
 import MarkdownField from "../UI/MarkdownField"
@@ -52,6 +52,7 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
                 <Stack direction="horizontal" gap={2}>
                     <OptionalImage src={item.img} alt={item.code} width={50} height={38} />
                     <label>{item.code}</label>
+                    {item.is_default && <Badge bg="info" pill>Default</Badge>}
 
                     <Dropdown className="ms-auto">
                         <Dropdown.Toggle variant={getStatusVariant(item.status)} size="sm">
@@ -111,6 +112,7 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
 
 const TokenTranslationsView: FC<TokenTranslationsPageProps> = ({ project_id, token, open }) => {
     const [translations, setTranslations] = useState<TokenTranslation[]>()
+    const [glossaryHints, setGlossaryHints] = useState<GlossaryHint[]>([])
     const [error, setError] = useState<string>()
 
     const updateInList = (code: string, changes: Partial<TokenTranslation>) => {
@@ -118,12 +120,13 @@ const TokenTranslationsView: FC<TokenTranslationsPageProps> = ({ project_id, tok
     }
 
     const load = async () => {
-        const result = await http<TokenTranslation[]>({
+        const result = await http<TokenTranslationsResponse>({
             method: APIMethod.get,
             path: `/api/string_token/${token.id}/translations`
         })
         if (result.value) {
-            setTranslations(result.value)
+            setTranslations(result.value.translations)
+            setGlossaryHints(result.value.glossary_hints)
         }
     }
 
@@ -161,6 +164,19 @@ const TokenTranslationsView: FC<TokenTranslationsPageProps> = ({ project_id, tok
     return (
         <ListGroup className="my-2">
             {error && <span className="text-danger small px-2">{error}</span>}
+            {glossaryHints.length > 0 && (
+                <ListGroup.Item className="py-1 px-2 small" style={{ background: 'var(--bs-tertiary-bg)' }}>
+                    <span className="fw-semibold text-muted me-2">Glossary:</span>
+                    {glossaryHints.map((hint: GlossaryHint) => (
+                        <span key={hint.term} className="me-3">
+                            <span className="text-muted">{hint.term}</span>
+                            {hint.definition && (
+                                <span className="text-muted fst-italic ms-1">— {hint.definition}</span>
+                            )}
+                        </span>
+                    ))}
+                </ListGroup.Item>
+            )}
             {translations?.map((item) => (
                 <TokenTranslationsItem
                     key={item.code}
