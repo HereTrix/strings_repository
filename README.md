@@ -2,9 +2,7 @@
 
 # StringsRepository
 
-**StringsRepository** is a self-hosted localization management service designed to simplify translation workflows for software projects.
-
-It provides a centralized place to manage translation keys, collaborate with translators, and synchronize translations with applications using a CLI tool or API.
+**StringsRepository** is a self-hosted translation management service for product teams that want full control without the complexity of a general-purpose platform. It's designed around an API/CLI-first workflow: translators work in the UI, developers push and pull strings from CI. Deploy it in a single Docker container, own the data, and extend the code directly.
 
 ## Features
 

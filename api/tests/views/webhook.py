@@ -268,15 +268,15 @@ class DispatcherTestCase(TestCase):
         self.user = make_user('owner')
         self.project = make_project('P', owner=self.user)
 
-    def _make_thread_sync(self):
-        """Patch threading.Thread so target runs synchronously in tests."""
-        def sync_thread(target, args=(), kwargs=None, daemon=False):
-            m = MagicMock()
-            m.start = lambda: target(*args)
-            return m
-        return patch('api.dispatcher.threading.Thread', side_effect=sync_thread)
+    def _make_task_sync(self):
+        """Patch async_task so webhook tasks run synchronously in tests."""
+        from api.tasks.webhook import send_webhook
+        def sync_async_task(func_path, *args, **kwargs):
+            if func_path == 'api.tasks.send_webhook':
+                send_webhook(*args, **kwargs)
+        return patch('api.dispatcher.async_task', side_effect=sync_async_task)
 
-    @patch('api.dispatcher.urllib.request.urlopen')
+    @patch('api.tasks.webhook.urllib.request.urlopen')
     def test_dispatch_delivers_to_subscribed_endpoint(self, mock_urlopen):
         mock_resp = MagicMock()
         mock_resp.__enter__ = lambda s: s
@@ -286,7 +286,7 @@ class DispatcherTestCase(TestCase):
 
         endpoint = make_webhook(self.project, events=['translation.created'])
 
-        with self._make_thread_sync():
+        with self._make_task_sync():
             from api.dispatcher import dispatch_event
             dispatch_event(
                 project_id=self.project.pk,
@@ -303,7 +303,7 @@ class DispatcherTestCase(TestCase):
         make_webhook(self.project, events=['translation.created'])
         WebhookEndpoint.objects.update(is_active=False)
 
-        with patch('api.dispatcher.urllib.request.urlopen') as mock_urlopen:
+        with patch('api.tasks.webhook.urllib.request.urlopen') as mock_urlopen:
             from api.dispatcher import dispatch_event
             dispatch_event(
                 project_id=self.project.pk,
@@ -315,7 +315,7 @@ class DispatcherTestCase(TestCase):
     def test_dispatch_skips_unsubscribed_endpoint(self):
         make_webhook(self.project, events=['token.created'])
 
-        with patch('api.dispatcher.urllib.request.urlopen') as mock_urlopen:
+        with patch('api.tasks.webhook.urllib.request.urlopen') as mock_urlopen:
             from api.dispatcher import dispatch_event
             dispatch_event(
                 project_id=self.project.pk,
@@ -325,7 +325,7 @@ class DispatcherTestCase(TestCase):
         mock_urlopen.assert_not_called()
 
     def test_dispatch_no_endpoints_does_nothing(self):
-        with patch('api.dispatcher.urllib.request.urlopen') as mock_urlopen:
+        with patch('api.tasks.webhook.urllib.request.urlopen') as mock_urlopen:
             from api.dispatcher import dispatch_event
             dispatch_event(
                 project_id=self.project.pk,
@@ -334,7 +334,7 @@ class DispatcherTestCase(TestCase):
             )
         mock_urlopen.assert_not_called()
 
-    @patch('api.dispatcher.urllib.request.urlopen')
+    @patch('api.tasks.webhook.urllib.request.urlopen')
     def test_dispatch_logs_http_error(self, mock_urlopen):
         import urllib.error
         mock_urlopen.side_effect = urllib.error.HTTPError(
@@ -342,7 +342,7 @@ class DispatcherTestCase(TestCase):
         )
         endpoint = make_webhook(self.project, events=['translation.created'])
 
-        with self._make_thread_sync():
+        with self._make_task_sync():
             from api.dispatcher import dispatch_event
             dispatch_event(
                 project_id=self.project.pk,
@@ -354,12 +354,12 @@ class DispatcherTestCase(TestCase):
         self.assertEqual(log.status_code, 500)
         self.assertIsNotNone(log.error)
 
-    @patch('api.dispatcher.urllib.request.urlopen')
+    @patch('api.tasks.webhook.urllib.request.urlopen')
     def test_dispatch_logs_connection_error(self, mock_urlopen):
         mock_urlopen.side_effect = ConnectionError('refused')
         endpoint = make_webhook(self.project, events=['translation.created'])
 
-        with self._make_thread_sync():
+        with self._make_task_sync():
             from api.dispatcher import dispatch_event
             dispatch_event(
                 project_id=self.project.pk,
@@ -371,7 +371,7 @@ class DispatcherTestCase(TestCase):
         self.assertIsNone(log.status_code)
         self.assertIn('refused', log.error)
 
-    @patch('api.dispatcher.urllib.request.urlopen')
+    @patch('api.tasks.webhook.urllib.request.urlopen')
     def test_dispatch_renders_template(self, mock_urlopen):
         mock_resp = MagicMock()
         mock_resp.__enter__ = lambda s: s
@@ -391,7 +391,7 @@ class DispatcherTestCase(TestCase):
 
         mock_urlopen.side_effect = capture_call
 
-        with self._make_thread_sync():
+        with self._make_task_sync():
             from api.dispatcher import dispatch_event
             dispatch_event(
                 project_id=self.project.pk,
@@ -401,7 +401,7 @@ class DispatcherTestCase(TestCase):
 
         self.assertEqual(captured['body'], {'text': 'New: welcome (EN)'})
 
-    @patch('api.dispatcher.urllib.request.urlopen')
+    @patch('api.tasks.webhook.urllib.request.urlopen')
     def test_dispatch_sends_hmac_signature_header(self, mock_urlopen):
         import hashlib
         import hmac
@@ -422,7 +422,7 @@ class DispatcherTestCase(TestCase):
 
         mock_urlopen.side_effect = capture
 
-        with self._make_thread_sync():
+        with self._make_task_sync():
             from api.dispatcher import dispatch_event
             dispatch_event(
                 project_id=self.project.pk,
@@ -609,12 +609,13 @@ class WebhookSSRFTestCase(TestCase):
         self.user = make_user('owner')
         self.project = make_project('P', owner=self.user)
 
-    def _make_thread_sync(self):
-        def sync_thread(target, args=(), kwargs=None, daemon=False):
-            m = MagicMock()
-            m.start = lambda: target(*args)
-            return m
-        return patch('api.dispatcher.threading.Thread', side_effect=sync_thread)
+    def _make_task_sync(self):
+        """Patch async_task so webhook tasks run synchronously in tests."""
+        from api.tasks.webhook import send_webhook
+        def sync_async_task(func_path, *args, **kwargs):
+            if func_path == 'api.tasks.send_webhook':
+                send_webhook(*args, **kwargs)
+        return patch('api.dispatcher.async_task', side_effect=sync_async_task)
 
     def _mock_addr(self, ip):
         import socket
@@ -630,8 +631,8 @@ class WebhookSSRFTestCase(TestCase):
         mock_resp.status = 200
 
         with patch('socket.getaddrinfo', return_value=self._mock_addr('8.8.8.8')), \
-             patch('api.dispatcher.urllib.request.urlopen', return_value=mock_resp) as mock_urlopen, \
-             self._make_thread_sync():
+             patch('api.tasks.webhook.urllib.request.urlopen', return_value=mock_resp) as mock_urlopen, \
+             self._make_task_sync():
             from api.dispatcher import dispatch_event
             dispatch_event(self.project.pk, 'translation.created', {'key': 'val'})
 
@@ -641,8 +642,8 @@ class WebhookSSRFTestCase(TestCase):
         make_webhook(self.project, url='https://internal.corp/hook', events=['translation.created'])
 
         with patch('socket.getaddrinfo', return_value=self._mock_addr('192.168.1.1')), \
-             patch('api.dispatcher.urllib.request.urlopen') as mock_urlopen, \
-             self._make_thread_sync():
+             patch('api.tasks.webhook.urllib.request.urlopen') as mock_urlopen, \
+             self._make_task_sync():
             from api.dispatcher import dispatch_event
             dispatch_event(self.project.pk, 'translation.created', {})
 
@@ -659,8 +660,8 @@ class WebhookSSRFTestCase(TestCase):
             is_active=True,
         )
 
-        with patch('api.dispatcher.urllib.request.urlopen') as mock_urlopen, \
-             self._make_thread_sync():
+        with patch('api.tasks.webhook.urllib.request.urlopen') as mock_urlopen, \
+             self._make_task_sync():
             from api.dispatcher import dispatch_event
             dispatch_event(self.project.pk, 'translation.created', {})
 
@@ -671,8 +672,8 @@ class WebhookSSRFTestCase(TestCase):
         make_webhook(self.project, url='https://nonexistent.invalid/hook', events=['translation.created'])
 
         with patch('socket.getaddrinfo', side_effect=socket.gaierror('nxdomain')), \
-             patch('api.dispatcher.urllib.request.urlopen') as mock_urlopen, \
-             self._make_thread_sync():
+             patch('api.tasks.webhook.urllib.request.urlopen') as mock_urlopen, \
+             self._make_task_sync():
             from api.dispatcher import dispatch_event
             dispatch_event(self.project.pk, 'translation.created', {})
 
