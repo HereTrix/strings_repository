@@ -128,7 +128,7 @@ class StringTokenTranslationsTestCase(TestCase):
         resp = self.client.get(f'/api/string_token/{self.token.pk}/translations')
         self.assertEqual(resp.status_code, 200)
         import json
-        data = json.loads(resp.content)
+        data = json.loads(resp.content)['translations']
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['code'], 'EN')
         self.assertEqual(data[0]['translation'], 'Hello')
@@ -141,6 +141,6 @@ class StringTokenTranslationsTestCase(TestCase):
         make_language(self.project, 'DE')
         resp = self.client.get(f'/api/string_token/{self.token.pk}/translations')
         import json
-        data = json.loads(resp.content)
+        data = json.loads(resp.content)['translations']
         de_entry = next(d for d in data if d['code'] == 'DE')
         self.assertEqual(de_entry['translation'], '')
