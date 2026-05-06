@@ -71,7 +71,7 @@ const PluralFormsPanel: FC<PluralFormsPanelProps> = ({
                         {isDiffing && hasDiff && (
                             <div
                                 className="mb-1 p-2 rounded border"
-                                style={{ background: '#f8f9fa' }}
+                                style={{ background: 'var(--bs-tertiary-bg)' }}
                             >
                                 <DiffView base={baseTranslation} next={value} />
                             </div>

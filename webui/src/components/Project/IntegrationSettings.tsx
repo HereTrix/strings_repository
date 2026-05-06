@@ -14,58 +14,7 @@ type Integration = {
     provider?: string
     provider_label?: string
     providers: Provider[]
-    endpoint_url?: string
-    payload_template?: string
-    response_path?: string
-    auth_header?: string
 }
-
-type AIPreset = {
-    label: string
-    endpoint_url: string
-    payload_template: string
-    response_path: string
-    auth_header: string
-}
-
-const AI_PRESETS: AIPreset[] = [
-    {
-        label: 'OpenAI / DeepSeek',
-        endpoint_url: 'https://api.openai.com/v1/chat/completions',
-        payload_template: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-                { role: 'system', content: 'Translate to {{target_lang}}. Return only the translation.' },
-                { role: 'user', content: '{{text}}' },
-            ],
-        }, null, 2),
-        response_path: 'choices.0.message.content',
-        auth_header: 'Authorization',
-    },
-    {
-        label: 'Claude',
-        endpoint_url: 'https://api.anthropic.com/v1/messages',
-        payload_template: JSON.stringify({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 1024,
-            system: 'Translate to {{target_lang}}. Return only the translation.',
-            messages: [{ role: 'user', content: '{{text}}' }],
-        }, null, 2),
-        response_path: 'content.0.text',
-        auth_header: 'x-api-key',
-    },
-    {
-        label: 'Ollama',
-        endpoint_url: 'http://localhost:11434/api/generate',
-        payload_template: JSON.stringify({
-            model: 'llama3',
-            prompt: 'Translate the following to {{target_lang}}, return only the translation: {{text}}',
-            stream: false,
-        }, null, 2),
-        response_path: 'response',
-        auth_header: 'Authorization',
-    },
-]
 
 type IntegrationSettingsProps = {
     project: Project
@@ -77,10 +26,6 @@ const IntegrationSettings: FC<IntegrationSettingsProps> = ({ project }) => {
     const [integration, setIntegration] = useState<Integration>()
     const [provider, setProvider] = useState('')
     const [apiKey, setApiKey] = useState('')
-    const [endpointUrl, setEndpointUrl] = useState('')
-    const [payloadTemplate, setPayloadTemplate] = useState('')
-    const [responsePath, setResponsePath] = useState('')
-    const [authHeader, setAuthHeader] = useState('Authorization')
     const [error, setError] = useState<string>()
     const [success, setSuccess] = useState(false)
     const [verifying, setVerifying] = useState(false)
@@ -98,12 +43,6 @@ const IntegrationSettings: FC<IntegrationSettingsProps> = ({ project }) => {
             } else if (result.value.providers.length > 0) {
                 setProvider(result.value.providers[0].value)
             }
-            if (result.value.provider === 'ai') {
-                setEndpointUrl(result.value.endpoint_url ?? '')
-                setPayloadTemplate(result.value.payload_template ?? '')
-                setResponsePath(result.value.response_path ?? '')
-                setAuthHeader(result.value.auth_header ?? 'Authorization')
-            }
         }
     }
 
@@ -111,23 +50,10 @@ const IntegrationSettings: FC<IntegrationSettingsProps> = ({ project }) => {
         load()
     }, [])
 
-    const applyPreset = (preset: AIPreset) => {
-        setEndpointUrl(preset.endpoint_url)
-        setPayloadTemplate(preset.payload_template)
-        setResponsePath(preset.response_path)
-        setAuthHeader(preset.auth_header)
-    }
-
     const save = async () => {
         setSuccess(false)
         setError(undefined)
         const data: Record<string, string> = { provider, api_key: apiKey }
-        if (provider === 'ai') {
-            data.endpoint_url = endpointUrl
-            data.payload_template = payloadTemplate
-            data.response_path = responsePath
-            data.auth_header = authHeader
-        }
         const result = await http({
             method: APIMethod.post,
             path: `/api/project/${project.id}/integration`,
@@ -173,6 +99,9 @@ const IntegrationSettings: FC<IntegrationSettingsProps> = ({ project }) => {
 
     if (!integration) return null
 
+    const isConnectedAI = provider === 'ai'
+    const canSave = integration.enabled || isConnectedAI || !!apiKey
+
     return (
         <div>
             {integration.enabled
@@ -215,65 +144,21 @@ const IntegrationSettings: FC<IntegrationSettingsProps> = ({ project }) => {
                             <option key={p.value} value={p.value}>{p.label}</option>
                         ))}
                     </Form.Select>
-                    <Form.Control
-                        type="password"
-                        placeholder={integration.enabled ? 'New API key (leave blank to keep current)' : 'API key'}
-                        value={apiKey}
-                        onChange={e => setApiKey(e.target.value)}
-                        size="sm"
-                        autoComplete="new-password"
-                    />
-                    {provider === 'ai' && (
-                        <>
-                            <div>
-                                <Form.Label className="small mb-1">Presets</Form.Label>
-                                <Stack direction="horizontal" gap={1} className="flex-wrap">
-                                    {AI_PRESETS.map(preset => (
-                                        <Button
-                                            key={preset.label}
-                                            variant="outline-secondary"
-                                            size="sm"
-                                            onClick={() => applyPreset(preset)}
-                                        >
-                                            {preset.label}
-                                        </Button>
-                                    ))}
-                                </Stack>
-                            </div>
-                            <Form.Control
-                                type="text"
-                                placeholder="Endpoint URL"
-                                value={endpointUrl}
-                                onChange={e => setEndpointUrl(e.target.value)}
-                                size="sm"
-                            />
-                            <Form.Control
-                                type="text"
-                                placeholder="Auth header name (e.g. Authorization or x-api-key)"
-                                value={authHeader}
-                                onChange={e => setAuthHeader(e.target.value)}
-                                size="sm"
-                            />
-                            <Form.Control
-                                as="textarea"
-                                rows={8}
-                                placeholder={'Payload template (JSON)\nUse {{text}}, {{target_lang}}, {{source_lang}}'}
-                                value={payloadTemplate}
-                                onChange={e => setPayloadTemplate(e.target.value)}
-                                size="sm"
-                                style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
-                            />
-                            <Form.Control
-                                type="text"
-                                placeholder="Response path (e.g. choices.0.message.content)"
-                                value={responsePath}
-                                onChange={e => setResponsePath(e.target.value)}
-                                size="sm"
-                            />
-                        </>
-                    )}
+                    {isConnectedAI
+                        ? <p className="text-muted small mb-0">
+                            Uses your connected AI provider for translation. No additional API key needed.
+                          </p>
+                        : <Form.Control
+                            type="password"
+                            placeholder={integration.enabled ? 'New API key (leave blank to keep current)' : 'API key'}
+                            value={apiKey}
+                            onChange={e => setApiKey(e.target.value)}
+                            size="sm"
+                            autoComplete="new-password"
+                          />
+                    }
                     <div>
-                        <Button size="sm" onClick={save} disabled={!integration.enabled && !apiKey}>
+                        <Button size="sm" onClick={save} disabled={!canSave}>
                             {integration.enabled ? 'Update' : 'Save'}
                         </Button>
                         {success && <span className="text-success small ms-2">Saved</span>}

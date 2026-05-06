@@ -11,10 +11,12 @@ ANTHROPIC_VERSION = '2023-06-01'
 
 
 class AnthropicVerificationProvider(VerificationProvider):
-    def __init__(self, api_key: str, endpoint_url: str, model_name: str):
+    def __init__(self, api_key: str, endpoint_url: str, model_name: str, timeout: int = 120, verification_instructions: str = ''):
         self.api_key = api_key
         self.endpoint_url = endpoint_url or DEFAULT_ENDPOINT
         self.model_name = model_name
+        self.timeout = timeout
+        self.verification_instructions = verification_instructions
 
     def verify(self, items: list[dict], checks: list[str], project_description: str) -> list[dict]:
         try:
@@ -22,7 +24,7 @@ class AnthropicVerificationProvider(VerificationProvider):
         except ValueError as e:
             raise RuntimeError(f'Invalid endpoint URL: {e}') from e
 
-        system_prompt = _build_system_prompt(checks, project_description)
+        system_prompt = _build_system_prompt(checks, project_description, self.verification_instructions)
         user_message = _build_user_message(items)
 
         payload = {
@@ -45,7 +47,7 @@ class AnthropicVerificationProvider(VerificationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req, timeout=60) as response:
+            with urllib.request.urlopen(req, timeout=self.timeout) as response:
                 raw = json.loads(response.read())
         except urllib.error.HTTPError as e:
             raise RuntimeError(f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e

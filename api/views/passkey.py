@@ -16,7 +16,7 @@ from webauthn.helpers.structs import (
     AttestationConveyancePreference,
 )
 
-from api.models.users import PasskeyCredential, PasskeyChallenge
+from api.models.users import PasskeyCredential, PasskeyChallenge, TwoFAVerification
 
 
 def _expected_origin():
@@ -173,6 +173,7 @@ class PasskeyAuthCompleteAPI(APIView):
         cred.save(update_fields=['sign_count'])
 
         instance, token = AuthToken.objects.create(user=cred.user)
+        TwoFAVerification.objects.get_or_create(token_key=instance.token_key)
         return Response({'token': token})
 
 

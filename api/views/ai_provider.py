@@ -26,6 +26,9 @@ def _serialize_provider(ai_provider: ProjectAIProvider) -> dict:
         'provider_label': PROVIDER_LABELS.get(ai_provider.provider_type, ai_provider.provider_type),
         'endpoint_url': ai_provider.endpoint_url,
         'model_name': ai_provider.model_name,
+        'request_timeout': ai_provider.request_timeout,
+        'translation_instructions': ai_provider.translation_instructions,
+        'verification_instructions': ai_provider.verification_instructions,
         'providers': PROVIDERS_LIST,
     }
 
@@ -61,6 +64,20 @@ class AIProviderAPI(generics.GenericAPIView):
         api_key = request.data.get('api_key', '').strip()
         model_name = request.data.get('model_name', '').strip()
         endpoint_url = request.data.get('endpoint_url', '').strip()
+        try:
+            request_timeout = int(request.data.get('request_timeout', 120))
+            if request_timeout < 1:
+                raise ValueError
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'request_timeout must be a positive integer'}, status=status.HTTP_400_BAD_REQUEST)
+
+        translation_instructions = request.data.get('translation_instructions', '').strip()
+        verification_instructions = request.data.get('verification_instructions', '').strip()
+
+        if len(translation_instructions) > 4000:
+            return JsonResponse({'error': 'translation_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(verification_instructions) > 4000:
+            return JsonResponse({'error': 'verification_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not provider_type:
             return JsonResponse({'error': 'provider_type is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -80,6 +97,9 @@ class AIProviderAPI(generics.GenericAPIView):
             ai_provider.provider_type = provider_type
             ai_provider.model_name = model_name
             ai_provider.endpoint_url = endpoint_url
+            ai_provider.request_timeout = request_timeout
+            ai_provider.translation_instructions = translation_instructions
+            ai_provider.verification_instructions = verification_instructions
             if api_key:
                 ai_provider.api_key = encrypt(api_key)
             ai_provider.save()
@@ -91,6 +111,9 @@ class AIProviderAPI(generics.GenericAPIView):
                 provider_type=provider_type,
                 model_name=model_name,
                 endpoint_url=endpoint_url,
+                request_timeout=request_timeout,
+                translation_instructions=translation_instructions,
+                verification_instructions=verification_instructions,
                 api_key=encrypt(api_key),
             )
             ai_provider.save()

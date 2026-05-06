@@ -129,13 +129,13 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
                 </Stack>
 
                 {showDiff && hasDiff && (
-                    <div className="my-1 p-2 rounded border" style={{ background: '#f8f9fa' }}>
+                    <div className="my-1 p-2 rounded border" style={{ background: 'var(--bs-tertiary-bg)' }}>
                         <DiffView base={savedText!} next={text ?? ''} />
                     </div>
                 )}
 
                 {translation.default_translation && (
-                    <div className="my-1 px-2 py-1 rounded border text-muted small" style={{ background: '#f8f9fa' }}>
+                    <div className="my-1 px-2 py-1 rounded border text-muted small" style={{ background: 'var(--bs-tertiary-bg)' }}>
                         <span className="fw-semibold me-1">{defaultLanguageCode ?? 'Default'}:</span>
                         {translation.default_translation}
                     </div>

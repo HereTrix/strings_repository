@@ -61,6 +61,8 @@ const ReportListItem: FC<ReportListItemProps> = ({ report, role, onDelete, onCli
                     </Stack>
                 )}
 
+                {report.is_readonly && <Badge bg="secondary">Read-only</Badge>}
+
                 <span className="text-muted small ms-auto">
                     {new Date(report.created_at).toLocaleDateString()}
                 </span>

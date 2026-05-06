@@ -39,12 +39,12 @@ const DiffView: FC<DiffViewProps> = ({ base, next }) => {
             {spans.map((s, i) => {
                 if (s.type === 'equal') return <span key={i}>{s.text}</span>
                 if (s.type === 'added') return (
-                    <span key={i} style={{ background: '#d4edda', color: '#155724', borderRadius: 2, padding: '0 2px' }}>
+                    <span key={i} style={{ background: 'var(--bs-success-bg-subtle)', color: 'var(--bs-success-text-emphasis)', borderRadius: 2, padding: '0 2px' }}>
                         {s.text}
                     </span>
                 )
                 return (
-                    <span key={i} style={{ background: '#f8d7da', color: '#721c24', borderRadius: 2, padding: '0 2px', textDecoration: 'line-through' }}>
+                    <span key={i} style={{ background: 'var(--bs-danger-bg-subtle)', color: 'var(--bs-danger-text-emphasis)', borderRadius: 2, padding: '0 2px', textDecoration: 'line-through' }}>
                         {s.text}
                     </span>
                 )

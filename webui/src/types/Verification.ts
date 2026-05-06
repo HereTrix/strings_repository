@@ -30,6 +30,11 @@ export interface VerificationComment {
   created_at: string
 }
 
+export interface VerificationResult {
+  results: VerificationSuggestion[]
+  summary: VerificationSummary
+}
+
 export interface VerificationReport {
   id: number
   mode: VerificationMode
@@ -43,7 +48,7 @@ export interface VerificationReport {
   completed_at: string | null
   error_message?: string
   summary?: VerificationSummary
-  results?: VerificationSuggestion[]
+  result?: VerificationResult
   comments?: VerificationComment[]
 }
 
@@ -53,6 +58,9 @@ export interface AIProvider {
   provider_label?: string
   endpoint_url?: string
   model_name?: string
+  request_timeout?: number
+  translation_instructions?: string
+  verification_instructions?: string
   providers: { value: string; label: string }[]
 }
 

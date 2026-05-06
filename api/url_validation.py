@@ -1,6 +1,7 @@
 import ipaddress
 import socket
 from urllib.parse import urlparse
+from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,9 +24,13 @@ def validate_url_for_outbound(url: str) -> None:
     Checks: scheme must be http or https; hostname must resolve to a public IP.
     All resolved addresses (A and AAAA) are checked; rejects if any is private.
     """
+    if settings.DEBUG:
+        return
+
     parsed = urlparse(url)
     if parsed.scheme not in ('http', 'https'):
-        raise ValueError(f"Disallowed URL scheme: {parsed.scheme!r}. Only http/https allowed.")
+        raise ValueError(
+            f"Disallowed URL scheme: {parsed.scheme!r}. Only http/https allowed.")
 
     hostname = parsed.hostname
     if not hostname:
