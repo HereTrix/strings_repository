@@ -32,6 +32,7 @@ from api.views.glossary import (
     GlossaryExtractionAPI, GlossarySuggestionsAPI,
     GlossaryExportAPI, GlossaryImportAPI,
 )
+from api.views.translation_memory import TranslationMemoryAPI
 from knox.views import LogoutView
 
 urlpatterns = [
@@ -93,6 +94,7 @@ urlpatterns = [
     path('project/<int:pk>/verify/<int:report_id>', VerificationDetailAPI.as_view()),
     path('project/<int:pk>/verify/<int:report_id>/apply', VerificationApplyAPI.as_view()),
     path('project/<int:pk>/verify/<int:report_id>/comments', VerificationCommentAPI.as_view()),
+    path('project/<int:pk>/translation-memory', TranslationMemoryAPI.as_view()),
     path('project/<int:pk>', ProjectAPI.as_view()),
     path('projects/list', ProjectListAPI.as_view()),
     path('project', CreateProjectAPI.as_view()),

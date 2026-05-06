@@ -6,6 +6,8 @@ import { FC, useEffect, useRef, useState } from "react"
 import TagsContainer from "../UI/TagsContainer"
 import MarkdownField from "../UI/MarkdownField"
 import { APIMethod, http } from "../../utils/network"
+import TranslationMemoryPanel from './TranslationMemoryPanel'
+import { TMSuggestion } from '../../types/TranslationMemory'
 
 type TranslationListItemProps = {
     translation: TranslationModel
@@ -35,8 +37,9 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
     const [pluralsOpen, setPluralsOpen] = useState(false)
     const [suggestion, setSuggestion] = useState<string>()
     const [translating, setTranslating] = useState(false)
-
-    const ref = useRef<HTMLTextAreaElement>(null)
+    const [tmSuggestions, setTmSuggestions] = useState<TMSuggestion[] | null>(null)
+    const [tmLoading, setTmLoading] = useState(false)
+    const [hasFetchedTm, setHasFetchedTm] = useState(false)
 
     const hasPluralForms = Object.keys(pluralForms).length > 0
 
@@ -85,6 +88,26 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
         setCanSave(true)
         setSaveSuccess(false)
         setSuggestion(undefined)
+    }
+
+    const fetchTmSuggestions = async () => {
+        if (hasFetchedTm) return
+        setTmLoading(true)
+        const result = await http<TMSuggestion[]>({
+            method: APIMethod.get,
+            path: `/api/project/${project_id}/translation-memory`,
+            params: {
+                token: translation.token,
+                language: code,
+            },
+        })
+        setTmLoading(false)
+        setHasFetchedTm(true)
+        if (result.value) {
+            setTmSuggestions(result.value)
+        } else {
+            setTmSuggestions([])
+        }
     }
 
     return (
@@ -158,7 +181,8 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
                 )}
 
                 <Row>
-                    <MarkdownField value={text ?? ''}
+                    <MarkdownField
+                        value={text ?? ''}
                         onChange={onTranslationChange}
                     />
                     <Stack direction="horizontal" gap={2} className="my-1">
@@ -183,11 +207,22 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
                                 disabled={translating}
                             >
                                 {translating
-                                    ? <><Spinner size="sm" className="me-1" />Translating…</>
+                                    ? <><Spinner size="sm" className="me-1" />Translating...</>
                                     : 'Translate'
                                 }
                             </Button>
                         )}
+                        <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={fetchTmSuggestions}
+                            disabled={hasFetchedTm}
+                        >
+                            {tmLoading
+                                ? <><Spinner size="sm" className="me-1" />Fetching...</>
+                                : 'Memory'
+                            }
+                        </Button>
                     </Stack>
                     {suggestion && (
                         <Stack direction="horizontal" gap={2} className="mt-1 p-2 rounded border" style={{ background: '#f0f7ff' }}>
@@ -195,6 +230,17 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
                             <Button size="sm" variant="outline-success" onClick={useSuggestion}>Use</Button>
                             <Button size="sm" variant="outline-secondary" onClick={() => setSuggestion(undefined)}>✕</Button>
                         </Stack>
+                    )}
+                    {(tmLoading || (tmSuggestions !== null && tmSuggestions.length > 0)) && (
+                        <TranslationMemoryPanel
+                            suggestions={tmSuggestions ?? []}
+                            loading={tmLoading}
+                            onUseSuggestion={(text) => {
+                                setText(text)
+                                setCanSave(true)
+                                setSaveSuccess(false)
+                            }}
+                        />
                     )}
                 </Row>
 

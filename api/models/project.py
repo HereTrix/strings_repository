@@ -100,6 +100,7 @@ class ProjectAIProvider(models.Model):
     translation_instructions = models.TextField(blank=True, default='')
     verification_instructions = models.TextField(blank=True, default='')
     glossary_extraction_instructions = models.TextField(blank=True, default='')
+    translation_memory_instructions = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

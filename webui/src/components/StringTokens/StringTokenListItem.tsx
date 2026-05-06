@@ -8,6 +8,7 @@ import TokenTranslationsView from "./TokenTranslationsView"
 type StringTokenItemProps = {
     project_id: number
     token: StringToken
+    integrationEnabled: boolean
     selectedTags: string[]
     onAddTag: () => void
     onDelete: () => void
@@ -15,7 +16,7 @@ type StringTokenItemProps = {
     onStatusChange: (status: string) => void
 }
 
-const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, selectedTags, onAddTag, onDelete, onTagClick, onStatusChange }) => {
+const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, integrationEnabled, selectedTags, onAddTag, onDelete, onTagClick, onStatusChange }) => {
     const [open, setOpen] = useState<boolean>(false)
 
     return (
@@ -66,7 +67,12 @@ const StringTokenListItem: FC<StringTokenItemProps> = ({ project_id, token, sele
                 </Stack>
                 <Collapse in={open}>
                     <div>
-                        <TokenTranslationsView project_id={project_id} token={token} open={open} />
+                        <TokenTranslationsView
+                            project_id={project_id}
+                            token={token}
+                            integrationEnabled={integrationEnabled}
+                            open={open}
+                        />
                     </div>
                 </Collapse>
             </Container>

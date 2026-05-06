@@ -12,6 +12,8 @@ interface TokenTranslation {
 export interface TokenTranslationsResponse {
     translations: TokenTranslation[]
     glossary_hints: GlossaryHint[]
+    default_translation?: string
+    default_language?: string
 }
 
 export default TokenTranslation

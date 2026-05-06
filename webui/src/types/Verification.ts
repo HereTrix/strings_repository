@@ -62,6 +62,7 @@ export interface AIProvider {
   translation_instructions?: string
   verification_instructions?: string
   glossary_extraction_instructions?: string
+  translation_memory_instructions?: string
   providers: { value: string; label: string }[]
 }
 

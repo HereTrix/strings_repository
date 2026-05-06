@@ -1,22 +1,28 @@
 import { FC, useRef, useState } from "react"
 import { APIMethod, http } from "../../utils/network"
 import TokenTranslation, { TokenTranslationsResponse } from "../../types/TokenTranslation"
-import { Badge, Button, Container, Dropdown, ListGroup, Stack } from "react-bootstrap"
+import { Badge, Button, Dropdown, ListGroup, Row, Spinner, Stack } from "react-bootstrap"
 import OptionalImage from "../UI/OptionalImage"
 import { EDITABLE_STATUSES, GlossaryHint, PluralForms, getStatusName, getStatusVariant } from "../../types/Translation"
 import StringToken from "../../types/StringToken"
 import PluralFormsPanel from "../UI/PluralFormsPanel"
 import MarkdownField from "../UI/MarkdownField"
+import { TMSuggestion } from "../../types/TranslationMemory";
+import TranslationMemoryPanel from "../Translation/TranslationMemoryPanel";
 
 type TokenTranslationsPageProps = {
     project_id: number
     token: StringToken
+    integrationEnabled: boolean
     open: boolean
 }
 
 type TokenTranslationsItemProps = {
     item: TokenTranslation
+    default_translation?: string
+    default_language?: string
     project_id: number
+    integrationEnabled: boolean
     token_key: string
     onSave: (translation: string) => void
     onStatusChange: (status: string) => void
@@ -24,12 +30,20 @@ type TokenTranslationsItemProps = {
 }
 
 const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
-    item, project_id, token_key, onSave, onStatusChange, onPluralSaved
+    item, default_translation, default_language, project_id, integrationEnabled, token_key, onSave, onStatusChange, onPluralSaved
 }) => {
     const [canSave, setCanSave] = useState<boolean>(false)
     const [text, setText] = useState<string>(item.translation)
     const [pluralForms, setPluralForms] = useState<PluralForms>(item.plural_forms ?? {})
     const [pluralsOpen, setPluralsOpen] = useState(false)
+
+    const [suggestion, setSuggestion] = useState<string>('')
+    const [translating, setTranslating] = useState(false)
+
+    const [tmSuggestions, setTmSuggestions] = useState<TMSuggestion[] | null>(null)
+    const [tmLoading, setTmLoading] = useState(false)
+    const [hasFetchedTm, setHasFetchedTm] = useState(false)
+
     const [error, setError] = useState<string>()
 
     const ref = useRef<HTMLTextAreaElement>(null)
@@ -44,6 +58,48 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
     const onSavePress = () => {
         setCanSave(false)
         onSave(text)
+    }
+
+    const useSuggestion = () => {
+        onTranslationChange(suggestion)
+        setSuggestion('')
+    }
+
+    const translate = async () => {
+        setTranslating(true)
+        setSuggestion('')
+        const result = await http<{ translation: string }>({
+            method: APIMethod.post,
+            path: `/api/project/${project_id}/machine-translate`,
+            data: {
+                text: default_translation,
+                target_language: item.code,
+                source_language: default_language,
+            },
+        })
+        setTranslating(false)
+        if (result.value) setSuggestion(result.value.translation)
+        else setError(result.error ?? 'Translation failed')
+    }
+
+    const fetchTmSuggestions = async () => {
+        if (hasFetchedTm) return
+        setTmLoading(true)
+        const result = await http<TMSuggestion[]>({
+            method: APIMethod.get,
+            path: `/api/project/${project_id}/translation-memory`,
+            params: {
+                token: token_key,
+                language: item.code,
+            },
+        })
+        setTmLoading(false)
+        setHasFetchedTm(true)
+        if (result.value) {
+            setTmSuggestions(result.value)
+        } else {
+            setTmSuggestions([])
+        }
     }
 
     return (
@@ -85,10 +141,52 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
                     </Button>
                 </Stack>
 
-                <Stack className="w-100 p-2">
+                <Row>
                     <MarkdownField value={text} onChange={onTranslationChange} />
-                </Stack>
-                {canSave && <Button onClick={onSavePress} className="my-1">Save</Button>}
+                    <Stack direction="horizontal" gap={2} className="my-1">
+                        {canSave && <Button onClick={onSavePress} className="my-1">Save</Button>}
+                        {integrationEnabled && !item.is_default && (
+                            <Button
+                                variant="outline-primary"
+                                size="sm"
+                                onClick={translate}
+                                disabled={translating}
+                            >
+                                {translating
+                                    ? <><Spinner size="sm" className="me-1" />Translating...</>
+                                    : 'Translate'
+                                }
+                            </Button>
+                        )}
+                        <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={fetchTmSuggestions}
+                            disabled={hasFetchedTm}
+                        >
+                            {tmLoading
+                                ? <><Spinner size="sm" className="me-1" />Fetching...</>
+                                : 'Memory'
+                            }
+                        </Button>
+                    </Stack>
+                    {suggestion && (
+                        <Stack direction="horizontal" gap={2} className="mt-1 p-2 rounded border" style={{ background: '#f0f7ff' }}>
+                            <span className="small flex-grow-1">{suggestion}</span>
+                            <Button size="sm" variant="outline-success" onClick={useSuggestion}>Use</Button>
+                            <Button size="sm" variant="outline-secondary" onClick={() => setSuggestion('')}>✕</Button>
+                        </Stack>
+                    )}
+                    {(tmLoading || (tmSuggestions !== null && tmSuggestions.length > 0)) && (
+                        <TranslationMemoryPanel
+                            suggestions={tmSuggestions ?? []}
+                            loading={tmLoading}
+                            onUseSuggestion={(text) => {
+                                onTranslationChange(text)
+                            }}
+                        />
+                    )}
+                </Row>
                 {error && <span className="text-danger small">{error}</span>}
 
                 {pluralsOpen && (
@@ -110,13 +208,19 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
     )
 }
 
-const TokenTranslationsView: FC<TokenTranslationsPageProps> = ({ project_id, token, open }) => {
+const TokenTranslationsView: FC<TokenTranslationsPageProps> = ({ project_id, token, integrationEnabled, open }) => {
     const [translations, setTranslations] = useState<TokenTranslation[]>()
     const [glossaryHints, setGlossaryHints] = useState<GlossaryHint[]>([])
+    const [defaultTranslation, setDefaultTranslation] = useState<string>()
+    const [defaultLanguageCode, setDefaultLanguageCode] = useState<string>()
+
     const [error, setError] = useState<string>()
 
     const updateInList = (code: string, changes: Partial<TokenTranslation>) => {
         setTranslations(prev => prev?.map(t => t.code === code ? { ...t, ...changes } : t))
+        if (changes.translation && code === defaultLanguageCode) {
+            setDefaultTranslation(changes.translation)
+        }
     }
 
     const load = async () => {
@@ -127,6 +231,8 @@ const TokenTranslationsView: FC<TokenTranslationsPageProps> = ({ project_id, tok
         if (result.value) {
             setTranslations(result.value.translations)
             setGlossaryHints(result.value.glossary_hints)
+            setDefaultLanguageCode(result.value.default_language)
+            setDefaultTranslation(result.value.default_translation)
         }
     }
 
@@ -181,7 +287,10 @@ const TokenTranslationsView: FC<TokenTranslationsPageProps> = ({ project_id, tok
                 <TokenTranslationsItem
                     key={item.code}
                     item={item}
+                    default_language={defaultLanguageCode}
+                    default_translation={defaultTranslation}
                     project_id={project_id}
+                    integrationEnabled={integrationEnabled}
                     token_key={token.token}
                     onSave={(translation) => saveTranslation(item.code, translation)}
                     onStatusChange={(status) => updateTranslationStatus(item, status)}

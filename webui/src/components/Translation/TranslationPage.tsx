@@ -12,9 +12,8 @@ import FilterBar, { StatusOption } from "../UI/FilterBar"
 import { usePagination, PAGE_LIMIT } from "../../hooks/usePagination"
 
 type TranslationPageProps = {
-    project_id: string
     code: string
-    project?: Project
+    project: Project
     scopeId?: number
     scope?: Scope
 }
@@ -25,14 +24,13 @@ type Filters = {
     status: string
 }
 
-const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project, scopeId, scope }) => {
+const TranslationPage: FC<TranslationPageProps> = ({ code, project, scopeId, scope }) => {
     const defaultLanguageCode = project?.languages.find(l => l.is_default)?.code
     const [filters, setFilters] = useState<Filters>({ tags: [], query: '', status: 'all' })
     const [lightboxUrl, setLightboxUrl] = useState<string>()
     const { items: translations, offset, hasMore, setHasMore, total, handleResponse, setItems: setTranslations } = usePagination<TranslationModel>()
     const [tags, setTags] = useState<string[]>([])
     const [error, setError] = useState<string>()
-    const [integrationEnabled, setIntegrationEnabled] = useState(false)
 
     const fetchData = useCallback(async (pageOffset: number) => {
         const params: Record<string, any> = {}
@@ -47,30 +45,22 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project, 
 
         const result = await http<PaginatedResponse<TranslationModel>>({
             method: APIMethod.get,
-            path: `/api/project/${project_id}/translations/${code}`,
+            path: `/api/project/${project.id}/translations/${code}`,
             params,
         })
 
         if (result.value) handleResponse(result.value, pageOffset)
         else { setHasMore(false); setError(result.error) }
-    }, [filters, project_id, code, scopeId, handleResponse, setHasMore])
+    }, [filters, project.id, code, scopeId, handleResponse, setHasMore])
 
     const fetchTags = useCallback(async () => {
         const result = await http<string[]>({
             method: APIMethod.get,
-            path: `/api/project/${project_id}/tags`
+            path: `/api/project/${project.id}/tags`
         })
         if (result.value) setTags(result.value)
         else setError(result.error)
-    }, [project_id])
-
-    const fetchIntegration = useCallback(async () => {
-        const result = await http<{ enabled: boolean }>({
-            method: APIMethod.get,
-            path: `/api/project/${project_id}/integration`,
-        })
-        if (result.value) setIntegrationEnabled(result.value.enabled)
-    }, [project_id])
+    }, [project.id])
 
     useEffect(() => {
         fetchData(0)
@@ -79,10 +69,6 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project, 
     useEffect(() => {
         fetchTags()
     }, [fetchTags])
-
-    useEffect(() => {
-        fetchIntegration()
-    }, [fetchIntegration])
 
     const updateTranslationInList = (translation: TranslationModel, updates: Partial<TranslationModel>) => {
         setTranslations(prev => prev.map(t => t.token === translation.token ? { ...t, ...updates } : t))
@@ -94,7 +80,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project, 
         const result = await http<TranslationModel>({
             method: APIMethod.put,
             path: `/api/translation/status`,
-            data: { project_id, code, token: translation.token, status }
+            data: { project_id: project.id, code, token: translation.token, status }
         })
         if (result.error) {
             setError(result.error)
@@ -106,7 +92,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project, 
         const result = await http({
             method: APIMethod.post,
             path: "/api/translation",
-            data: { project_id, code, token: translation.token, translation: translation.translation }
+            data: { project_id: project.id, code, token: translation.token, translation: translation.translation }
         })
         if (result.error) setError(result.error)
     }
@@ -215,10 +201,10 @@ const TranslationPage: FC<TranslationPageProps> = ({ project_id, code, project, 
                                         key={translation.token}
                                         translation={translation}
                                         selectedTags={filters.tags}
-                                        project_id={project_id}
+                                        project_id={project.id.toString()}
                                         code={code}
                                         defaultLanguageCode={defaultLanguageCode}
-                                        integrationEnabled={integrationEnabled}
+                                        integrationEnabled={project.has_translation_integration}
                                         onSave={saveTranslation}
                                         onStatusChange={(status) => updateTranslationStatus(translation, status)}
                                         onTagClick={updateTagSelection}

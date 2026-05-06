@@ -219,6 +219,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
                                     key={token.id}
                                     token={token}
                                     project_id={project.id}
+                                    integrationEnabled={project.has_translation_integration}
                                     selectedTags={filters.tags}
                                     onAddTag={() => setSelectedToken(token)}
                                     onDelete={() => setDeletionItem(token)}
