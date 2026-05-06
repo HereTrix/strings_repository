@@ -1,4 +1,6 @@
+import difflib
 import json
+import random
 import re
 
 from django.db.models import Q
@@ -11,6 +13,11 @@ from api.models.string_token import StringToken
 from api.models.tag import Tag
 from api.models.translations import Translation
 from api.views.plugin import validate_access_token
+
+_TM_FLOOR = 0.60
+_TM_MAX_RETURN = 5
+_TM_MAX_SCAN = 500
+_TM_SOURCE_TRUNCATE = 500
 
 # Tool schemas
 
@@ -143,6 +150,76 @@ _TOOLS = [
             "required": ["entries"],
         },
     },
+    {
+        "name": "check_glossary",
+        "description": "Check whether any words or phrases in a source string match project glossary terms. Returns matched terms with their definitions and preferred translations.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "source_text": {
+                    "type": "string",
+                    "description": "The source string to check against the glossary",
+                },
+                "language_code": {
+                    "type": "string",
+                    "description": "Optional target language code (e.g. 'DE'). When provided, includes preferred_translation for that language.",
+                },
+            },
+            "required": ["source_text"],
+        },
+    },
+    {
+        "name": "suggest_translation",
+        "description": "Return translation memory suggestions: previously-translated strings with source text similar to the given source_text, translated into the specified language.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "source_text": {"type": "string"},
+                "language_code": {
+                    "type": "string",
+                    "description": "Target language code, e.g. 'DE'",
+                },
+            },
+            "required": ["source_text", "language_code"],
+        },
+    },
+    {
+        "name": "verify_string",
+        "description": (
+            "Run AI quality verification on a single source/translation pair. "
+            "Requires the project to have an AI provider configured. "
+            "Returns severity ('ok', 'warning', or 'error'), a suggested correction, and the reason. "
+            "Note: response time depends on the AI provider (may take several seconds)."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "source_text": {
+                    "type": "string",
+                    "description": "The source (default-language) string",
+                },
+                "translation_text": {
+                    "type": "string",
+                    "description": "The translation to verify",
+                },
+                "language_code": {
+                    "type": "string",
+                    "description": "The target language code, e.g. 'DE'",
+                },
+                "checks": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "Optional list of check keys to run. "
+                        "Defaults to all translation_accuracy checks. "
+                        "Valid values: semantic_accuracy, placeholder_preservation, "
+                        "omissions_additions, grammar_target, tone_match."
+                    ),
+                },
+            },
+            "required": ["source_text", "translation_text", "language_code"],
+        },
+    },
 ]
 
 
@@ -212,6 +289,9 @@ class McpView(View):
             'suggest_token_key': self._tool_suggest_token_key,
             'get_token_naming_patterns': self._tool_get_token_naming_patterns,
             'batch_create_tokens': self._tool_batch_create_tokens,
+            'check_glossary': self._tool_check_glossary,
+            'suggest_translation': self._tool_suggest_translation,
+            'verify_string': self._tool_verify_string,
         }
 
         handler = _handlers.get(name)
@@ -470,3 +550,162 @@ class McpView(View):
                 failed.append({"token_key": token_key, "error": str(exc)})
 
         return {"created": created, "skipped": skipped, "failed": failed}
+
+    def _tool_check_glossary(self, args, access):
+        source_text = args.get('source_text', '')
+        if not source_text:
+            return {'matches': []}
+
+        language_code = args.get('language_code', '').strip().upper() or None
+
+        try:
+            from api.models.glossary import GlossaryTerm
+            terms = GlossaryTerm.objects.filter(
+                project=access.project
+            ).prefetch_related('translations')
+        except Exception:
+            raise ValueError('Glossary feature not available')
+
+        matches = []
+        for term in terms:
+            if term.case_sensitive:
+                found = term.term in source_text
+            else:
+                found = term.term.lower() in source_text.lower()
+
+            if not found:
+                continue
+
+            preferred_translation = None
+            if language_code:
+                preferred_translation = next(
+                    (
+                        t.preferred_translation
+                        for t in term.translations.all()
+                        if t.language_code.upper() == language_code
+                    ),
+                    None,
+                )
+
+            matches.append({
+                'term': term.term,
+                'definition': term.definition,
+                'case_sensitive': term.case_sensitive,
+                'preferred_translation': preferred_translation,
+            })
+
+        return {'matches': matches}
+
+    def _tool_suggest_translation(self, args, access):
+        from django.db.models import OuterRef, Subquery
+
+        from api.models.language import Language
+        from api.models.string_token import StringToken
+        from api.models.translations import Translation
+
+        source_text = args.get('source_text', '').strip()
+        lang_code = args.get('language_code', '').strip().upper()
+
+        if not source_text or not lang_code:
+            return {'suggestions': []}
+
+        if not Language.objects.filter(project=access.project, code=lang_code).exists():
+            raise ValueError(f"Language '{lang_code}' not found in project")
+
+        source_lang = Language.objects.filter(
+            project=access.project, is_default=True
+        ).first()
+        if not source_lang:
+            return {'suggestions': []}
+
+        source_subquery = Translation.objects.filter(
+            token=OuterRef('token'),
+            language=source_lang,
+        ).values('translation')[:1]
+
+        candidates_qs = (
+            Translation.objects.filter(
+                token__project=access.project,
+                token__status=StringToken.Status.active,
+                language__code=lang_code,
+            )
+            .select_related('token')
+            .annotate(source_text_val=Subquery(source_subquery))
+            .order_by('token__token')
+        )
+
+        total = candidates_qs.count()
+        if total > 2000:
+            all_pks = list(candidates_qs.values_list('pk', flat=True))
+            sampled_pks = random.sample(all_pks, _TM_MAX_SCAN)
+            candidates_qs = candidates_qs.filter(pk__in=sampled_pks)
+
+        current_trunc = source_text[:_TM_SOURCE_TRUNCATE]
+        scored = []
+        for c in candidates_qs:
+            src = (c.source_text_val or '')[:_TM_SOURCE_TRUNCATE]
+            if not src:
+                continue
+            score = difflib.SequenceMatcher(None, current_trunc, src).ratio()
+            if score >= _TM_FLOOR:
+                scored.append({
+                    'token_key': c.token.token,
+                    'source_text': c.source_text_val or '',
+                    'translation_text': c.translation,
+                    'similarity_score': round(score, 4),
+                })
+
+        scored.sort(key=lambda x: x['similarity_score'], reverse=True)
+        return {'suggestions': scored[:_TM_MAX_RETURN]}
+
+    def _tool_verify_string(self, args, access):
+        from api.verification_providers import get_verification_provider
+        from api.views.verification import MODE_CHECKS
+        from api.models.verification import VerificationReport
+
+        source_text = args.get('source_text', '').strip()
+        translation_text = args.get('translation_text', '').strip()
+        lang_code = args.get('language_code', '').strip().upper()
+
+        if not source_text or not translation_text or not lang_code:
+            raise ValueError('source_text, translation_text, and language_code are required')
+
+        try:
+            ai_provider = access.project.ai_provider
+        except Exception:
+            raise ValueError('No AI provider configured for this project')
+
+        all_accuracy_checks = [
+            c for c in MODE_CHECKS[VerificationReport.Mode.translation_accuracy]
+            if c != 'glossary_compliance'
+        ]
+        requested = args.get('checks') or []
+        if requested:
+            effective_checks = [c for c in requested if c in all_accuracy_checks]
+            if not effective_checks:
+                effective_checks = all_accuracy_checks
+        else:
+            effective_checks = all_accuracy_checks
+
+        items = [{
+            'token_id': 0,
+            'token_key': 'mcp_verify',
+            'language': lang_code,
+            'plural_form': None,
+            'source': source_text,
+            'current': translation_text,
+            'placeholders': [],
+        }]
+
+        provider = get_verification_provider(ai_provider)
+        results = provider.verify(items, effective_checks, access.project.description or '')
+
+        if not results:
+            return {'severity': 'ok', 'suggestion': '', 'reason': 'No issues found.'}
+
+        r = results[0]
+        return {
+            'severity': r.get('severity', 'ok'),
+            'suggestion': r.get('suggestion', ''),
+            'reason': r.get('reason', ''),
+        }
