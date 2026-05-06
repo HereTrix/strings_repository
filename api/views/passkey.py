@@ -17,6 +17,7 @@ from webauthn.helpers.structs import (
 )
 
 from api.models.users import PasskeyCredential, PasskeyChallenge, TwoFAVerification
+from api.throttles import PasskeyAuthRateThrottle
 
 
 def _expected_origin():
@@ -112,6 +113,7 @@ class PasskeyRegisterCompleteAPI(APIView):
 
 class PasskeyAuthBeginAPI(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [PasskeyAuthRateThrottle]
 
     def post(self, request):
         options = webauthn.generate_authentication_options(
@@ -130,6 +132,7 @@ class PasskeyAuthBeginAPI(APIView):
 
 class PasskeyAuthCompleteAPI(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [PasskeyAuthRateThrottle]
 
     def post(self, request):
         _sweep_expired_challenges()

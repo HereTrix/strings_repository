@@ -9,6 +9,7 @@ from api.models.language import Language
 from api.models.project import ProjectAIProvider
 from api.models.string_token import StringToken
 from api.models.translations import Translation
+from api.throttles import AICallRateThrottle
 from api.verification_providers import get_verification_provider
 from api.views.helper import get_project_any_role
 
@@ -21,6 +22,7 @@ SOURCE_TRUNCATE = 500  # chars used for similarity scoring
 
 
 class TranslationMemoryAPI(generics.GenericAPIView):
+    throttle_classes = [AICallRateThrottle]
 
     def get(self, request, pk):
         project = get_project_any_role(pk, request.user)

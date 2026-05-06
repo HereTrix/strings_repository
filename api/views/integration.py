@@ -5,6 +5,7 @@ from rest_framework import generics, permissions, status
 
 from api.crypto import encrypt
 from api.models.project import Project, ProjectRole, TranslationIntegration
+from api.throttles import AICallRateThrottle
 from api.translation_providers import get_provider
 
 logger = logging.getLogger(__name__)
@@ -123,6 +124,7 @@ class VerifyIntegrationAPI(generics.GenericAPIView):
 
 
 class MachineTranslateAPI(generics.GenericAPIView):
+    throttle_classes = [AICallRateThrottle]
 
     def post(self, request, pk):
         project = Project.objects.select_related('integration', 'ai_provider').filter(

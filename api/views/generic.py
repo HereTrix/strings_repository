@@ -4,6 +4,7 @@ from django_otp import user_has_device
 from api.models.project import Invitation, ProjectRole
 from api.models.users import PasskeyCredential
 from api.serializers.users import UserSerializer, LoginSerializer
+from api.throttles import LoginRateThrottle
 from rest_framework import generics, permissions, status
 from knox.models import AuthToken
 import re
@@ -12,6 +13,7 @@ import re
 class SignInAPI(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         try:

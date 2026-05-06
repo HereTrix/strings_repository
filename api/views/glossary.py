@@ -11,6 +11,7 @@ from rest_framework import generics, status
 from api.models.glossary import GlossaryExtractionJob, GlossaryTerm, GlossaryTranslation
 from api.models.project import ProjectAIProvider
 from api.serializers.glossary import GlossaryExtractionJobSerializer, GlossaryTermSerializer
+from api.throttles import AICallRateThrottle
 from api.views.helper import get_project_admin, get_project_any_role
 
 
@@ -262,6 +263,7 @@ class GlossaryImportAPI(generics.GenericAPIView):
 
 
 class GlossaryExtractionAPI(generics.GenericAPIView):
+    throttle_classes = [AICallRateThrottle]
 
     def get(self, request, pk):
         project = get_project_any_role(pk, request.user)
@@ -298,6 +300,7 @@ class GlossaryExtractionAPI(generics.GenericAPIView):
 
 
 class GlossarySuggestionsAPI(generics.GenericAPIView):
+    throttle_classes = [AICallRateThrottle]
 
     def get(self, request, pk):
         project = get_project_admin(pk, request.user)

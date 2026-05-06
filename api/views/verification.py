@@ -7,6 +7,7 @@ from rest_framework import generics, status
 
 from api.models.project import Project, ProjectAIProvider, ProjectRole
 from api.models.verification import VerificationComment, VerificationReport
+from api.throttles import AICallRateThrottle
 from api.views.helper import get_project_any_role, get_project_admin, get_project_editor_plus
 from api.serializers.verification import (
     VerificationCommentSerializer,
@@ -103,6 +104,7 @@ class VerificationCountAPI(generics.GenericAPIView):
 
 
 class VerificationListCreateAPI(generics.GenericAPIView):
+    throttle_classes = [AICallRateThrottle]
 
     def get(self, request, pk):
         project = _get_project_any_role(pk, request.user)
