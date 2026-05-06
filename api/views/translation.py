@@ -78,7 +78,7 @@ class StringTokenAPI(generics.GenericAPIView):
                 token.tags.add(token_tag)
             token.save()
 
-        serializer = StringTokenSerializer(token)
+        serializer = StringTokenSerializer(token, )
         return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request):
@@ -375,6 +375,10 @@ class StringTokenTranslationsAPI(generics.GenericAPIView):
                 })
 
         data = []
+        default_transaltion = None
+        if default_lang:
+            default_transaltion = token.translation.filter(
+                language__code=default_lang.code).first()
         for lang in languages:
             translation = token.translation.filter(language=lang).first()
             data.append({
@@ -389,4 +393,9 @@ class StringTokenTranslationsAPI(generics.GenericAPIView):
                 } if translation else {},
             })
 
-        return JsonResponse({'translations': data, 'glossary_hints': glossary_hints})
+        return JsonResponse({
+            'translations': data,
+            'glossary_hints': glossary_hints,
+            'default_translation': default_transaltion.translation if default_transaltion else None,
+            'default_language': default_lang.code if default_lang else None,
+        })

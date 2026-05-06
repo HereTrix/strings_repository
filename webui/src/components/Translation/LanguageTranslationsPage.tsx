@@ -117,28 +117,29 @@ const LanguageTranslationsPage = () => {
                 </Button>
             )}
 
-            {project_id && code && viewMode === 'all' &&
-                <TranslationPage
-                    project_id={project_id}
-                    code={code}
-                    project={project}
-                />
+            {project && <>
+                {code && viewMode === 'all' &&
+                    <TranslationPage
+                        code={code}
+                        project={project}
+                    />
+                }
+                {viewMode === 'scopes' && !selectedScope && project_id && (
+                    <ScopesGallery
+                        project_id={project_id}
+                        onScopeSelect={setSelectedScope}
+                    />
+                )}
+                {viewMode === 'scopes' && selectedScope && code && (
+                    <TranslationPage
+                        code={code}
+                        project={project}
+                        scopeId={selectedScope.id}
+                        scope={selectedScope}
+                    />
+                )}
+            </>
             }
-            {viewMode === 'scopes' && !selectedScope && project_id && (
-                <ScopesGallery
-                    project_id={project_id}
-                    onScopeSelect={setSelectedScope}
-                />
-            )}
-            {viewMode === 'scopes' && selectedScope && project_id && code && (
-                <TranslationPage
-                    project_id={project_id}
-                    code={code}
-                    project={project}
-                    scopeId={selectedScope.id}
-                    scope={selectedScope}
-                />
-            )}
 
             {project &&
                 <ExportPage

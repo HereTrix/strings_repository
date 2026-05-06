@@ -96,13 +96,14 @@ def _parse_glossary_response(content: str) -> list[dict]:
 
 
 class OpenAIVerificationProvider(VerificationProvider):
-    def __init__(self, api_key: str, endpoint_url: str, model_name: str, timeout: int = 120, verification_instructions: str = '', glossary_extraction_instructions: str = ''):
+    def __init__(self, api_key: str, endpoint_url: str, model_name: str, timeout: int = 120, verification_instructions: str = '', glossary_extraction_instructions: str = '', translation_memory_instructions: str = ''):
         self.api_key = api_key
         self.endpoint_url = endpoint_url or DEFAULT_ENDPOINT
         self.model_name = model_name
         self.timeout = timeout
         self.verification_instructions = verification_instructions
         self.glossary_extraction_instructions = glossary_extraction_instructions
+        self.translation_memory_instructions = translation_memory_instructions
 
     def verify(self, items: list[dict], checks: list[str], project_description: str, glossary_terms=()) -> list[dict]:
         try:
@@ -185,3 +186,69 @@ class OpenAIVerificationProvider(VerificationProvider):
             raise RuntimeError(f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
         content = raw.get('choices', [{}])[0].get('message', {}).get('content', '')
         return _parse_glossary_response(content)
+
+    def rank_by_similarity(self, source: str, candidates: list[dict]) -> list[dict]:
+        if not candidates:
+            return candidates
+        try:
+            validate_url_for_outbound(self.endpoint_url)
+        except ValueError:
+            return candidates
+
+        role = self.translation_memory_instructions if self.translation_memory_instructions else 'You are a translation expert.'
+        system_prompt = (
+            f'{role} Given a source string and a list of candidate token keys, '
+            'rank the candidates by how semantically similar their source meaning is to the given source string. '
+            'Respond with ONLY a JSON array of token_key strings, most similar first. '
+            'Include every key exactly once. No prose, no markdown.'
+        )
+        user_message = json.dumps({
+            'source': source[:500],
+            'candidates': [
+                {'token_key': c['token_key'], 'source_text': c['source_text'][:500]}
+                for c in candidates
+            ]
+        }, ensure_ascii=False)
+
+        payload = {
+            'model': self.model_name,
+            'messages': [
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_message},
+            ],
+            'response_format': {'type': 'json_object'},
+        }
+        req = urllib.request.Request(
+            self.endpoint_url,
+            data=json.dumps(payload).encode(),
+            headers={
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': 'application/json',
+            },
+            method='POST',
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=10) as response:
+                raw = json.loads(response.read())
+        except Exception:
+            return candidates
+
+        try:
+            content = raw.get('choices', [{}])[0].get('message', {}).get('content', '')
+            parsed = json.loads(content)
+            if isinstance(parsed, dict):
+                for val in parsed.values():
+                    if isinstance(val, list):
+                        parsed = val
+                        break
+            if not isinstance(parsed, list):
+                return candidates
+            ordered_keys = [str(k) for k in parsed]
+        except Exception:
+            return candidates
+
+        key_to_candidate = {c['token_key']: c for c in candidates}
+        result = [key_to_candidate[k] for k in ordered_keys if k in key_to_candidate]
+        seen = set(ordered_keys)
+        result += [c for c in candidates if c['token_key'] not in seen]
+        return result

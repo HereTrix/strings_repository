@@ -44,9 +44,10 @@ type MarkdownFieldProps = {
     value: string
     onChange: (value: string) => void
     rows?: number
+    onFocus?: () => void
 }
 
-const MarkdownField: FC<MarkdownFieldProps> = ({ value, onChange, rows = 3 }) => {
+const MarkdownField: FC<MarkdownFieldProps> = ({ value, onChange, rows = 3, onFocus }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const [active, setActive] = useState(false)
 
@@ -92,6 +93,7 @@ const MarkdownField: FC<MarkdownFieldProps> = ({ value, onChange, rows = 3 }) =>
                 style={{ resize: 'vertical' }}
                 value={value}
                 onChange={e => onChange(e.target.value)}
+                onFocus={onFocus}
             />
         </div>
     )

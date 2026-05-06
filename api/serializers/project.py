@@ -47,7 +47,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'description', 'role', 'require_2fa']
+        fields = ['id', 'name', 'description',
+                  'role', 'require_2fa']
 
     def get_role(self, obj):
         user = self.context.get('user')
@@ -68,6 +69,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
     has_ai_provider = serializers.SerializerMethodField()
     has_glossary_terms = serializers.SerializerMethodField()
+    has_translation_integration = serializers.SerializerMethodField()
 
     def get_has_ai_provider(self, obj):
         return ProjectAIProvider.objects.filter(project=obj).exists()
@@ -107,10 +109,17 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
                 )
         return value
 
+    def get_has_translation_integration(self, obj):
+        try:
+            integration = obj.integration
+            return True
+        except:
+            return False
+
     class Meta:
         model = Project
         fields = ['id', 'name', 'description',
-                  'languages', 'role', 'require_2fa', 'has_ai_provider', 'has_glossary_terms']
+                  'languages', 'role', 'require_2fa', 'has_ai_provider', 'has_glossary_terms', 'has_translation_integration']
 
 
 class IntegrationSerializer(serializers.ModelSerializer):

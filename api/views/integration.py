@@ -31,7 +31,8 @@ class IntegrationAPI(generics.GenericAPIView):
         if not project:
             return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        providers = [{'value': v, 'label': l} for v, l in TranslationIntegration.PROVIDER_CHOICES]
+        providers = [{'value': v, 'label': l}
+                     for v, l in TranslationIntegration.PROVIDER_CHOICES]
         try:
             integration = project.integration
             return JsonResponse(_integration_response(integration))
@@ -114,7 +115,8 @@ class VerifyIntegrationAPI(generics.GenericAPIView):
             provider = get_provider(integration, ai_provider)
             provider.translate('Hello', 'FR')
         except Exception as e:
-            logger.exception('Integration verification failed for project %s: %s', pk, e)
+            logger.exception(
+                'Integration verification failed for project %s: %s', pk, e)
             return JsonResponse({'error': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
 
         return JsonResponse({'ok': True})
@@ -154,7 +156,8 @@ class MachineTranslateAPI(generics.GenericAPIView):
             provider = get_provider(integration, ai_provider)
             translation = provider.translate(text, target_lang, source_lang)
         except Exception as e:
-            logger.exception('Machine translation failed for project %s: %s', pk, e)
+            logger.exception(
+                'Machine translation failed for project %s: %s', pk, e)
             return JsonResponse({'error': 'Translation failed'}, status=status.HTTP_502_BAD_GATEWAY)
 
         return JsonResponse({'translation': translation})

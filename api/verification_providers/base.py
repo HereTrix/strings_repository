@@ -34,3 +34,13 @@ class VerificationProvider:
         Returns list of dicts: [{term, definition, translations: [{language_code, preferred_translation}]}]
         """
         raise NotImplementedError
+
+    def rank_by_similarity(self, source: str, candidates: list[dict]) -> list[dict]:
+        """
+        source: source text of the string being edited
+        candidates: list of dicts, each with keys:
+            token_key (str), source_text (str), translation_text (str), similarity_score (float)
+        Returns: same list reordered so most semantically similar candidates come first.
+        Implementations must never raise — return candidates unchanged on any error.
+        """
+        raise NotImplementedError

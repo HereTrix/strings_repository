@@ -30,6 +30,7 @@ def _serialize_provider(ai_provider: ProjectAIProvider) -> dict:
         'translation_instructions': ai_provider.translation_instructions,
         'verification_instructions': ai_provider.verification_instructions,
         'glossary_extraction_instructions': ai_provider.glossary_extraction_instructions,
+        'translation_memory_instructions': ai_provider.translation_memory_instructions,
         'providers': PROVIDERS_LIST,
     }
 
@@ -75,6 +76,7 @@ class AIProviderAPI(generics.GenericAPIView):
         translation_instructions = request.data.get('translation_instructions', '').strip()
         verification_instructions = request.data.get('verification_instructions', '').strip()
         glossary_extraction_instructions = request.data.get('glossary_extraction_instructions', '').strip()
+        translation_memory_instructions = request.data.get('translation_memory_instructions', '').strip()
 
         if len(translation_instructions) > 4000:
             return JsonResponse({'error': 'translation_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
@@ -82,6 +84,8 @@ class AIProviderAPI(generics.GenericAPIView):
             return JsonResponse({'error': 'verification_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
         if len(glossary_extraction_instructions) > 4000:
             return JsonResponse({'error': 'glossary_extraction_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(translation_memory_instructions) > 4000:
+            return JsonResponse({'error': 'translation_memory_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not provider_type:
             return JsonResponse({'error': 'provider_type is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -105,6 +109,7 @@ class AIProviderAPI(generics.GenericAPIView):
             ai_provider.translation_instructions = translation_instructions
             ai_provider.verification_instructions = verification_instructions
             ai_provider.glossary_extraction_instructions = glossary_extraction_instructions
+            ai_provider.translation_memory_instructions = translation_memory_instructions
             if api_key:
                 ai_provider.api_key = encrypt(api_key)
             ai_provider.save()
@@ -120,6 +125,7 @@ class AIProviderAPI(generics.GenericAPIView):
                 translation_instructions=translation_instructions,
                 verification_instructions=verification_instructions,
                 glossary_extraction_instructions=glossary_extraction_instructions,
+                translation_memory_instructions=translation_memory_instructions,
                 api_key=encrypt(api_key),
             )
             ai_provider.save()

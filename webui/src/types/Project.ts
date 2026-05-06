@@ -17,6 +17,7 @@ interface Project {
     has_ai_provider: boolean
     verification_cap?: number
     has_glossary_terms: boolean
+    has_translation_integration: boolean
 }
 
 export default Project

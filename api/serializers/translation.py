@@ -14,7 +14,8 @@ class StringTokenSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StringToken
-        fields = ['id', 'token', 'comment', 'tags', 'status']
+        fields = ['id', 'token', 'comment', 'tags',
+                  'status']
 
 
 class StringTranslationSerializer(serializers.ModelSerializer):

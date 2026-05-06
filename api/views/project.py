@@ -99,6 +99,15 @@ class StringTokenListAPI(generics.ListAPIView):
             project__roles__user=self.request.user
         ).prefetch_related('tags', 'translation').distinct()
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        default_lang = Language.objects.filter(
+            project__pk=self.kwargs['pk'],
+            is_default=True
+        ).first()
+        context['default_code'] = default_lang.code if default_lang else None
+        return context
+
 
 class TranslationsListAPI(generics.ListAPIView):
     serializer_class = StringTokenModelSerializer
@@ -127,7 +136,8 @@ class TranslationsListAPI(generics.ListAPIView):
         glossary = []
         for term in terms:
             pt = next(
-                (t.preferred_translation for t in term.translations.all() if t.language_code.upper() == code),
+                (t.preferred_translation for t in term.translations.all()
+                 if t.language_code.upper() == code),
                 ''
             )
             glossary.append({
@@ -148,7 +158,8 @@ class LanguageProgressAPI(generics.GenericAPIView):
         except Project.DoesNotExist:
             return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        total = StringToken.objects.filter(project=project, status='active').count()
+        total = StringToken.objects.filter(
+            project=project, status='active').count()
         result = {}
         for language in project.languages.all():
             translated = Translation.objects.filter(
