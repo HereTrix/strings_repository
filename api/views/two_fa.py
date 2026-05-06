@@ -10,6 +10,7 @@ from rest_framework import generics, permissions, status
 
 from api.models.users import BackupCode, TwoFAVerification
 from api.serializers.users import UserSerializer
+from api.throttles import TwoFALoginRateThrottle
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,7 @@ class TwoFADeleteAPI(generics.GenericAPIView):
 
 class TwoFALoginAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [TwoFALoginRateThrottle]
 
     def post(self, request):
         user = request.user

@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock
+from django.core.cache import cache
 from django.test import TestCase
 from rest_framework.test import APITestCase
 
@@ -26,6 +27,7 @@ def make_ai_provider(project):
 class GlossaryExtractionAPITests(APITestCase):
 
     def setUp(self):
+        cache.clear()
         self.owner = make_user('owner')
         self.translator = make_user('translator')
         self.project = make_project(owner=self.owner)

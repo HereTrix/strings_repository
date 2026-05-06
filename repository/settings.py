@@ -196,6 +196,13 @@ REST_FRAMEWORK = {
         'api.permissions.ProjectTwoFAPermission',
     ],
     'EXCEPTION_HANDLER': 'api.exception_handler.custom_exception_handler',
+    # Throttle rates — uses Django's cache backend.
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '10/min',
+        'two_fa_login': '5/min',
+        'passkey_auth': '10/min',
+        'ai_call': '30/hour',
+    },
 }
 
 WEBAUTHN_RP_ID = env_value('WEBAUTHN_RP_ID', default='localhost')

@@ -2,6 +2,7 @@ import json
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.test import TestCase
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from knox.models import AuthToken
@@ -138,6 +139,7 @@ class LoginTwoFATestCase(TestCase):
 class TwoFALoginAPITestCase(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.user = make_user('fa_login_user')
         self.device = _make_confirmed_device(self.user)
         self.client = authed_client(self.user)

@@ -1,6 +1,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
+from django.core.cache import cache
 from django.test import TestCase
 
 from api.crypto import encrypt
@@ -141,6 +142,7 @@ class VerifyConnectedAIIntegrationTestCase(TestCase):
 
 class MachineTranslateConnectedAITestCase(TestCase):
     def setUp(self):
+        cache.clear()
         self.owner = make_user('owner')
         self.project = make_project(owner=self.owner)
         self.client = authed_client(self.owner)
@@ -184,6 +186,7 @@ class ConnectedAISSRFTestCase(TestCase):
     """SSRF guard: connected AI provider must reject private endpoint URLs."""
 
     def setUp(self):
+        cache.clear()
         self.owner = make_user('ssrf_owner')
         self.project = make_project(owner=self.owner)
         self.client = authed_client(self.owner)
