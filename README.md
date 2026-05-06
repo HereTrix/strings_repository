@@ -20,6 +20,9 @@ It provides a centralized place to manage translation keys, collaborate with tra
 * **Machine translation** - DeepL, Google Translate, and Generic AI (any OpenAI-compatible REST API) integration
 * **AI translation verification** - async quality audits powered by any OpenAI-compatible or Anthropic-compatible provider; source quality and translation accuracy modes with per-check selection, scope/tag filtering, suggestion review, and one-click apply
 * **Two-factor authentication (2FA)** - TOTP-based 2FA per user account; project owners can require 2FA for all project members
+* **Glossary** - manage domain-specific terms with definitions and per-language preferred translations; AI-powered term extraction from existing strings; import/export support
+* **Translation memory** - automatically surface previously-translated strings similar to the current source text to improve consistency
+* **Passkeys (WebAuthn)** - passwordless authentication via FIDO2/passkeys as an alternative to passwords
 * **MCP support** - AI-agent integration via Model Context Protocol for IDE-based key management and localization workflows
 * **Webhooks** - real-time event notifications to external services
 * **Full change history** - track all translation changes with an exportable history log
@@ -137,6 +140,9 @@ The endpoint uses project access tokens — the same tokens used by the CLI. Pas
 | `suggest_token_key` | Suggest a key name derived from source text |
 | `get_token_naming_patterns` | Analyse the project's key naming conventions |
 | `batch_create_tokens` | Create multiple keys with translations in one call |
+| `check_glossary` | Check whether words or phrases in a source string match project glossary terms; returns matched terms with definitions and preferred translations |
+| `suggest_translation` | Fetch translation memory suggestions — previously-translated strings whose source text is similar to the given input |
+| `verify_string` | Run AI quality verification on a single source/translation pair (requires an AI provider configured on the project); returns severity, suggested correction, and reason |
 
 ### IDE setup (Claude Code)
 
