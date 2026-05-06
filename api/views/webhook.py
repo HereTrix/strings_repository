@@ -198,10 +198,10 @@ class WebhookVerifyAPI(generics.GenericAPIView):
         except WebhookEndpoint.DoesNotExist:
             return JsonResponse({'error': 'Webhook not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Run synchronously (not in a thread) so we can read the result immediately.
+        # Run synchronously so we can read the delivery result immediately.
         # Bypasses the subscription filter — verify always delivers regardless of subscribed events.
-        from api.dispatcher import _send_webhook
-        _send_webhook(
+        from api.tasks import send_webhook
+        send_webhook(
             endpoint_id=endpoint.pk,
             event_type='verify',
             payload={
