@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react"
-import { Alert, Badge, Button, Form, Stack } from "react-bootstrap"
+import { Badge, Button, Collapse, Form, Stack } from "react-bootstrap"
 import Project, { ProjectRole } from "../../types/Project"
 import { AIProvider } from "../../types/Verification"
 import { APIMethod, http } from "../../utils/network"
@@ -10,12 +10,13 @@ type AIPreset = {
     provider_type: string
     endpoint_url: string
     model_name: string
+    request_timeout: number
 }
 
 const AI_PRESETS: AIPreset[] = [
-    { label: 'OpenAI', provider_type: 'openai', endpoint_url: '', model_name: 'gpt-4o-mini' },
-    { label: 'Claude', provider_type: 'anthropic', endpoint_url: '', model_name: 'claude-haiku-4-5-20251001' },
-    { label: 'Ollama', provider_type: 'openai', endpoint_url: 'http://localhost:11434/v1/chat/completions', model_name: 'llama3' },
+    { label: 'OpenAI', provider_type: 'openai', endpoint_url: '', model_name: 'gpt-4o-mini', request_timeout: 120 },
+    { label: 'Claude', provider_type: 'anthropic', endpoint_url: '', model_name: 'claude-haiku-4-5-20251001', request_timeout: 120 },
+    { label: 'Ollama', provider_type: 'openai', endpoint_url: 'http://localhost:11434/v1/chat/completions', model_name: 'llama3', request_timeout: 300 },
 ]
 
 type AIProviderSettingsProps = {
@@ -31,6 +32,11 @@ const AIProviderSettings: FC<AIProviderSettingsProps> = ({ project, onProviderCh
     const [apiKey, setApiKey] = useState('')
     const [endpointUrl, setEndpointUrl] = useState('')
     const [modelName, setModelName] = useState('')
+    const [requestTimeout, setRequestTimeout] = useState(120)
+    const [translationInstructions, setTranslationInstructions] = useState('')
+    const [verificationInstructions, setVerificationInstructions] = useState('')
+    const [translationOpen, setTranslationOpen] = useState(false)
+    const [verificationOpen, setVerificationOpen] = useState(false)
     const [error, setError] = useState<string>()
     const [success, setSuccess] = useState(false)
 
@@ -45,6 +51,11 @@ const AIProviderSettings: FC<AIProviderSettingsProps> = ({ project, onProviderCh
                 setProviderType(result.value.provider_type ?? '')
                 setEndpointUrl(result.value.endpoint_url ?? '')
                 setModelName(result.value.model_name ?? '')
+                setRequestTimeout(result.value.request_timeout ?? 120)
+                setTranslationInstructions(result.value.translation_instructions ?? '')
+                setVerificationInstructions(result.value.verification_instructions ?? '')
+                setTranslationOpen(!!(result.value.translation_instructions))
+                setVerificationOpen(!!(result.value.verification_instructions))
             } else if (result.value.providers.length > 0) {
                 setProviderType(result.value.providers[0].value)
             }
@@ -59,6 +70,7 @@ const AIProviderSettings: FC<AIProviderSettingsProps> = ({ project, onProviderCh
         setProviderType(preset.provider_type)
         setEndpointUrl(preset.endpoint_url)
         setModelName(preset.model_name)
+        setRequestTimeout(preset.request_timeout)
     }
 
     const save = async () => {
@@ -67,7 +79,15 @@ const AIProviderSettings: FC<AIProviderSettingsProps> = ({ project, onProviderCh
         const result = await http({
             method: APIMethod.post,
             path: `/api/project/${project.id}/ai-provider`,
-            data: { provider_type: providerType, api_key: apiKey, model_name: modelName, endpoint_url: endpointUrl },
+            data: {
+                provider_type: providerType,
+                api_key: apiKey,
+                model_name: modelName,
+                endpoint_url: endpointUrl,
+                request_timeout: requestTimeout,
+                translation_instructions: translationInstructions,
+                verification_instructions: verificationInstructions,
+            },
         })
         if (result.error) {
             setError(result.error)
@@ -156,6 +176,72 @@ const AIProviderSettings: FC<AIProviderSettingsProps> = ({ project, onProviderCh
                         onChange={e => setEndpointUrl(e.target.value)}
                         size="sm"
                     />
+                    <Form.Control
+                        type="number"
+                        placeholder="Request timeout (seconds)"
+                        value={requestTimeout}
+                        onChange={e => setRequestTimeout(Number(e.target.value))}
+                        size="sm"
+                        min={1}
+                    />
+                    <div>
+                        <button
+                            type="button"
+                            className="btn btn-link btn-sm p-0 text-decoration-none d-flex align-items-center gap-2"
+                            onClick={() => setTranslationOpen(o => !o)}
+                            aria-expanded={translationOpen}
+                        >
+                            <span className="small">Translation instructions</span>
+                            {translationInstructions && <Badge bg="secondary" pill>Custom</Badge>}
+                            <span className="text-muted" style={{ fontSize: '0.6rem' }}>{translationOpen ? '▲' : '▼'}</span>
+                        </button>
+                        <Collapse in={translationOpen}>
+                            <div className="mt-2">
+                                <Form.Control
+                                    as="textarea"
+                                    rows={3}
+                                    placeholder="Translate to the target language."
+                                    value={translationInstructions}
+                                    onChange={e => setTranslationInstructions(e.target.value)}
+                                    size="sm"
+                                />
+                                <Form.Text className="text-muted">
+                                    Replaces the default translation directive. Leave blank to use the default.
+                                    Available variable: <code>{'{target_lang}'}</code> — replaced with the target language name at runtime.<br />
+                                    Example: <em>"You are a professional legal translator. Translate to {'{target_lang}'} using formal register."</em>
+                                </Form.Text>
+                            </div>
+                        </Collapse>
+                    </div>
+                    <div>
+                        <button
+                            type="button"
+                            className="btn btn-link btn-sm p-0 text-decoration-none d-flex align-items-center gap-2"
+                            onClick={() => setVerificationOpen(o => !o)}
+                            aria-expanded={verificationOpen}
+                        >
+                            <span className="small">Verification instructions</span>
+                            {verificationInstructions && <Badge bg="secondary" pill>Custom</Badge>}
+                            <span className="text-muted" style={{ fontSize: '0.6rem' }}>{verificationOpen ? '▲' : '▼'}</span>
+                        </button>
+                        <Collapse in={verificationOpen}>
+                            <div className="mt-2">
+                                <Form.Control
+                                    as="textarea"
+                                    rows={3}
+                                    placeholder="You are a translation quality reviewer."
+                                    value={verificationInstructions}
+                                    onChange={e => setVerificationInstructions(e.target.value)}
+                                    size="sm"
+                                />
+                                <Form.Text className="text-muted">
+                                    Replaces the default reviewer role. Leave blank to use the default.
+                                    No variables available — write plain instructions only.<br />
+                                    Example: <em>"You are a senior editor for a children's book publisher. Review for age-appropriate language."</em>
+                                </Form.Text>
+                            </div>
+                        </Collapse>
+                    </div>
                     <Form.Control
                         type="password"
                         placeholder={provider.enabled ? 'New API key (leave blank to keep current)' : 'API key'}

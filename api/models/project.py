@@ -66,13 +66,13 @@ class TranslationIntegration(models.Model):
     PROVIDER_CHOICES = [
         (PROVIDER_DEEPL, 'DeepL'),
         (PROVIDER_GOOGLE, 'Google Translate'),
-        (PROVIDER_AI, 'Generic AI'),
+        (PROVIDER_AI, 'Use Connected AI'),
     ]
 
     project = models.OneToOneField(
         Project, on_delete=models.CASCADE, related_name='integration')
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES)
-    api_key = models.BinaryField()
+    api_key = models.BinaryField(null=True, blank=True)
     endpoint_url = models.CharField(max_length=500, blank=True, default='')
     payload_template = models.TextField(blank=True, default='')
     response_path = models.CharField(max_length=200, blank=True, default='')
@@ -96,6 +96,9 @@ class ProjectAIProvider(models.Model):
     endpoint_url = models.CharField(max_length=500, blank=True, default='')
     api_key = models.BinaryField()
     model_name = models.CharField(max_length=200)
+    request_timeout = models.PositiveIntegerField(default=120)
+    translation_instructions = models.TextField(blank=True, default='')
+    verification_instructions = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

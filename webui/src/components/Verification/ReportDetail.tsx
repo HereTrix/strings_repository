@@ -167,7 +167,7 @@ const ReportDetail: FC<ReportDetailProps> = ({ reportId, project, onBack, onRepo
                 </Stack>
             )}
 
-            {report.status === 'complete' && report.results && (
+            {report.status === 'complete' && report.result?.results && (
                 <>
                     {canEdit && !report.is_readonly && (
                         <Stack direction="horizontal" gap={2} className="mb-3">
@@ -183,7 +183,7 @@ const ReportDetail: FC<ReportDetailProps> = ({ reportId, project, onBack, onRepo
                         </Stack>
                     )}
 
-                    {report.results.map((s, idx) => {
+                    {report.result.results.map((s, idx) => {
                         const key = suggestionKey(s)
                         const comments = commentsForSuggestion(s)
                         return (

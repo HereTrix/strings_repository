@@ -1,4 +1,3 @@
-import json
 import logging
 
 from django.http import JsonResponse
@@ -11,35 +10,8 @@ from api.translation_providers import get_provider
 logger = logging.getLogger(__name__)
 
 
-def _ai_fields_from_request(data: dict) -> dict:
-    return {
-        'endpoint_url': data.get('endpoint_url', ''),
-        'payload_template': data.get('payload_template', ''),
-        'response_path': data.get('response_path', '') or 'choices.0.message.content',
-        'auth_header': data.get('auth_header', '') or 'Authorization',
-    }
-
-
-def _validate_ai_fields(data: dict):
-    endpoint_url = data.get('endpoint_url', '').strip()
-    payload_template = data.get('payload_template', '').strip()
-    if not endpoint_url:
-        return 'endpoint_url is required for Generic AI provider'
-    if not payload_template:
-        return 'payload_template is required for Generic AI provider'
-    try:
-        json.loads(payload_template)
-    except json.JSONDecodeError:
-        return 'payload_template must be valid JSON'
-    if '{{text}}' not in payload_template:
-        return 'payload_template must contain {{text}} placeholder'
-    if '{{target_lang}}' not in payload_template:
-        return 'payload_template must contain {{target_lang}} placeholder'
-    return None
-
-
 def _integration_response(integration: TranslationIntegration) -> dict:
-    data = {
+    return {
         'enabled': True,
         'provider': integration.provider,
         'provider_label': dict(TranslationIntegration.PROVIDER_CHOICES).get(
@@ -47,14 +19,6 @@ def _integration_response(integration: TranslationIntegration) -> dict:
         ),
         'providers': [{'value': v, 'label': l} for v, l in TranslationIntegration.PROVIDER_CHOICES],
     }
-    if integration.provider == TranslationIntegration.PROVIDER_AI:
-        data.update({
-            'endpoint_url': integration.endpoint_url,
-            'payload_template': integration.payload_template,
-            'response_path': integration.response_path,
-            'auth_header': integration.auth_header,
-        })
-    return data
 
 
 class IntegrationAPI(generics.GenericAPIView):
@@ -91,32 +55,21 @@ class IntegrationAPI(generics.GenericAPIView):
         if provider not in dict(TranslationIntegration.PROVIDER_CHOICES):
             return JsonResponse({'error': 'Invalid provider'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if provider == TranslationIntegration.PROVIDER_AI:
-            error = _validate_ai_fields(request.data)
-            if error:
-                return JsonResponse({'error': error}, status=status.HTTP_400_BAD_REQUEST)
+        uses_connected_ai = provider == TranslationIntegration.PROVIDER_AI
 
         try:
             integration = project.integration
             integration.provider = provider
             if api_key:
                 integration.api_key = encrypt(api_key)
-            if provider == TranslationIntegration.PROVIDER_AI:
-                ai = _ai_fields_from_request(request.data)
-                integration.endpoint_url = ai['endpoint_url']
-                integration.payload_template = ai['payload_template']
-                integration.response_path = ai['response_path']
-                integration.auth_header = ai['auth_header']
             integration.save()
         except TranslationIntegration.DoesNotExist:
-            if not api_key:
+            if not uses_connected_ai and not api_key:
                 return JsonResponse({'error': 'api_key is required'}, status=status.HTTP_400_BAD_REQUEST)
-            ai = _ai_fields_from_request(request.data) if provider == TranslationIntegration.PROVIDER_AI else {}
             integration = TranslationIntegration(
                 project=project,
                 provider=provider,
-                api_key=encrypt(api_key),
-                **ai,
+                api_key=encrypt(api_key) if api_key else None,
             )
             integration.save()
 
@@ -142,7 +95,7 @@ class IntegrationAPI(generics.GenericAPIView):
 class VerifyIntegrationAPI(generics.GenericAPIView):
 
     def post(self, request, pk):
-        project = Project.objects.filter(
+        project = Project.objects.select_related('integration', 'ai_provider').filter(
             pk=pk,
             roles__user=request.user,
             roles__role__in=ProjectRole.change_participants_roles,
@@ -155,8 +108,10 @@ class VerifyIntegrationAPI(generics.GenericAPIView):
         except TranslationIntegration.DoesNotExist:
             return JsonResponse({'error': 'No integration configured'}, status=status.HTTP_400_BAD_REQUEST)
 
+        ai_provider = getattr(project, 'ai_provider', None)
+
         try:
-            provider = get_provider(integration)
+            provider = get_provider(integration, ai_provider)
             provider.translate('Hello', 'FR')
         except Exception as e:
             logger.exception('Integration verification failed for project %s: %s', pk, e)
@@ -168,7 +123,7 @@ class VerifyIntegrationAPI(generics.GenericAPIView):
 class MachineTranslateAPI(generics.GenericAPIView):
 
     def post(self, request, pk):
-        project = Project.objects.filter(
+        project = Project.objects.select_related('integration', 'ai_provider').filter(
             pk=pk,
             roles__user=request.user,
         ).first()
@@ -193,8 +148,10 @@ class MachineTranslateAPI(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        ai_provider = getattr(project, 'ai_provider', None)
+
         try:
-            provider = get_provider(integration)
+            provider = get_provider(integration, ai_provider)
             translation = provider.translate(text, target_lang, source_lang)
         except Exception as e:
             logger.exception('Machine translation failed for project %s: %s', pk, e)
