@@ -104,7 +104,11 @@ class VerificationCountAPI(generics.GenericAPIView):
 
 
 class VerificationListCreateAPI(generics.GenericAPIView):
-    throttle_classes = [AICallRateThrottle]
+
+    def get_throttles(self):
+        if self.request.method == 'POST':
+            return [AICallRateThrottle()]
+        return []
 
     def get(self, request, pk):
         project = _get_project_any_role(pk, request.user)

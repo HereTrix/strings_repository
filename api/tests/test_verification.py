@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from unittest.mock import patch
 
+from django.core.cache import cache
 from django.test import TestCase
 
 from api.crypto import encrypt
@@ -40,6 +41,7 @@ def _make_complete_report(project, user, mode='source_quality', target_language=
 
 class VerificationListTestCase(TestCase):
     def setUp(self):
+        cache.clear()
         self.owner = make_user('owner')
         self.project = make_project(owner=self.owner)
         self.client = authed_client(self.owner)
@@ -81,6 +83,7 @@ class VerificationCountTestCase(TestCase):
 
 class VerificationCreateTestCase(TestCase):
     def setUp(self):
+        cache.clear()
         self.owner = make_user('owner')
         self.project = make_project(owner=self.owner)
         self.client = authed_client(self.owner)

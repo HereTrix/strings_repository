@@ -1,5 +1,6 @@
 from unittest.mock import patch, MagicMock
 
+from django.core.cache import cache
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -27,6 +28,7 @@ def _make_ai_provider(project):
 class AccessAndValidationTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.owner = make_user('owner')
         self.project = make_project(owner=self.owner)
         self.en = make_language(self.project, 'EN')
@@ -64,6 +66,7 @@ class AccessAndValidationTests(TestCase):
 class ManualModeTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.owner = make_user('owner2')
         self.project = make_project(owner=self.owner)
         self.en = make_language(self.project, 'EN')
@@ -193,6 +196,7 @@ class ManualModeTests(TestCase):
 class LargeProjectSamplingTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.owner = make_user('owner3')
         self.project = make_project(owner=self.owner)
         self.en = make_language(self.project, 'EN')
@@ -238,6 +242,7 @@ class LargeProjectSamplingTests(TestCase):
 class AIModeTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.owner = make_user('owner4')
         self.project = make_project(owner=self.owner)
         self.en = make_language(self.project, 'EN')

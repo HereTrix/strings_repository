@@ -263,7 +263,11 @@ class GlossaryImportAPI(generics.GenericAPIView):
 
 
 class GlossaryExtractionAPI(generics.GenericAPIView):
-    throttle_classes = [AICallRateThrottle]
+
+    def get_throttles(self):
+        if self.request.method == 'POST':
+            return [AICallRateThrottle()]
+        return []
 
     def get(self, request, pk):
         project = get_project_any_role(pk, request.user)
@@ -300,7 +304,6 @@ class GlossaryExtractionAPI(generics.GenericAPIView):
 
 
 class GlossarySuggestionsAPI(generics.GenericAPIView):
-    throttle_classes = [AICallRateThrottle]
 
     def get(self, request, pk):
         project = get_project_admin(pk, request.user)
