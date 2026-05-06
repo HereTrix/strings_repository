@@ -375,6 +375,7 @@ class StringTokenTranslationsAPI(generics.GenericAPIView):
                 })
 
         data = []
+        default_transaltion = None
         if default_lang:
             default_transaltion = token.translation.filter(
                 language__code=default_lang.code).first()
