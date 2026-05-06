@@ -113,12 +113,30 @@ class TranslationsListAPI(generics.ListAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['code'] = self.kwargs.get('code')
+        code = self.kwargs.get('code', '').upper()
+        context['code'] = code
         default_lang = Language.objects.filter(
             project__pk=self.kwargs['pk'],
             is_default=True
         ).first()
         context['default_code'] = default_lang.code if default_lang else None
+        from api.models.glossary import GlossaryTerm
+        terms = GlossaryTerm.objects.filter(
+            project__pk=self.kwargs['pk']
+        ).prefetch_related('translations')
+        glossary = []
+        for term in terms:
+            pt = next(
+                (t.preferred_translation for t in term.translations.all() if t.language_code.upper() == code),
+                ''
+            )
+            glossary.append({
+                'term': term.term,
+                'definition': term.definition,
+                'case_sensitive': term.case_sensitive,
+                'preferred_translation': pt,
+            })
+        context['glossary_terms'] = glossary
         return context
 
 

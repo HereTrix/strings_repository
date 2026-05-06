@@ -99,6 +99,7 @@ class ProjectAIProvider(models.Model):
     request_timeout = models.PositiveIntegerField(default=120)
     translation_instructions = models.TextField(blank=True, default='')
     verification_instructions = models.TextField(blank=True, default='')
+    glossary_extraction_instructions = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

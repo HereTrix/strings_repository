@@ -27,6 +27,11 @@ from api.views.verification import (
     VerificationApplyAPI,
     VerificationCommentAPI,
 )
+from api.views.glossary import (
+    GlossaryTermListCreateAPI, GlossaryTermDetailAPI,
+    GlossaryExtractionAPI, GlossarySuggestionsAPI,
+    GlossaryExportAPI, GlossaryImportAPI,
+)
 from knox.views import LogoutView
 
 urlpatterns = [
@@ -75,6 +80,13 @@ urlpatterns = [
     path('project/<int:pk>/bundles/<int:bundle_id>/export', BundleExportAPI.as_view()),
     # AI provider
     path('project/<int:pk>/ai-provider', AIProviderAPI.as_view()),
+    # Glossary — named sub-routes MUST precede <int:term_id>
+    path('project/<int:pk>/glossary/export', GlossaryExportAPI.as_view()),
+    path('project/<int:pk>/glossary/import', GlossaryImportAPI.as_view()),
+    path('project/<int:pk>/glossary/extract', GlossaryExtractionAPI.as_view()),
+    path('project/<int:pk>/glossary/suggestions', GlossarySuggestionsAPI.as_view()),
+    path('project/<int:pk>/glossary/<int:term_id>', GlossaryTermDetailAPI.as_view()),
+    path('project/<int:pk>/glossary', GlossaryTermListCreateAPI.as_view()),
     # Verification — count MUST be before <report_id> to avoid integer-match conflict
     path('project/<int:pk>/verify/count', VerificationCountAPI.as_view()),
     path('project/<int:pk>/verify', VerificationListCreateAPI.as_view()),

@@ -13,12 +13,13 @@ import BundlesPage from "../Bundles/BundlesPage"
 import ScopeManager from "../StringTokens/ScopeManager"
 
 const VerificationPage = React.lazy(() => import('../Verification/VerificationPage'))
+const GlossaryPage = React.lazy(() => import('../Glossary/GlossaryPage'))
 
 const ProjectPage = () => {
 
     const { id, tab } = useParams()
     const navigate = useNavigate()
-    const allowedTabs = ['languages', 'tokens', 'scopes', 'history', 'bundles', 'info', 'verify']
+    const allowedTabs = ['languages', 'tokens', 'scopes', 'history', 'bundles', 'info', 'verify', 'glossary']
     const getValidTab = (t: string | undefined | null) =>
         t && allowedTabs.includes(t) ? t : 'languages'
     const [activeTab, setActiveTab] = useState(getValidTab(tab))
@@ -111,11 +112,12 @@ const ProjectPage = () => {
                     >
                         {activeTab === "bundles" && <BundlesPage project={project} />}
                     </Tab>
-                    <Tab
-                        eventKey="info"
-                        title="info"
-                    >
-                        <ProjectInfo project={project} onProviderChange={fetch} />
+                    <Tab eventKey="glossary" title="Glossary" key="glossary">
+                        {activeTab === 'glossary' && (
+                            <Suspense fallback={<Spinner size="sm" />}>
+                                <GlossaryPage project={project} />
+                            </Suspense>
+                        )}
                     </Tab>
                     {project.has_ai_provider && (
                         <Tab eventKey="verify" title="Verify" key="verify">
@@ -126,6 +128,12 @@ const ProjectPage = () => {
                             )}
                         </Tab>
                     )}
+                    <Tab
+                        eventKey="info"
+                        title="Info"
+                    >
+                        <ProjectInfo project={project} onProviderChange={fetch} />
+                    </Tab>
                 </Tabs>
                 {showImport &&
                     <ImportPage

@@ -10,3 +10,4 @@ from .transport_models import *
 from .webhook import *
 from .scope import *
 from .verification import *
+from .glossary import *

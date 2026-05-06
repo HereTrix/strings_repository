@@ -59,3 +59,34 @@ def make_access_token(project, user, permission=ProjectAccessToken.AccessTokenPe
         user=user,
         project=project,
     )
+
+
+from api.models.glossary import GlossaryTerm, GlossaryTranslation, GlossaryExtractionJob
+
+
+def make_glossary_term(project, term='Submit', definition='', case_sensitive=False, owner=None):
+    return GlossaryTerm.objects.create(
+        project=project,
+        term=term,
+        definition=definition,
+        case_sensitive=case_sensitive,
+        created_by=owner,
+    )
+
+
+def make_glossary_translation(term, language_code='DE', preferred_translation='Absenden', user=None):
+    return GlossaryTranslation.objects.create(
+        term=term,
+        language_code=language_code.upper(),
+        preferred_translation=preferred_translation,
+        updated_by=user,
+    )
+
+
+def make_extraction_job(project, user=None, status='complete', suggestions=None):
+    return GlossaryExtractionJob.objects.create(
+        project=project,
+        created_by=user,
+        status=status,
+        suggestions=suggestions or [],
+    )

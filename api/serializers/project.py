@@ -67,9 +67,14 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     languages = LanguageSerializer(many=True, read_only=True)
     role = serializers.SerializerMethodField()
     has_ai_provider = serializers.SerializerMethodField()
+    has_glossary_terms = serializers.SerializerMethodField()
 
     def get_has_ai_provider(self, obj):
         return ProjectAIProvider.objects.filter(project=obj).exists()
+
+    def get_has_glossary_terms(self, obj):
+        from api.models.glossary import GlossaryTerm
+        return GlossaryTerm.objects.filter(project=obj).exists()
 
     def get_role(self, obj):
         user = self.context['request'].user
@@ -105,7 +110,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'name', 'description',
-                  'languages', 'role', 'require_2fa', 'has_ai_provider']
+                  'languages', 'role', 'require_2fa', 'has_ai_provider', 'has_glossary_terms']
 
 
 class IntegrationSerializer(serializers.ModelSerializer):

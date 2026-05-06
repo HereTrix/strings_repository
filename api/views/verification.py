@@ -7,6 +7,7 @@ from rest_framework import generics, status
 
 from api.models.project import Project, ProjectAIProvider, ProjectRole
 from api.models.verification import VerificationComment, VerificationReport
+from api.views.helper import get_project_any_role, get_project_admin, get_project_editor_plus
 from api.serializers.verification import (
     VerificationCommentSerializer,
     VerificationReportDetailSerializer,
@@ -29,28 +30,21 @@ MODE_CHECKS = {
         'omissions_additions',
         'grammar_target',
         'tone_match',
+        'glossary_compliance',
     ],
 }
 
 
 def _get_project_any_role(pk: int, user) -> Project | None:
-    return Project.objects.filter(pk=pk, roles__user=user).first()
+    return get_project_any_role(pk, user)
 
 
 def _get_project_admin(pk: int, user) -> Project | None:
-    return Project.objects.filter(
-        pk=pk,
-        roles__user=user,
-        roles__role__in=ProjectRole.change_participants_roles,
-    ).first()
+    return get_project_admin(pk, user)
 
 
 def _get_project_editor_plus(pk: int, user) -> Project | None:
-    return Project.objects.filter(
-        pk=pk,
-        roles__user=user,
-        roles__role__in=ProjectRole.change_token_roles,
-    ).first()
+    return get_project_editor_plus(pk, user)
 
 
 def _has_active_job(project: Project, mode: str, target_language: str) -> bool:

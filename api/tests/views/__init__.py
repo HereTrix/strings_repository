@@ -8,3 +8,4 @@ from api.tests.views.import_api import *
 from api.tests.views.history import *
 from api.tests.views.webhook import *
 from api.tests.views.bundle import *
+from api.tests.views.glossary import *

@@ -61,6 +61,7 @@ export interface AIProvider {
   request_timeout?: number
   translation_instructions?: string
   verification_instructions?: string
+  glossary_extraction_instructions?: string
   providers: { value: string; label: string }[]
 }
 
@@ -78,5 +79,6 @@ export const MODE_CHECKS: Record<VerificationMode, { key: string; label: string 
     { key: 'omissions_additions', label: 'Omissions / Additions' },
     { key: 'grammar_target', label: 'Grammar in Target Language' },
     { key: 'tone_match', label: 'Tone Match' },
+    { key: 'glossary_compliance', label: 'Glossary Compliance' },
   ],
 }

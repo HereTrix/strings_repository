@@ -9,6 +9,7 @@ from api.models.tag import Tag
 from api.models.translations import Translation
 from api.models.users import TwoFAVerification, BackupCode, PasskeyCredential, PasskeyChallenge
 from api.models.verification import VerificationReport, VerificationComment
+from api.models.glossary import GlossaryTerm, GlossaryTranslation, GlossaryExtractionJob
 
 admin.site.register(ProjectRole)
 admin.site.register(Project)
@@ -65,3 +66,23 @@ class PasskeyChallengeAdmin(admin.ModelAdmin):
 class VerificationCommentAdmin(admin.ModelAdmin):
     list_display = ['id', 'report', 'token_key', 'author', 'created_at']
     search_fields = ['token_key', 'text']
+
+
+@admin.register(GlossaryTerm)
+class GlossaryTermAdmin(admin.ModelAdmin):
+    list_display = ['id', 'project', 'term', 'case_sensitive', 'created_by', 'created_at']
+    list_filter = ['case_sensitive']
+    search_fields = ['term', 'project__name']
+
+
+@admin.register(GlossaryTranslation)
+class GlossaryTranslationAdmin(admin.ModelAdmin):
+    list_display = ['id', 'term', 'language_code', 'preferred_translation', 'updated_at']
+    search_fields = ['term__term', 'language_code', 'preferred_translation']
+
+
+@admin.register(GlossaryExtractionJob)
+class GlossaryExtractionJobAdmin(admin.ModelAdmin):
+    list_display = ['id', 'project', 'status', 'created_by', 'created_at', 'completed_at']
+    list_filter = ['status']
+    search_fields = ['project__name']

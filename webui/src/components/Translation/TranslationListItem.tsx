@@ -1,7 +1,7 @@
 import { Badge, Button, Dropdown, ListGroup, Row, Spinner, Stack } from "react-bootstrap"
 import PluralFormsPanel from "../UI/PluralFormsPanel"
 import DiffView from "../UI/DiffView"
-import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, PluralForms, TranslationModel } from "../../types/Translation"
+import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, GlossaryHint, PluralForms, TranslationModel } from "../../types/Translation"
 import { FC, useEffect, useRef, useState } from "react"
 import TagsContainer from "../UI/TagsContainer"
 import MarkdownField from "../UI/MarkdownField"
@@ -138,6 +138,22 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
                     <div className="my-1 px-2 py-1 rounded border text-muted small" style={{ background: 'var(--bs-tertiary-bg)' }}>
                         <span className="fw-semibold me-1">{defaultLanguageCode ?? 'Default'}:</span>
                         {translation.default_translation}
+                    </div>
+                )}
+                {translation.glossary_hints && translation.glossary_hints.length > 0 && (
+                    <div className="my-1 px-2 py-1 rounded border small" style={{ background: 'var(--bs-tertiary-bg)', borderColor: 'var(--bs-info-border-subtle)' }}>
+                        <span className="fw-semibold text-muted me-2">Glossary:</span>
+                        {translation.glossary_hints.map((hint: GlossaryHint) => (
+                            <span key={hint.term} className="me-3">
+                                <span className="text-muted">{hint.term}</span>
+                                {hint.preferred_translation && (
+                                    <> → <span className="fw-semibold">{hint.preferred_translation}</span></>
+                                )}
+                                {!hint.preferred_translation && hint.definition && (
+                                    <span className="text-muted fst-italic ms-1">({hint.definition})</span>
+                                )}
+                            </span>
+                        ))}
                     </div>
                 )}
 

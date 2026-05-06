@@ -35,8 +35,10 @@ const AIProviderSettings: FC<AIProviderSettingsProps> = ({ project, onProviderCh
     const [requestTimeout, setRequestTimeout] = useState(120)
     const [translationInstructions, setTranslationInstructions] = useState('')
     const [verificationInstructions, setVerificationInstructions] = useState('')
+    const [glossaryExtractionInstructions, setGlossaryExtractionInstructions] = useState('')
     const [translationOpen, setTranslationOpen] = useState(false)
     const [verificationOpen, setVerificationOpen] = useState(false)
+    const [glossaryOpen, setGlossaryOpen] = useState(false)
     const [error, setError] = useState<string>()
     const [success, setSuccess] = useState(false)
 
@@ -54,8 +56,10 @@ const AIProviderSettings: FC<AIProviderSettingsProps> = ({ project, onProviderCh
                 setRequestTimeout(result.value.request_timeout ?? 120)
                 setTranslationInstructions(result.value.translation_instructions ?? '')
                 setVerificationInstructions(result.value.verification_instructions ?? '')
+                setGlossaryExtractionInstructions(result.value.glossary_extraction_instructions ?? '')
                 setTranslationOpen(!!(result.value.translation_instructions))
                 setVerificationOpen(!!(result.value.verification_instructions))
+                setGlossaryOpen(!!(result.value.glossary_extraction_instructions))
             } else if (result.value.providers.length > 0) {
                 setProviderType(result.value.providers[0].value)
             }
@@ -87,6 +91,7 @@ const AIProviderSettings: FC<AIProviderSettingsProps> = ({ project, onProviderCh
                 request_timeout: requestTimeout,
                 translation_instructions: translationInstructions,
                 verification_instructions: verificationInstructions,
+                glossary_extraction_instructions: glossaryExtractionInstructions,
             },
         })
         if (result.error) {
@@ -238,6 +243,35 @@ const AIProviderSettings: FC<AIProviderSettingsProps> = ({ project, onProviderCh
                                     Replaces the default reviewer role. Leave blank to use the default.
                                     No variables available — write plain instructions only.<br />
                                     Example: <em>"You are a senior editor for a children's book publisher. Review for age-appropriate language."</em>
+                                </Form.Text>
+                            </div>
+                        </Collapse>
+                    </div>
+                    <div>
+                        <button
+                            type="button"
+                            className="btn btn-link btn-sm p-0 text-decoration-none d-flex align-items-center gap-2"
+                            onClick={() => setGlossaryOpen(o => !o)}
+                            aria-expanded={glossaryOpen}
+                        >
+                            <span className="small">Glossary extraction instructions</span>
+                            {glossaryExtractionInstructions && <Badge bg="secondary" pill>Custom</Badge>}
+                            <span className="text-muted" style={{ fontSize: '0.6rem' }}>{glossaryOpen ? '▲' : '▼'}</span>
+                        </button>
+                        <Collapse in={glossaryOpen}>
+                            <div className="mt-2">
+                                <Form.Control
+                                    as="textarea"
+                                    rows={3}
+                                    placeholder="You are a localization expert."
+                                    value={glossaryExtractionInstructions}
+                                    onChange={e => setGlossaryExtractionInstructions(e.target.value)}
+                                    size="sm"
+                                />
+                                <Form.Text className="text-muted">
+                                    Replaces the default glossary extraction role. Leave blank to use the default.
+                                    No variables available — write plain instructions only.<br />
+                                    Example: <em>"You are a medical terminology expert. Focus on clinical terms, drug names, and anatomical vocabulary."</em>
                                 </Form.Text>
                             </div>
                         </Collapse>
