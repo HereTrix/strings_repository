@@ -1,10 +1,11 @@
 name: image build
-
+permissions:
+  contents: read
+  
 on:
   push:
     branches:
       - main
-      - dev
   pull_request:
     branches:
       - main
@@ -125,3 +126,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f testct || true
