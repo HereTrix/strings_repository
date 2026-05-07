@@ -1,6 +1,7 @@
 import re
 import zipfile
 from defusedxml import minidom
+from xml.dom.minidom import Document
 
 from django.http import HttpResponse
 
@@ -22,7 +23,7 @@ class AndroidResourceFileWriter:
         return f'/values-{code.lower()}/strings{ExportFile.android.file_extension()}'
 
     def append(self, records, code):
-        root = minidom.Document()
+        root = Document()
         xml = root.createElement('resources')
         root.appendChild(xml)
 

@@ -12,18 +12,18 @@ jobs:
 
         steps:
             - name: Checkout
-                uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+              uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
 
             - name: Setup Python
-                uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-                with:
+              uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+              with:
                 python-version: "3.14"
 
             - name: Install Bandit
-                run: pip install bandit
+              run: pip install bandit
 
             - name: Run Bandit security scan
-                run: bandit -c bandit.yml -r api/ -ll
+              run: bandit -c bandit.yml -r api/ -ll
 
     frontend-lint:
         name: Frontend Lint (ESLint)
@@ -35,15 +35,15 @@ jobs:
 
         steps:
             - name: Checkout
-                uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+              uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
 
             - name: Setup Node
-                uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
-                with:
+              uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+              with:
                 node-version: "25"
 
             - name: Install dependencies
-                run: npm ci
+              run: npm ci
 
             - name: Run ESLint
-                run: npx eslint .
+              run: npx eslint .
