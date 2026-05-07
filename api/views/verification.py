@@ -279,9 +279,16 @@ class VerificationApplyAPI(generics.GenericAPIView):
                     pf_obj.value = text
                     pf_obj.save()
                     applied += 1
-                except Exception as e:
+                except Exception:
+                    logger.exception(
+                        'Failed applying plural suggestion for token_id=%s plural_form=%s project_id=%s report_id=%s',
+                        token_id,
+                        plural_form,
+                        project.pk,
+                        report_id,
+                    )
                     errors.append(
-                        f'Token {token_id} plural {plural_form}: {e}')
+                        f'Token {token_id} plural {plural_form}: failed to apply')
             else:
                 try:
                     code = lang_code or ''
@@ -298,8 +305,14 @@ class VerificationApplyAPI(generics.GenericAPIView):
                         text=text,
                     )
                     applied += 1
-                except Exception as e:
-                    errors.append(f'Token {token_id}: {e}')
+                except Exception:
+                    logger.exception(
+                        'Failed applying suggestion for token_id=%s project_id=%s report_id=%s',
+                        token_id,
+                        project.pk,
+                        report_id,
+                    )
+                    errors.append(f'Token {token_id}: failed to apply')
 
         report.is_readonly = True
         report.save(update_fields=['is_readonly'])
