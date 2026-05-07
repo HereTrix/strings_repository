@@ -1,5 +1,6 @@
 ![build status](https://github.com/HereTrix/strings_repository/actions/workflows/main-build.yml/badge.svg)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/HereTrix/strings_repository/badge)](https://scorecard.dev/viewer/?uri=github.com/HereTrix/strings_repository)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12778/badge)](https://www.bestpractices.dev/projects/12778)
 
 # StringsRepository
 

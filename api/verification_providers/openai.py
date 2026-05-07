@@ -1,5 +1,6 @@
 import json
 import urllib.error
+from urllib.parse import urlparse
 import urllib.request
 
 from api.url_validation import validate_url_for_outbound
@@ -21,8 +22,10 @@ def _build_system_prompt(checks: list[str], project_description: str, custom_ins
             if pt:
                 lines.append(f'  - "{gt["term"]}"{cs} → "{pt}"')
             else:
-                lines.append(f'  - "{gt["term"]}"{cs} (no preferred translation for this language)')
-        glossary_part = '\nGLOSSARY TERMS (must be respected in translations):\n' + '\n'.join(lines)
+                lines.append(
+                    f'  - "{gt["term"]}"{cs} (no preferred translation for this language)')
+        glossary_part = '\nGLOSSARY TERMS (must be respected in translations):\n' + \
+            '\n'.join(lines)
     return (
         f'{role}{desc_part}{glossary_part}\n'
         f'Checks to perform: {checks_str}\n'
@@ -111,7 +114,8 @@ class OpenAIVerificationProvider(VerificationProvider):
         except ValueError as e:
             raise RuntimeError(f'Invalid endpoint URL: {e}') from e
 
-        system_prompt = _build_system_prompt(checks, project_description, self.verification_instructions, glossary_terms)
+        system_prompt = _build_system_prompt(
+            checks, project_description, self.verification_instructions, glossary_terms)
         user_message = _build_user_message(items)
 
         payload = {
@@ -133,8 +137,13 @@ class OpenAIVerificationProvider(VerificationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as response:
+            parsed = urlparse(req)
+            if not parsed.scheme == 'https':
+                raise ValueError("Blocked scheme")
+            # fmt: off
+            with urllib.request.urlopen(req, timeout=self.timeout) as response: # nosec B310
                 raw = json.loads(response.read())
+            # fmt: on
         except urllib.error.HTTPError as e:
             raise RuntimeError(
                 f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
@@ -166,7 +175,8 @@ class OpenAIVerificationProvider(VerificationProvider):
             'model': self.model_name,
             'messages': [
                 {'role': 'system', 'content': system_prompt},
-                {'role': 'user', 'content': json.dumps(strings, ensure_ascii=False)},
+                {'role': 'user', 'content': json.dumps(
+                    strings, ensure_ascii=False)},
             ],
             'response_format': {'type': 'json_object'},
         }
@@ -180,11 +190,16 @@ class OpenAIVerificationProvider(VerificationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req, timeout=90) as response:
+            parsed = urlparse(req)
+            if not parsed.scheme == 'https':
+                raise ValueError("Blocked scheme")
+            with urllib.request.urlopen(req, timeout=90) as response:  # nosec B310
                 raw = json.loads(response.read())
         except urllib.error.HTTPError as e:
-            raise RuntimeError(f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
-        content = raw.get('choices', [{}])[0].get('message', {}).get('content', '')
+            raise RuntimeError(
+                f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
+        content = raw.get('choices', [{}])[0].get(
+            'message', {}).get('content', '')
         return _parse_glossary_response(content)
 
     def rank_by_similarity(self, source: str, candidates: list[dict]) -> list[dict]:
@@ -205,7 +220,8 @@ class OpenAIVerificationProvider(VerificationProvider):
         user_message = json.dumps({
             'source': source[:500],
             'candidates': [
-                {'token_key': c['token_key'], 'source_text': c['source_text'][:500]}
+                {'token_key': c['token_key'],
+                    'source_text': c['source_text'][:500]}
                 for c in candidates
             ]
         }, ensure_ascii=False)
@@ -228,13 +244,17 @@ class OpenAIVerificationProvider(VerificationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req, timeout=10) as response:
+            parsed = urlparse(req)
+            if not parsed.scheme == 'https':
+                raise ValueError("Blocked scheme")
+            with urllib.request.urlopen(req, timeout=10) as response:  # nosec B310
                 raw = json.loads(response.read())
         except Exception:
             return candidates
 
         try:
-            content = raw.get('choices', [{}])[0].get('message', {}).get('content', '')
+            content = raw.get('choices', [{}])[0].get(
+                'message', {}).get('content', '')
             parsed = json.loads(content)
             if isinstance(parsed, dict):
                 for val in parsed.values():
@@ -248,7 +268,8 @@ class OpenAIVerificationProvider(VerificationProvider):
             return candidates
 
         key_to_candidate = {c['token_key']: c for c in candidates}
-        result = [key_to_candidate[k] for k in ordered_keys if k in key_to_candidate]
+        result = [key_to_candidate[k]
+                  for k in ordered_keys if k in key_to_candidate]
         seen = set(ordered_keys)
         result += [c for c in candidates if c['token_key'] not in seen]
         return result

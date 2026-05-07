@@ -31,7 +31,8 @@ class ConnectedAIProvider(TranslationProvider):
             raise RuntimeError(f'Invalid endpoint URL: {e}') from e
 
         try:
-            directive = self.translation_instructions.format(target_lang=target_lang) if self.translation_instructions else f'Translate to {target_lang}.'
+            directive = self.translation_instructions.format(
+                target_lang=target_lang) if self.translation_instructions else f'Translate to {target_lang}.'
         except KeyError:
             directive = self.translation_instructions
         system_content = f'{directive}\nReturn only the translation, no explanations.'
@@ -52,10 +53,13 @@ class ConnectedAIProvider(TranslationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req, timeout=60) as response:
+            # fmt: off
+            with urllib.request.urlopen(req, timeout=60) as response: # nosec B310: URL validated by validate_url_for_outbound()
                 raw = json.loads(response.read())
+            # fmt: on
         except urllib.error.HTTPError as e:
-            raise RuntimeError(f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
+            raise RuntimeError(
+                f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
 
         return raw.get('choices', [{}])[0].get('message', {}).get('content', '').strip()
 
@@ -67,7 +71,8 @@ class ConnectedAIProvider(TranslationProvider):
             raise RuntimeError(f'Invalid endpoint URL: {e}') from e
 
         try:
-            directive = self.translation_instructions.format(target_lang=target_lang) if self.translation_instructions else f'Translate to {target_lang}.'
+            directive = self.translation_instructions.format(
+                target_lang=target_lang) if self.translation_instructions else f'Translate to {target_lang}.'
         except KeyError:
             directive = self.translation_instructions
         system_content = f'{directive}\nReturn only the translation, no explanations.'
@@ -88,9 +93,12 @@ class ConnectedAIProvider(TranslationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req, timeout=60) as response:
+            # fmt: off
+            with urllib.request.urlopen(req, timeout=60) as response:  # nosec B310: URL validated by validate_url_for_outbound()
                 raw = json.loads(response.read())
+            # fmt: on
         except urllib.error.HTTPError as e:
-            raise RuntimeError(f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
+            raise RuntimeError(
+                f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
 
         return raw.get('content', [{}])[0].get('text', '').strip()

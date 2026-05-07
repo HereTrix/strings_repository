@@ -1,4 +1,4 @@
-from xml.dom import minidom
+from defusedxml import minidom
 import zipfile
 
 from django.http import HttpResponse
@@ -46,7 +46,8 @@ class DotNetFileWriter(TranslationFileWriter):
         for record in records:
             plural_forms = getattr(record, 'plural_forms', None) or {}
             if plural_forms:
-                first_present_form = next((f for f in PLURAL_FORM_ORDER if f in plural_forms), None)
+                first_present_form = next(
+                    (f for f in PLURAL_FORM_ORDER if f in plural_forms), None)
                 for form in PLURAL_FORM_ORDER:
                     if form not in plural_forms:
                         continue

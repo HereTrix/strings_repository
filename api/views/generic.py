@@ -93,7 +93,7 @@ class ProfileAPI(generics.GenericAPIView):
             user.save()
         except Exception as e:
             return Response({
-                'error': e
+                'error': 'Updates failed'
             }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = UserSerializer(user)
@@ -137,7 +137,7 @@ class ActivateProjectAPI(generics.GenericAPIView):
 
         except Exception as e:
             return Response({
-                'error': e
+                'error': 'Code activation failed'
             }, status=status.HTTP_400_BAD_REQUEST)
 
 

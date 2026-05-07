@@ -1,5 +1,6 @@
 import json
 import urllib.error
+from urllib.parse import urlparse
 import urllib.request
 
 from api.translation_providers.base import TranslationProvider
@@ -50,10 +51,14 @@ class GenericAIProvider(TranslationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req) as response:
+            parsed = urlparse(req)
+            if not parsed.scheme == 'https':
+                raise ValueError("Blocked scheme")
+            with urllib.request.urlopen(req) as response:  # nosec B310
                 result = json.loads(response.read())
         except urllib.error.HTTPError as e:
-            raise RuntimeError(f'AI provider error {e.code}: {e.read().decode()}') from e
+            raise RuntimeError(
+                f'AI provider error {e.code}: {e.read().decode()}') from e
 
         return self._extract(result, self.response_path)
 
@@ -62,9 +67,12 @@ class GenericAIProvider(TranslationProvider):
         current = data
         for part in parts:
             try:
-                current = current[int(part)] if isinstance(current, list) else current[part]
+                current = current[int(part)] if isinstance(
+                    current, list) else current[part]
             except (KeyError, IndexError, TypeError, ValueError) as e:
-                raise RuntimeError(f'Cannot extract response_path "{path}": failed at "{part}"') from e
+                raise RuntimeError(
+                    f'Cannot extract response_path "{path}": failed at "{part}"') from e
         if not isinstance(current, str):
-            raise RuntimeError(f'response_path "{path}" resolved to {type(current).__name__}, expected str')
+            raise RuntimeError(
+                f'response_path "{path}" resolved to {type(current).__name__}, expected str')
         return current
