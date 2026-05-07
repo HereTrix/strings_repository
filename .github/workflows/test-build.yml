@@ -54,6 +54,10 @@ jobs:
     name: Web UI tests
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: webui
+
     steps:
       - name: Checkout
         uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
