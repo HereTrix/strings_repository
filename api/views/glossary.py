@@ -1,11 +1,11 @@
 import csv
 import io
-import random
-from datetime import datetime, timezone
+import logging
 
 from django.db import transaction
-from django.http import HttpResponse, JsonResponse
 from django_q.tasks import async_task
+from django.http import HttpResponse
+from rest_framework.response import Response
 from rest_framework import generics, status
 
 from api.models.glossary import GlossaryExtractionJob, GlossaryTerm, GlossaryTranslation
@@ -14,29 +14,31 @@ from api.serializers.glossary import GlossaryExtractionJobSerializer, GlossaryTe
 from api.throttles import AICallRateThrottle
 from api.views.helper import get_project_admin, get_project_any_role
 
+logger = logging.getLogger(__name__)
+
 
 class GlossaryTermListCreateAPI(generics.GenericAPIView):
 
     def get(self, request, pk):
         project = get_project_any_role(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         terms = GlossaryTerm.objects.filter(
             project=project).prefetch_related('translations')
         serializer = GlossaryTermSerializer(terms, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
 
     def post(self, request, pk):
         project = get_project_admin(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
 
         term_value = request.data.get('term', '').strip()
         if not term_value:
-            return JsonResponse({'error': 'term is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'term is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         if GlossaryTerm.objects.filter(project=project, term__iexact=term_value).exists():
-            return JsonResponse({'error': 'A term with this name already exists'}, status=status.HTTP_409_CONFLICT)
+            return Response({'error': 'A term with this name already exists'}, status=status.HTTP_409_CONFLICT)
 
         definition = request.data.get('definition', '')
         case_sensitive = bool(request.data.get('case_sensitive', False))
@@ -57,7 +59,7 @@ class GlossaryTermListCreateAPI(generics.GenericAPIView):
             GlossaryTerm.objects.prefetch_related(
                 'translations').get(pk=term.pk)
         )
-        return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class GlossaryTermDetailAPI(generics.GenericAPIView):
@@ -66,23 +68,23 @@ class GlossaryTermDetailAPI(generics.GenericAPIView):
         if require_admin:
             project = get_project_admin(pk, request.user)
             if not project:
-                return None, None, JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+                return None, None, Response({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
         else:
             project = get_project_any_role(pk, request.user)
             if not project:
-                return None, None, JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+                return None, None, Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         try:
             term = GlossaryTerm.objects.prefetch_related(
                 'translations').get(pk=term_id, project=project)
             return project, term, None
         except GlossaryTerm.DoesNotExist:
-            return None, None, JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return None, None, Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request, pk, term_id):
         _, term, err = self._get_term(request, pk, term_id)
         if err:
             return err
-        return JsonResponse(GlossaryTermSerializer(term).data)
+        return Response(GlossaryTermSerializer(term).data)
 
     def put(self, request, pk, term_id):
         project, term, err = self._get_term(
@@ -96,7 +98,7 @@ class GlossaryTermDetailAPI(generics.GenericAPIView):
                 project=project, term__iexact=new_term_value
             ).exclude(pk=term.pk).exists()
             if conflict:
-                return JsonResponse({'error': 'A term with this name already exists'}, status=status.HTTP_409_CONFLICT)
+                return Response({'error': 'A term with this name already exists'}, status=status.HTTP_409_CONFLICT)
 
         with transaction.atomic():
             term.term = new_term_value
@@ -114,14 +116,14 @@ class GlossaryTermDetailAPI(generics.GenericAPIView):
             GlossaryTerm.objects.prefetch_related(
                 'translations').get(pk=term.pk)
         )
-        return JsonResponse(serializer.data)
+        return Response(serializer.data)
 
     def delete(self, request, pk, term_id):
         _, term, err = self._get_term(request, pk, term_id, require_admin=True)
         if err:
             return err
         term.delete()
-        return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
+        return Response({}, status=status.HTTP_204_NO_CONTENT)
 
 
 def _save_translations(term, translations_data, user, project):
@@ -156,7 +158,7 @@ class GlossaryExportAPI(generics.GenericAPIView):
     def get(self, request, pk):
         project = get_project_any_role(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
         terms = GlossaryTerm.objects.filter(
             project=project).prefetch_related('translations').order_by('term')
@@ -188,11 +190,11 @@ class GlossaryImportAPI(generics.GenericAPIView):
     def post(self, request, pk):
         project = get_project_admin(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
 
         uploaded = request.FILES.get('file')
         if not uploaded:
-            return JsonResponse({'error': 'file is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'file is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         from api.models.language import Language
         valid_codes = set(Language.objects.filter(
@@ -202,7 +204,8 @@ class GlossaryImportAPI(generics.GenericAPIView):
             decoded = uploaded.read().decode('utf-8-sig')
             reader = csv.DictReader(io.StringIO(decoded))
         except Exception as e:
-            return JsonResponse({'error': f'Could not parse CSV: {e}'}, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(e)
+            return Response({'error': f'Could not parse CSV'}, status=status.HTTP_400_BAD_REQUEST)
 
         imported = 0
         updated = 0
@@ -259,7 +262,7 @@ class GlossaryImportAPI(generics.GenericAPIView):
                         term_obj, data['translations'], request.user, project)
                     imported += 1
 
-        return JsonResponse({'imported': imported, 'updated': updated, 'skipped': skipped, 'warnings': warnings})
+        return Response({'imported': imported, 'updated': updated, 'skipped': skipped, 'warnings': warnings})
 
 
 class GlossaryExtractionAPI(generics.GenericAPIView):
@@ -272,19 +275,19 @@ class GlossaryExtractionAPI(generics.GenericAPIView):
     def get(self, request, pk):
         project = get_project_any_role(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         job = GlossaryExtractionJob.objects.filter(project=project).first()
         if not job:
-            return JsonResponse({'error': 'No extraction job found'}, status=status.HTTP_404_NOT_FOUND)
-        return JsonResponse(GlossaryExtractionJobSerializer(job).data)
+            return Response({'error': 'No extraction job found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(GlossaryExtractionJobSerializer(job).data)
 
     def post(self, request, pk):
         project = get_project_admin(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
 
         if not ProjectAIProvider.objects.filter(project=project).exists():
-            return JsonResponse({'error': 'No AI provider configured'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No AI provider configured'}, status=status.HTTP_400_BAD_REQUEST)
 
         active = GlossaryExtractionJob.objects.filter(
             project=project,
@@ -292,7 +295,7 @@ class GlossaryExtractionAPI(generics.GenericAPIView):
                         GlossaryExtractionJob.Status.running]
         ).exists()
         if active:
-            return JsonResponse(
+            return Response(
                 {'error': 'An extraction job is already running'},
                 status=status.HTTP_409_CONFLICT
             )
@@ -300,7 +303,7 @@ class GlossaryExtractionAPI(generics.GenericAPIView):
         job = GlossaryExtractionJob.objects.create(
             project=project, created_by=request.user)
         async_task('api.tasks.run_glossary_extraction_job', job.pk)
-        return JsonResponse(GlossaryExtractionJobSerializer(job).data, status=status.HTTP_201_CREATED)
+        return Response(GlossaryExtractionJobSerializer(job).data, status=status.HTTP_201_CREATED)
 
 
 class GlossarySuggestionsAPI(generics.GenericAPIView):
@@ -308,43 +311,43 @@ class GlossarySuggestionsAPI(generics.GenericAPIView):
     def get(self, request, pk):
         project = get_project_admin(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
         job = GlossaryExtractionJob.objects.filter(
             project=project, status=GlossaryExtractionJob.Status.complete
         ).first()
         if not job or not job.suggestions:
-            return JsonResponse([], safe=False)
-        return JsonResponse(job.suggestions, safe=False)
+            return Response([])
+        return Response(job.suggestions)
 
     def patch(self, request, pk):
         project = get_project_admin(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
 
         job = GlossaryExtractionJob.objects.filter(
             project=project, status=GlossaryExtractionJob.Status.complete
         ).select_for_update().first()
         if not job or not job.suggestions:
-            return JsonResponse({'error': 'No completed extraction job with suggestions'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'No completed extraction job with suggestions'}, status=status.HTTP_404_NOT_FOUND)
 
         index = request.data.get('index')
         action = request.data.get('action')
         if index is None or action not in ('accept', 'reject'):
-            return JsonResponse({'error': 'index and action (accept|reject) are required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'index and action (accept|reject) are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             index = int(index)
             suggestion = job.suggestions[index]
         except (IndexError, TypeError, ValueError):
-            return JsonResponse({'error': 'Invalid index'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid index'}, status=status.HTTP_400_BAD_REQUEST)
 
         if suggestion.get('status') in ('accepted', 'rejected'):
-            return JsonResponse({'error': 'Suggestion already reviewed'}, status=status.HTTP_409_CONFLICT)
+            return Response({'error': 'Suggestion already reviewed'}, status=status.HTTP_409_CONFLICT)
 
         if action == 'reject':
             job.suggestions[index]['status'] = 'rejected'
             job.save(update_fields=['suggestions'])
-            return JsonResponse({'suggestion': job.suggestions[index]})
+            return Response({'suggestion': job.suggestions[index]})
 
         term_value = (request.data.get('term')
                       or suggestion.get('term', '')).strip()
@@ -354,7 +357,7 @@ class GlossarySuggestionsAPI(generics.GenericAPIView):
             'translations', suggestion.get('translations', []))
 
         if not term_value:
-            return JsonResponse({'error': 'term is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'term is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             existing = GlossaryTerm.objects.filter(
@@ -378,4 +381,4 @@ class GlossarySuggestionsAPI(generics.GenericAPIView):
             job.suggestions[index]['status'] = 'accepted'
             job.save(update_fields=['suggestions'])
 
-        return JsonResponse({'suggestion': job.suggestions[index]})
+        return Response({'suggestion': job.suggestions[index]})

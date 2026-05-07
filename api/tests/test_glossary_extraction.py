@@ -255,7 +255,7 @@ class RunGlossaryExtractionJobTests(TestCase):
         run_glossary_extraction_job(job.pk)
         job.refresh_from_db()
         self.assertEqual(job.status, 'failed')
-        self.assertIn('API error', job.error_message)
+        self.assertIn('Extraction job failed', job.error_message)
 
     @patch('api.verification_providers.get_verification_provider')
     def test_task_caps_strings_at_200(self, mock_get_provider):

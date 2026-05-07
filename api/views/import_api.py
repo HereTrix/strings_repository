@@ -1,7 +1,6 @@
-from datetime import datetime
-from django.http import JsonResponse
+from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
-from rest_framework import generics, permissions, status, views
+from rest_framework import status, views
 
 from api import dispatcher
 from api.file_processors.file_processor import FileImporter
@@ -10,7 +9,6 @@ from api.models.language import Language
 from api.models.string_token import StringToken
 from api.models.translations import Translation
 from api.models.tag import Tag
-from api.models.transport_models import TranslationModel
 
 
 class ImportAPI(views.APIView):
@@ -22,15 +20,16 @@ class ImportAPI(views.APIView):
         tags = request.POST.get('tags')
         project_id = request.POST.get('project_id')
         file = request.FILES.get('file')
-        deprecate_missing = request.POST.get('deprecate_missing', 'false').lower() == 'true'
+        deprecate_missing = request.POST.get(
+            'deprecate_missing', 'false').lower() == 'true'
 
         if not file:
-            return JsonResponse({
+            return Response({
                 'error': 'No localization file'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if not project_id:
-            return JsonResponse({
+            return Response({
                 'error': 'No project_id'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -42,21 +41,21 @@ class ImportAPI(views.APIView):
                 roles__role__in=ProjectRole.change_token_roles,
             )
         except Project.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': 'Not allowed'
             }, status=status.HTTP_403_FORBIDDEN)
 
         # Deprecating missing tokens is a bulk destructive action — owner/admin only
         if deprecate_missing:
             if tags:
-                return JsonResponse({
+                return Response({
                     'error': 'deprecate_missing cannot be used with a tag filter — '
                              'a partial import does not represent the full token set.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             user_role = project.roles.get(user=user).role
             if user_role not in ProjectRole.change_participants_roles:
-                return JsonResponse({
+                return Response({
                     'error': 'Deprecating missing tokens requires owner or admin role.'
                 }, status=status.HTTP_403_FORBIDDEN)
 
@@ -64,14 +63,14 @@ class ImportAPI(views.APIView):
             importer = FileImporter(file=file)
 
             if importer.needs_language_code() and not code:
-                return JsonResponse({
+                return Response({
                     'error': 'No language code'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             records = importer.parse()
-        except FileImporter.UnsupportedFile as e:
-            return JsonResponse({
-                'error': str(e)
+        except FileImporter.UnsupportedFile:
+            return Response({
+                'error': 'Unsupported file format'
             }, status=status.HTTP_404_NOT_FOUND)
 
         tag_models = []
@@ -109,11 +108,11 @@ class ImportAPI(views.APIView):
                 imported_keys.add(record.token)
                 imported_count += 1
             except Project.DoesNotExist:
-                return JsonResponse({
+                return Response({
                     'error': 'Unable to import into project'
                 }, status=status.HTTP_404_NOT_FOUND)
             except Language.DoesNotExist:
-                return JsonResponse({
+                return Response({
                     'error': 'Unable to import with language code'
                 }, status=status.HTTP_404_NOT_FOUND)
 
@@ -138,7 +137,7 @@ class ImportAPI(views.APIView):
             actor=user.email,
         )
 
-        return JsonResponse({
+        return Response({
             'imported': imported_count,
             'deprecated': deprecated_count,
         })

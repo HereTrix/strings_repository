@@ -1,12 +1,9 @@
-import json
+from rest_framework.response import Response
+from rest_framework import generics, status
 
-from django.http import JsonResponse
-from rest_framework import generics, permissions, status
-
-from api import dispatcher
 from api.crypto import decrypt, encrypt
 from api.models.project import Project, ProjectRole
-from api.models.webhook import WebhookDeliveryLog, WebhookEndpoint
+from api.models.webhook import WebhookEndpoint
 
 
 _HTTP_STATUS_HINTS = {
@@ -79,27 +76,27 @@ class WebhookListAPI(generics.GenericAPIView):
     def get(self, request, pk):
         project = _get_project_for_admin(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
         endpoints = project.webhooks.all()
-        return JsonResponse([_serialize_endpoint(e) for e in endpoints], safe=False)
+        return Response([_serialize_endpoint(e) for e in endpoints])
 
     def post(self, request, pk):
         project = _get_project_for_admin(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
         url = request.data.get('url', '').strip()
         title = request.data.get('title', '').strip()
         if not url:
-            return JsonResponse({'error': 'url is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'url is required'}, status=status.HTTP_400_BAD_REQUEST)
         if not title:
-            return JsonResponse({'error': 'title is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'title is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         events = request.data.get('events', [])
         unknown = [e for e in events if e not in WebhookEndpoint.EVENTS]
         if unknown:
-            return JsonResponse(
+            return Response(
                 {'error': f'Unknown event types: {unknown}'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -119,7 +116,7 @@ class WebhookListAPI(generics.GenericAPIView):
         endpoint.save()
 
         # Reveal signing_secret only on creation so the user can copy it.
-        return JsonResponse(_serialize_endpoint(endpoint, reveal_secret=True), status=status.HTTP_201_CREATED)
+        return Response(_serialize_endpoint(endpoint, reveal_secret=True), status=status.HTTP_201_CREATED)
 
 
 class WebhookDetailAPI(generics.GenericAPIView):
@@ -127,17 +124,17 @@ class WebhookDetailAPI(generics.GenericAPIView):
     def _get_endpoint(self, pk: int, webhook_id: int, user):
         project = _get_project_for_admin(pk, user)
         if not project:
-            return None, JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return None, Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         try:
             return project.webhooks.get(pk=webhook_id), None
         except WebhookEndpoint.DoesNotExist:
-            return None, JsonResponse({'error': 'Webhook not found'}, status=status.HTTP_404_NOT_FOUND)
+            return None, Response({'error': 'Webhook not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request, pk, webhook_id):
         endpoint, err = self._get_endpoint(pk, webhook_id, request.user)
         if err:
             return err
-        return JsonResponse(_serialize_endpoint(endpoint))
+        return Response(_serialize_endpoint(endpoint))
 
     def put(self, request, pk, webhook_id):
         endpoint, err = self._get_endpoint(pk, webhook_id, request.user)
@@ -147,13 +144,13 @@ class WebhookDetailAPI(generics.GenericAPIView):
         if 'title' in request.data:
             title = request.data['title'].strip()
             if not title:
-                return JsonResponse({'error': 'title cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'title cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
             endpoint.title = title
 
         if 'url' in request.data:
             url = request.data['url'].strip()
             if not url:
-                return JsonResponse({'error': 'url cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'url cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
             endpoint.url = encrypt(url)
 
         if 'auth_token' in request.data:
@@ -167,7 +164,7 @@ class WebhookDetailAPI(generics.GenericAPIView):
             events = request.data['events']
             unknown = [e for e in events if e not in WebhookEndpoint.EVENTS]
             if unknown:
-                return JsonResponse(
+                return Response(
                     {'error': f'Unknown event types: {unknown}'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -177,14 +174,14 @@ class WebhookDetailAPI(generics.GenericAPIView):
             endpoint.is_active = bool(request.data['is_active'])
 
         endpoint.save()
-        return JsonResponse(_serialize_endpoint(endpoint))
+        return Response(_serialize_endpoint(endpoint))
 
     def delete(self, request, pk, webhook_id):
         endpoint, err = self._get_endpoint(pk, webhook_id, request.user)
         if err:
             return err
         endpoint.delete()
-        return JsonResponse({}, status=status.HTTP_200_OK)
+        return Response({}, status=status.HTTP_200_OK)
 
 
 class WebhookVerifyAPI(generics.GenericAPIView):
@@ -192,11 +189,11 @@ class WebhookVerifyAPI(generics.GenericAPIView):
     def post(self, request, pk, webhook_id):
         project = _get_project_for_admin(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         try:
             endpoint = project.webhooks.get(pk=webhook_id)
         except WebhookEndpoint.DoesNotExist:
-            return JsonResponse({'error': 'Webhook not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Webhook not found'}, status=status.HTTP_404_NOT_FOUND)
 
         # Run synchronously so we can read the delivery result immediately.
         # Bypasses the subscription filter — verify always delivers regardless of subscribed events.
@@ -214,7 +211,7 @@ class WebhookVerifyAPI(generics.GenericAPIView):
         log = endpoint.logs.order_by('-delivered_at').first()
 
         if log and log.status_code and 200 <= log.status_code < 300:
-            return JsonResponse({'status_code': log.status_code})
+            return Response({'status_code': log.status_code})
 
         if log and log.status_code:
             error_msg = _http_error_message(log.status_code, log.error)
@@ -223,7 +220,7 @@ class WebhookVerifyAPI(generics.GenericAPIView):
         else:
             error_msg = 'No delivery attempt was recorded.'
 
-        return JsonResponse({'error': error_msg}, status=status.HTTP_502_BAD_GATEWAY)
+        return Response({'error': error_msg}, status=status.HTTP_502_BAD_GATEWAY)
 
 
 class WebhookLogsAPI(generics.GenericAPIView):
@@ -231,11 +228,11 @@ class WebhookLogsAPI(generics.GenericAPIView):
     def get(self, request, pk, webhook_id):
         project = _get_project_for_admin(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         try:
             endpoint = project.webhooks.get(pk=webhook_id)
         except WebhookEndpoint.DoesNotExist:
-            return JsonResponse({'error': 'Webhook not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Webhook not found'}, status=status.HTTP_404_NOT_FOUND)
 
         logs = endpoint.logs.all()[:50]
         data = [
@@ -248,11 +245,11 @@ class WebhookLogsAPI(generics.GenericAPIView):
             }
             for log in logs
         ]
-        return JsonResponse(data, safe=False)
+        return Response(data)
 
 
 class WebhookEventsAPI(generics.GenericAPIView):
     """Returns the list of all supported event types."""
 
     def get(self, request, pk):
-        return JsonResponse(WebhookEndpoint.EVENTS, safe=False)
+        return Response(WebhookEndpoint.EVENTS)

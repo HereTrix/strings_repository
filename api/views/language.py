@@ -1,5 +1,5 @@
-from django.http import JsonResponse
-from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework import generics, status
 import django.core.exceptions as exception
 
 from api import dispatcher
@@ -18,11 +18,11 @@ class LanguageAPI(generics.GenericAPIView):
         project_id = request.data['project']
 
         if code is None:
-            return JsonResponse({
+            return Response({
                 'error': 'Code is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         if project_id is None:
-            return JsonResponse({
+            return Response({
                 'error': 'Project is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -32,15 +32,11 @@ class LanguageAPI(generics.GenericAPIView):
                 roles__role__in=ProjectRole.change_language_roles
             )
         except Project.DoesNotExist:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
-        except exception.ValidationError as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({}, status=status.HTTP_404_NOT_FOUND)
 
         try:
             Language.objects.get(code=code, project=project)
-            return JsonResponse({
+            return Response({
                 'error': 'Project already has this language'
             }, status=status.HTTP_400_BAD_REQUEST)
         except Language.DoesNotExist:
@@ -56,7 +52,7 @@ class LanguageAPI(generics.GenericAPIView):
             actor=user.email,
         )
 
-        return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
+        return Response({}, status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request):
         user = request.user
@@ -64,11 +60,11 @@ class LanguageAPI(generics.GenericAPIView):
         project_id = request.data['project']
 
         if code is None:
-            return JsonResponse({
+            return Response({
                 'error': 'Code is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         if project_id is None:
-            return JsonResponse({
+            return Response({
                 'error': 'Project is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -76,13 +72,9 @@ class LanguageAPI(generics.GenericAPIView):
             project = Project.objects.get(
                 pk=project_id, roles__user=user, roles__role__in=ProjectRole.change_language_roles)
         except Project.DoesNotExist as e:
-            return JsonResponse({
-                'error': str(e)
+            return Response({
+                'error': 'Project not found'
             }, status=status.HTTP_404_NOT_FOUND)
-        except exception.ValidationError as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             language = Language.objects.get(code=code, project=project)
@@ -93,9 +85,9 @@ class LanguageAPI(generics.GenericAPIView):
                 payload={'language': code.upper()},
                 actor=user.email,
             )
-            return JsonResponse({}, status=status.HTTP_200_OK)
+            return Response({}, status=status.HTTP_200_OK)
         except Language.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': "Language doesn't exist"
             }, status=status.HTTP_404_NOT_FOUND)
 
@@ -110,15 +102,16 @@ class SetDefaultLanguageAPI(generics.GenericAPIView):
                 roles__role__in=ProjectRole.change_language_roles,
             )
         except Project.DoesNotExist:
-            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             language = Language.objects.get(code=code.upper(), project=project)
         except Language.DoesNotExist:
-            return JsonResponse({'error': 'Language not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Language not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        Language.objects.filter(project=project, is_default=True).update(is_default=False)
+        Language.objects.filter(
+            project=project, is_default=True).update(is_default=False)
         language.is_default = True
         language.save()
 
-        return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)

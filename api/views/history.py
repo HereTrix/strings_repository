@@ -1,10 +1,14 @@
 from datetime import datetime
-from django.http import HttpResponse, JsonResponse
+import logging
+from django.http import HttpResponse
+from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 from api.file_processors.history_file import HistoryFileWriter
 
 from api.models.history import HistoryRecord
 from api.serializers.history import HistorySerializer
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectHistoryAPI(generics.GenericAPIView):
@@ -14,7 +18,7 @@ class ProjectHistoryAPI(generics.GenericAPIView):
         time_from = request.GET.get('from')
         time_to = request.GET.get('to')
         if not time_from and not time_to:
-            return JsonResponse({
+            return Response({
                 'error': 'Missing time range'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -38,10 +42,11 @@ class ProjectHistoryAPI(generics.GenericAPIView):
             records = records.order_by('updated_at')
 
             serializer = HistorySerializer(records, many=True)
-            return JsonResponse(serializer.data, safe=False)
+            return Response(serializer.data)
         except Exception as e:
-            return JsonResponse({
-                'error': e
+            logger.error(e)
+            return Response({
+                'error': 'Failed to retrieve history'
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -52,7 +57,7 @@ class ProjectHistoryExportAPI(generics.GenericAPIView):
         time_from = request.GET.get('from')
         time_to = request.GET.get('to')
         if not time_from and not time_to:
-            return JsonResponse({
+            return Response({
                 'error': 'Missing time range'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -83,6 +88,7 @@ class ProjectHistoryExportAPI(generics.GenericAPIView):
             writer.write(response=response)
             return response
         except Exception as e:
-            return JsonResponse({
-                'error': e
+            logger.error(e)
+            return Response({
+                'error': 'Failed to export history records'
             }, status=status.HTTP_400_BAD_REQUEST)

@@ -2,9 +2,8 @@ from api import dispatcher
 from api.models.history import HistoryRecord
 from api.models.language import Language
 from api.models.project import Project, ProjectRole
-from django.http import JsonResponse
-import django.core.exceptions as exception
-from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework import generics, status
 from datetime import datetime
 
 from api.models.tag import Tag
@@ -32,7 +31,7 @@ class StringTokenAPI(generics.GenericAPIView):
         tags = request.data.get('tags')
 
         if key is None:
-            return JsonResponse({
+            return Response({
                 'error': 'Token is not defined'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -43,16 +42,12 @@ class StringTokenAPI(generics.GenericAPIView):
                 roles__role__in=ProjectRole.change_token_roles
             )
         except Project.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': 'Project not found'
             }, status=status.HTTP_404_NOT_FOUND)
-        except exception.ValidationError as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
 
         if StringToken.objects.filter(project=project, token=key).exists():
-            return JsonResponse({
+            return Response({
                 'error': f"Token '{key}' already exists in this project."
             }, status=status.HTTP_409_CONFLICT)
 
@@ -79,14 +74,14 @@ class StringTokenAPI(generics.GenericAPIView):
             token.save()
 
         serializer = StringTokenSerializer(token, )
-        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request):
         user = request.user
         token_id = request.data['id']
 
         if token_id is None:
-            return JsonResponse({
+            return Response({
                 'error': 'id is not defined'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -97,13 +92,9 @@ class StringTokenAPI(generics.GenericAPIView):
                 project__roles__role__in=ProjectRole.change_participants_roles
             )
         except StringToken.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': 'Token not found'
             }, status=status.HTTP_404_NOT_FOUND)
-        except exception.ValidationError as e:
-            return JsonResponse({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
 
         token_name = token.token
         project = token.project
@@ -119,7 +110,7 @@ class StringTokenAPI(generics.GenericAPIView):
             actor=user.email,
         )
 
-        return JsonResponse({}, status=status.HTTP_200_OK)
+        return Response({}, status=status.HTTP_200_OK)
 
 
 class TranslationAPI(generics.GenericAPIView):
@@ -129,19 +120,19 @@ class TranslationAPI(generics.GenericAPIView):
         project_id = request.data['project_id']
 
         if project_id is None:
-            return JsonResponse({
+            return Response({
                 'error': 'project_id is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         code = request.data['code']
         if code is None:
-            return JsonResponse({
+            return Response({
                 'error': 'code is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         token_key = request.data['token']
         if token_key is None:
-            return JsonResponse({
+            return Response({
                 'error': 'token is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -154,7 +145,7 @@ class TranslationAPI(generics.GenericAPIView):
         ).first()
 
         if token is None:
-            return JsonResponse({
+            return Response({
                 'error': 'Token not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
@@ -171,7 +162,7 @@ class TranslationAPI(generics.GenericAPIView):
                 text=text
             )
         except Language.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': 'Language not found'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -186,7 +177,7 @@ class TranslationAPI(generics.GenericAPIView):
             actor=user.email,
         )
 
-        return JsonResponse({
+        return Response({
             'code': code,
             'img': Langcoder.flag(code),
             'translation': translation.translation if translation else '',
@@ -205,31 +196,31 @@ class TranslationStatusAPI(generics.GenericAPIView):
         project_id = request.data['project_id']
 
         if project_id is None:
-            return JsonResponse({
+            return Response({
                 'error': 'project_id is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         code = request.data['code']
         if code is None:
-            return JsonResponse({
+            return Response({
                 'error': 'code is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         token_key = request.data['token']
         if token_key is None:
-            return JsonResponse({
+            return Response({
                 'error': 'token is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         status_value = request.data.get('status')
 
         if status_value is None:
-            return JsonResponse({
+            return Response({
                 'error': 'Status is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if status_value not in Translation.Status.values or status_value == Translation.Status.new:
-            return JsonResponse({
+            return Response({
                 'error': 'Invalid status value'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -265,7 +256,7 @@ class TranslationStatusAPI(generics.GenericAPIView):
         )
 
         serializer = TranslationSerializer(translation)
-        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class StringTokenTagAPI(generics.GenericAPIView):
@@ -281,7 +272,7 @@ class StringTokenTagAPI(generics.GenericAPIView):
                 project__roles__role__in=ProjectRole.change_token_roles
             )
         except StringToken.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': 'Token not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
@@ -291,7 +282,7 @@ class StringTokenTagAPI(generics.GenericAPIView):
             token.tags.add(token_tag)
         token.save()
 
-        return JsonResponse({})
+        return Response({})
 
 
 class StringTokenStatusAPI(generics.GenericAPIView):
@@ -301,12 +292,12 @@ class StringTokenStatusAPI(generics.GenericAPIView):
         status_value = request.data.get('status')
 
         if status_value is None:
-            return JsonResponse({
+            return Response({
                 'error': 'Status is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if status_value not in StringToken.Status.values:
-            return JsonResponse({
+            return Response({
                 'error': 'Invalid status value'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -317,7 +308,7 @@ class StringTokenStatusAPI(generics.GenericAPIView):
                 project__roles__role__in=ProjectRole.change_token_roles
             )
         except StringToken.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': 'Token not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
@@ -332,7 +323,7 @@ class StringTokenStatusAPI(generics.GenericAPIView):
         )
 
         serializer = StringTokenSerializer(token)
-        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class StringTokenTranslationsAPI(generics.GenericAPIView):
@@ -346,7 +337,7 @@ class StringTokenTranslationsAPI(generics.GenericAPIView):
                 project__roles__user=user,
             )
         except StringToken.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': 'Token not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
@@ -393,7 +384,7 @@ class StringTokenTranslationsAPI(generics.GenericAPIView):
                 } if translation else {},
             })
 
-        return JsonResponse({
+        return Response({
             'translations': data,
             'glossary_hints': glossary_hints,
             'default_translation': default_transaltion.translation if default_transaltion else None,

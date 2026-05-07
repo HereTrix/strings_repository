@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 
 from api.file_processors.file_processor import ExportFile, FileProcessor
@@ -12,7 +12,7 @@ class ExportFormatsAPI(generics.GenericAPIView):
     def get(self, request):
         result = [{'type': file.value, 'name': file.vendor(), 'extension': file.file_extension()}
                   for file in ExportFile]
-        return JsonResponse(result, safe=False)
+        return Response(result)
 
 
 class ExportAPI(generics.GenericAPIView):
@@ -27,7 +27,7 @@ class ExportAPI(generics.GenericAPIView):
             file_type = ExportFile(type)
 
             if not file_type:
-                return JsonResponse({
+                return Response({
                     'error': 'Unsupported file type'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -63,6 +63,6 @@ class ExportAPI(generics.GenericAPIView):
 
             return processor.http_response()
         except Exception as e:
-            return JsonResponse({
-                'error': e
+            return Response({
+                'error': 'File export failed'
             }, status=status.HTTP_400_BAD_REQUEST)

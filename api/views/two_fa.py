@@ -5,7 +5,7 @@ import logging
 import qrcode
 from django_otp import user_has_device
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from django.http import JsonResponse
+from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 
 from api.models.users import BackupCode, TwoFAVerification
@@ -22,7 +22,7 @@ class TwoFASetupAPI(generics.GenericAPIView):
         user = request.user
 
         if user_has_device(user, confirmed=True):
-            return JsonResponse(
+            return Response(
                 {'error': '2FA already active; disable first'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -44,7 +44,7 @@ class TwoFASetupAPI(generics.GenericAPIView):
 
         backup_codes = BackupCode.generate(user)
 
-        return JsonResponse({
+        return Response({
             'otpauth_uri': otpauth_uri,
             'qr_code': qr_b64,
             'backup_codes': backup_codes,
@@ -60,20 +60,20 @@ class TwoFAVerifyAPI(generics.GenericAPIView):
 
         device = TOTPDevice.objects.filter(user=user, confirmed=False).first()
         if not device:
-            return JsonResponse(
+            return Response(
                 {'error': 'No pending 2FA device'},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         if not device.verify_token(code):
-            return JsonResponse(
+            return Response(
                 {'error': 'Invalid code'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         device.confirmed = True
         device.save(update_fields=['confirmed'])
-        return JsonResponse({})
+        return Response({})
 
 
 class TwoFADeleteAPI(generics.GenericAPIView):
@@ -85,16 +85,17 @@ class TwoFADeleteAPI(generics.GenericAPIView):
 
         device = TOTPDevice.objects.filter(user=user, confirmed=True).first()
         if not device:
-            return JsonResponse(
+            return Response(
                 {'error': 'No active 2FA device'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         totp_valid = device.verify_token(code)
-        backup_valid = not totp_valid and BackupCode.verify_and_consume(user, code)
+        backup_valid = not totp_valid and BackupCode.verify_and_consume(
+            user, code)
 
         if not totp_valid and not backup_valid:
-            return JsonResponse(
+            return Response(
                 {'error': 'Invalid code'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -106,9 +107,10 @@ class TwoFADeleteAPI(generics.GenericAPIView):
         user_token_keys = AuthToken.objects.filter(
             user=user
         ).values_list('token_key', flat=True)
-        TwoFAVerification.objects.filter(token_key__in=user_token_keys).delete()
+        TwoFAVerification.objects.filter(
+            token_key__in=user_token_keys).delete()
 
-        return JsonResponse({})
+        return Response({})
 
 
 class TwoFALoginAPI(generics.GenericAPIView):
@@ -121,16 +123,17 @@ class TwoFALoginAPI(generics.GenericAPIView):
 
         device = TOTPDevice.objects.filter(user=user, confirmed=True).first()
         if not device:
-            return JsonResponse(
+            return Response(
                 {'error': 'No active 2FA device'},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         totp_valid = device.verify_token(code)
-        backup_valid = not totp_valid and BackupCode.verify_and_consume(user, code)
+        backup_valid = not totp_valid and BackupCode.verify_and_consume(
+            user, code)
 
         if not totp_valid and not backup_valid:
-            return JsonResponse(
+            return Response(
                 {'error': 'Invalid code'},
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -138,7 +141,7 @@ class TwoFALoginAPI(generics.GenericAPIView):
         token_key = request.auth.token_key
         TwoFAVerification.objects.get_or_create(token_key=token_key)
 
-        return JsonResponse({
+        return Response({
             'user': UserSerializer(user).data,
             'expired': request.auth.expiry.isoformat() if request.auth.expiry else None,
         })

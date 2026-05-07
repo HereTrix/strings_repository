@@ -1,10 +1,10 @@
-from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django_otp import user_has_device
 from api.models.project import Invitation, ProjectRole
 from api.models.users import PasskeyCredential
 from api.serializers.users import UserSerializer, LoginSerializer
 from api.throttles import LoginRateThrottle
+from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 from knox.models import AuthToken
 import re
@@ -23,18 +23,18 @@ class SignInAPI(generics.GenericAPIView):
             token = AuthToken.objects.create(user)
 
             if user_has_device(user, confirmed=True):
-                return JsonResponse(
+                return Response(
                     {'2fa_required': True, 'token': token[1]},
                     status=202,
                 )
 
-            return JsonResponse({
+            return Response({
                 "user": UserSerializer(user, context=self.get_serializer_context()).data,
                 "token": token[1],
                 "expired": token[0].expiry,
             })
         except Exception as e:
-            return JsonResponse({
+            return Response({
                 "error": "Invalid credentials"
             }, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -47,17 +47,17 @@ class ChangePasswordAPI(generics.GenericAPIView):
         password = request.data['password']
         new_password = request.data['new_password']
         if not user.check_password(password):
-            return JsonResponse({
+            return Response({
                 'error': 'Password is invalid'
             }, status=status.HTTP_400_BAD_REQUEST)
         regex = r"^(?=.*[A-Za-z])(?=.*\d).{8,}$"
         if not re.fullmatch(regex, new_password):
-            return JsonResponse({
+            return Response({
                 'error': 'New password is invalid'
             }, status=status.HTTP_400_BAD_REQUEST)
         user.set_password(new_password)
         user.save()
-        return JsonResponse({}, status=status.HTTP_200_OK)
+        return Response({}, status=status.HTTP_200_OK)
 
 
 class ProfileAPI(generics.GenericAPIView):
@@ -67,17 +67,19 @@ class ProfileAPI(generics.GenericAPIView):
         try:
             user = request.user
         except User.DoesNotExist:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+            return Response({}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = UserSerializer(user)
         data = serializer.data
         data['has_2fa'] = user_has_device(user, confirmed=True)
-        passkeys = PasskeyCredential.objects.filter(user=user).values('id', 'name', 'created_at')
+        passkeys = PasskeyCredential.objects.filter(
+            user=user).values('id', 'name', 'created_at')
         data['passkeys'] = [
-            {'id': p['id'], 'name': p['name'], 'created_at': p['created_at'].isoformat()}
+            {'id': p['id'], 'name': p['name'],
+                'created_at': p['created_at'].isoformat()}
             for p in passkeys
         ]
-        return JsonResponse(data)
+        return Response(data)
 
     def post(self, request):
         email = request.data['email']
@@ -90,12 +92,12 @@ class ProfileAPI(generics.GenericAPIView):
             user.last_name = last_name
             user.save()
         except Exception as e:
-            return JsonResponse({
+            return Response({
                 'error': e
             }, status=status.HTTP_404_NOT_FOUND)
 
         serializer = UserSerializer(user)
-        return JsonResponse(serializer.data)
+        return Response(serializer.data)
 
 
 class ActivateProjectAPI(generics.GenericAPIView):
@@ -115,7 +117,7 @@ class ActivateProjectAPI(generics.GenericAPIView):
             ids = [role.user.id for role in invite.project.roles.all()]
 
             if existing_role:
-                return JsonResponse({
+                return Response({
                     'error': 'Already participating in project'
                 })
 
@@ -127,14 +129,14 @@ class ActivateProjectAPI(generics.GenericAPIView):
 
             invite.delete()
 
-            return JsonResponse({})
+            return Response({})
         except Invitation.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': 'Wrong activation code'
             }, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as e:
-            return JsonResponse({
+            return Response({
                 'error': e
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -145,45 +147,45 @@ class SignUpAPI(generics.GenericAPIView):
 
         login = request.data.get('login')
         if not login:
-            return JsonResponse({
+            return Response({
                 'error': 'Login should not be empty'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         password = request.data.get('password')
         regex = r"^(?=.*[A-Za-z])(?=.*\d).{8,}$"
         if not re.fullmatch(regex, password):
-            return JsonResponse({
+            return Response({
                 'error': 'Password is not strong enough'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         code = request.data.get('code')
         if not code:
-            return JsonResponse({
+            return Response({
                 'error': 'Invitation code should not be empty'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         name = request.data.get('name')
         if not name:
-            return JsonResponse({
+            return Response({
                 'error': 'Please provide name'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         surname = request.data.get('surname')
         if not surname:
-            return JsonResponse({
+            return Response({
                 'error': 'Please provide last name'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             invitation = Invitation.objects.get(code=code)
         except Invitation.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': 'Invitation code is invalid'
             })
 
         try:
             user = User.objects.get(username=login)
-            return JsonResponse({
+            return Response({
                 'error': 'Please, activate code on your profile page'
             })
         except User.DoesNotExist:
@@ -202,4 +204,4 @@ class SignUpAPI(generics.GenericAPIView):
 
         invitation.delete()
 
-        return JsonResponse({})
+        return Response({})
