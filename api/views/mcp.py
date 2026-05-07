@@ -1,5 +1,6 @@
 import difflib
 import json
+import logging
 import random
 import re
 
@@ -16,6 +17,8 @@ from api.views.plugin import AccessTokenAuth
 
 _TM_FLOOR = 0.60
 _TM_MAX_RETURN = 5
+
+logger = logging.getLogger(__name__)
 _TM_MAX_SCAN = 500
 _TM_SOURCE_TRUNCATE = 500
 
@@ -296,8 +299,9 @@ class McpView(APIView):
 
         try:
             result = handler(args, access)
-        except Exception as exc:
-            return self._error(id_, -32603, str(exc))
+        except Exception:
+            logger.exception("Unhandled exception while executing MCP tool '%s'", name)
+            return self._error(id_, -32603, "Internal server error.")
 
         return Response({
             "jsonrpc": "2.0", "id": id_,
