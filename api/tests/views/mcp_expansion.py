@@ -178,7 +178,7 @@ class SuggestTranslationTestCase(TestCase):
 
     def test_suggest_translation_invalid_language_returns_error(self):
         resp = self._call({'source_text': 'Sign In', 'language_code': 'XX'})
-        self.assertIn('not found in project', get_error(resp))
+        self.assertIn('Item not found', get_error(resp))
 
     def test_suggest_translation_empty_source_returns_empty(self):
         result = get_result(self._call(

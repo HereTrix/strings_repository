@@ -225,6 +225,14 @@ _TOOLS = [
     },
 ]
 
+
+class NotFoundException(Exception):
+    ...
+
+
+class AIProviderNotConfigured(Exception):
+    ...
+
 # View
 
 
@@ -299,8 +307,15 @@ class McpView(APIView):
 
         try:
             result = handler(args, access)
+        except NotFoundException as e:
+            logger.exception(e)
+            return self._error(id_, -32603, "Item not found")
+        except AIProviderNotConfigured as e:
+            logger.exception(e)
+            return self._error(id_, -32603, "No AI provider configured")
         except Exception:
-            logger.exception("Unhandled exception while executing MCP tool '%s'", name)
+            logger.exception(
+                "Unhandled exception while executing MCP tool '%s'", name)
             return self._error(id_, -32603, "Internal server error.")
 
         return Response({
@@ -610,7 +625,9 @@ class McpView(APIView):
             return {'suggestions': []}
 
         if not Language.objects.filter(project=access.project, code=lang_code).exists():
-            raise ValueError(f"Language '{lang_code}' not found in project")
+            raise NotFoundException(
+                f"Language '{lang_code}' not found in project"
+            )
 
         source_lang = Language.objects.filter(
             project=access.project, is_default=True
@@ -674,7 +691,9 @@ class McpView(APIView):
         try:
             ai_provider = access.project.ai_provider
         except Exception:
-            raise ValueError('No AI provider configured for this project')
+            raise AIProviderNotConfigured(
+                'No AI provider configured for this project'
+            )
 
         all_accuracy_checks = [
             c for c in MODE_CHECKS[VerificationReport.Mode.translation_accuracy]
