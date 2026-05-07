@@ -32,8 +32,8 @@ jobs:
         runs-on: ubuntu-latest
 
         defaults:
-        run:
-            working-directory: webui
+            run:
+                working-directory: webui
 
         steps:
             - name: Checkout

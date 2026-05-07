@@ -28,6 +28,7 @@ jobs:
         run: |
             python -m pip install --upgrade pip
             pip install -r requirements.txt
+            pip install coverage
 
       - name: Create required static directory
         run: mkdir -p webui/static
@@ -37,4 +38,14 @@ jobs:
           APP_SECRET_KEY: ci-secret-key
           DB_ENGINE: sqlite3
           DB_NAME: ci
-        run: python manage.py test api --verbosity=2
+        run: coverage run manage.py test api --verbosity=2
+      
+      - name: Coverage report
+        run: coverage xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+        with: 
+          files: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
