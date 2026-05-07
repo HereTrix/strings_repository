@@ -1,0 +1,40 @@
+name: test build
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+      
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Django tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+
+      - name: Create required static directory
+        run: mkdir -p webui/static
+
+      - name: Run tests
+        env:
+          APP_SECRET_KEY: ci-secret-key
+          DB_ENGINE: sqlite3
+          DB_NAME: ci
+        run: python manage.py test api --verbosity=2
