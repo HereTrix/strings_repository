@@ -1,11 +1,9 @@
-from django.http import JsonResponse
+from api.models.project import Project, ProjectRole
+from rest_framework.response import Response
 
 
 def error_response(message, status_code):
-    return JsonResponse({'error': str(message)}, status=status_code)
-
-
-from api.models.project import Project, ProjectRole
+    return Response({'error': str(message)}, status=status_code)
 
 
 def get_project_any_role(pk: int, user) -> Project | None:

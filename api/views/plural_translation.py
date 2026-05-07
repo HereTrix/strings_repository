@@ -1,5 +1,5 @@
-from django.http import JsonResponse
-from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework import generics, status
 
 from api.models.language import Language
 from api.models.translations import PluralTranslation, StringToken, Translation
@@ -18,20 +18,20 @@ class PluralTranslationAPI(generics.GenericAPIView):
         plural_forms = request.data.get('plural_forms')
 
         if not all([project_id, code, token_key]):
-            return JsonResponse(
+            return Response(
                 {'error': 'project_id, code and token are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if not isinstance(plural_forms, dict):
-            return JsonResponse(
+            return Response(
                 {'error': 'plural_forms must be an object'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         invalid = [f for f in plural_forms if f not in PLURAL_FORMS]
         if invalid:
-            return JsonResponse(
+            return Response(
                 {'error': f'Unknown plural forms: {invalid}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -42,7 +42,7 @@ class PluralTranslationAPI(generics.GenericAPIView):
             token=token_key,
         ).first()
         if not token:
-            return JsonResponse(
+            return Response(
                 {'error': 'Token not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
@@ -52,7 +52,7 @@ class PluralTranslationAPI(generics.GenericAPIView):
                 code=code.upper(), project__pk=project_id
             )
         except Language.DoesNotExist:
-            return JsonResponse(
+            return Response(
                 {'error': 'Language not found'},
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -73,4 +73,4 @@ class PluralTranslationAPI(generics.GenericAPIView):
         translation.status = Translation.Status.in_review
         translation.save()
 
-        return JsonResponse({}, status=status.HTTP_200_OK)
+        return Response({}, status=status.HTTP_200_OK)

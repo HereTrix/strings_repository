@@ -1,6 +1,10 @@
-from django.http import JsonResponse
+from rest_framework.response import Response
 from django.utils import timezone
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status
+
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.permissions import BasePermission
 
 from api.file_processors.export_file_type import ExportFile
 from api.file_processors.file_processor import FileProcessor
@@ -12,52 +16,56 @@ from api.models.translations import Translation
 from api.models.transport_models import TranslationModel
 from api.serializers.translation import StringTokenModelSerializer
 
+# Custom authenticator
 
-def validate_access_token(token):
-    """
-    Returns (access, error_response) tuple.
-    If the token is invalid or expired, access is None and error_response is a JsonResponse.
-    """
-    try:
-        access = ProjectAccessToken.objects.get(token=token)
-    except ProjectAccessToken.DoesNotExist:
-        return None, JsonResponse({
-            'error': 'No access'
-        }, status=status.HTTP_403_FORBIDDEN)
 
-    if access.expiration and access.expiration < timezone.now():
-        access.delete()
-        return None, JsonResponse({
-            'error': 'No access'
-        }, status=status.HTTP_403_FORBIDDEN)
+class AccessTokenAuth(BaseAuthentication):
+    def authenticate(self, request):
+        token = request.META.get("HTTP_ACCESS_TOKEN")
 
-    return access, None
+        if not token:
+            raise AuthenticationFailed("No access token")
+
+        try:
+            access = ProjectAccessToken.objects.get(token=token)
+        except ProjectAccessToken.DoesNotExist:
+            raise AuthenticationFailed("No access")
+
+        if access.expiration and access.expiration < timezone.now():
+            access.delete()
+            raise AuthenticationFailed("Token expired")
+
+        return (access.user, access)
+
+
+class WriteTokenPermission(BasePermission):
+    def has_permission(self, request, view):
+        access = request.auth
+
+        if not access:
+            return False
+
+        return access.permission != ProjectAccessToken.AccessTokenPermissions.read
 
 
 class PullAPI(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
+    authentication_classes = [AccessTokenAuth]
+    permission_classes = []
 
     def post(self, request):
-        token = request.META.get('HTTP_ACCESS_TOKEN')
         string_tokens = request.data.get('tokens')
         code = request.data.get('code')
 
-        if not token:
-            return JsonResponse({
-                'error': 'No access'
-            }, status=status.HTTP_403_FORBIDDEN)
         if not code:
-            return JsonResponse({
+            return Response({
                 'error': 'No language code'
             }, status=status.HTTP_400_BAD_REQUEST)
         if not string_tokens:
-            return JsonResponse({
+            return Response({
                 'error': 'No localization keys to fetch'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        access, error = validate_access_token(token)
-        if error:
-            return error
+        access = request.auth
 
         tokens = StringToken.objects.filter(
             project=access.project
@@ -66,39 +74,27 @@ class PullAPI(generics.GenericAPIView):
         ).distinct()
 
         serializer = StringTokenModelSerializer(tokens, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
 
 
 class PushAPI(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
+    authentication_classes = [AccessTokenAuth]
+    permission_classes = [WriteTokenPermission]
 
     def post(self, request):
-        token = request.META.get('HTTP_ACCESS_TOKEN')
         data = request.data.get('translations')
         code = request.data.get('code')
 
-        if not token:
-            return JsonResponse({
-                'error': 'No access'
-            }, status=status.HTTP_403_FORBIDDEN)
         if not code:
-            return JsonResponse({
+            return Response({
                 'error': 'No language code'
             }, status=status.HTTP_400_BAD_REQUEST)
         if not data:
-            return JsonResponse({
+            return Response({
                 'error': 'No translations provided'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        access, error = validate_access_token(token)
-        if error:
-            return error
-
-        if access.permission == ProjectAccessToken.AccessTokenPermissions.read:
-            return JsonResponse({
-                'error': 'You do not have permissions to perform this action'
-            }, status=status.HTTP_403_FORBIDDEN)
-
+        access = request.auth
         project = access.project
         failed = []
 
@@ -116,47 +112,33 @@ class PushAPI(generics.GenericAPIView):
                     text=item['translation']
                 )
             except Exception as e:
-                failed.append({'token': item.get('token'), 'error': str(e)})
+                failed.append({'token': item.get('token'),
+                              'error': 'Failed to create translation'})
 
         if failed:
-            return JsonResponse({'failed': failed}, status=status.HTTP_207_MULTI_STATUS)
+            return Response({'failed': failed}, status=status.HTTP_207_MULTI_STATUS)
 
-        return JsonResponse({})
+        return Response({})
 
 
 class FetchLanguagesAPI(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
+    authentication_classes = [AccessTokenAuth]
+    permission_classes = []
 
     def get(self, request):
-        token = request.META.get('HTTP_ACCESS_TOKEN')
-
-        if not token:
-            return JsonResponse({
-                'error': 'No access'
-            }, status=status.HTTP_403_FORBIDDEN)
-
-        access, error = validate_access_token(token)
-        if error:
-            return error
+        access = request.auth
 
         codes = [lang.code for lang in access.project.languages.all()]
-        return JsonResponse(codes, safe=False)
+        return Response(codes)
 
 
 class PluginExportAPI(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
+    authentication_classes = [AccessTokenAuth]
+    permission_classes = []
 
     def post(self, request):
-        token = request.META.get('HTTP_ACCESS_TOKEN')
-
-        if not token:
-            return JsonResponse({
-                'error': 'No access'
-            }, status=status.HTTP_403_FORBIDDEN)
-
-        access, error = validate_access_token(token)
-        if error:
-            return error
+        access = request.auth
+        print('<<<<', access)
 
         project = access.project
         user = access.user
@@ -169,7 +151,7 @@ class PluginExportAPI(generics.GenericAPIView):
         try:
             file_type = ExportFile(export_type)
         except ValueError:
-            return JsonResponse({
+            return Response({
                 'error': 'Unsupported file type'
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -190,7 +172,7 @@ class PluginExportAPI(generics.GenericAPIView):
             bundle = TranslationBundle.objects.filter(
                 project=project, is_active=True).first()
             if not bundle:
-                return JsonResponse({
+                return Response({
                     'error': (
                         'No active bundle for this project. '
                         'Activate a bundle first or use a specific version name.'
@@ -203,7 +185,7 @@ class PluginExportAPI(generics.GenericAPIView):
             bundle = TranslationBundle.objects.get(
                 project=project, version_name=bundle_version)
         except TranslationBundle.DoesNotExist:
-            return JsonResponse({
+            return Response({
                 'error': f"Bundle '{bundle_version}' not found."
             }, status=status.HTTP_404_NOT_FOUND)
 
@@ -226,7 +208,7 @@ def _export_live(project, user, codes, tags, file_type):
                        for t in tokens]
             processor.append(records=records, code=code)
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return Response({'error': 'Failed to process errors'}, status=400)
 
     return processor.http_response()
 
@@ -251,6 +233,6 @@ def _export_bundle(bundle, codes, file_type):
         try:
             processor.append(records=records, code=code)
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return Response({'error': 'Failed to process records'}, status=400)
 
     return processor.http_response()

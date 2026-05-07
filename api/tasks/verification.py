@@ -156,7 +156,8 @@ def run_verification_job(report_id: int):
         target_lang = report.target_language.upper()
         for gt in GlossaryTerm.objects.filter(project=report.project).prefetch_related('translations').order_by('term'):
             pref_tr = next(
-                (t.preferred_translation for t in gt.translations.all() if t.language_code.upper() == target_lang),
+                (t.preferred_translation for t in gt.translations.all()
+                 if t.language_code.upper() == target_lang),
                 ''
             )
             glossary_terms.append({
@@ -177,7 +178,7 @@ def run_verification_job(report_id: int):
             all_results.extend(batch_results)
     except Exception as e:
         logger.exception('Verification job %s failed: %s', report_id, e)
-        _fail(report, str(e))
+        _fail(report, 'Verification job failed')
         _fire_webhook(report)
         return
 

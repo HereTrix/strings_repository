@@ -2,7 +2,7 @@ import difflib
 import random
 
 from django.db.models import OuterRef, Subquery
-from django.http import JsonResponse
+from rest_framework.response import Response
 from rest_framework import generics, status
 
 from api.models.language import Language
@@ -27,13 +27,13 @@ class TranslationMemoryAPI(generics.GenericAPIView):
     def get(self, request, pk):
         project = get_project_any_role(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
         token_key = request.query_params.get('token', '').strip()
         lang_code = request.query_params.get('language', '').strip().upper()
 
         if not token_key or not lang_code:
-            return JsonResponse(
+            return Response(
                 {'error': 'token and language are required'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -41,7 +41,7 @@ class TranslationMemoryAPI(generics.GenericAPIView):
         source_lang = Language.objects.filter(
             project=project, is_default=True).first()
         if not source_lang:
-            return JsonResponse([], safe=False)
+            return Response([])
 
         # Current token's source text
         current_source = (
@@ -55,7 +55,7 @@ class TranslationMemoryAPI(generics.GenericAPIView):
         ) or ''
 
         if not current_source.strip():
-            return JsonResponse([], safe=False)
+            return Response([])
 
         use_ai = ProjectAIProvider.objects.filter(project=project).exists()
         floor = AI_FLOOR if use_ai else MANUAL_FLOOR
@@ -106,7 +106,7 @@ class TranslationMemoryAPI(generics.GenericAPIView):
         scored.sort(key=lambda x: x['similarity_score'], reverse=True)
 
         if not scored:
-            return JsonResponse([], safe=False)
+            return Response([])
 
         # AI re-ranking
         if use_ai:
@@ -119,4 +119,4 @@ class TranslationMemoryAPI(generics.GenericAPIView):
                 pass  # silent fallback to difflib order
             scored = pool
 
-        return JsonResponse(scored[:TM_RETURN], safe=False)
+        return Response(scored[:TM_RETURN])

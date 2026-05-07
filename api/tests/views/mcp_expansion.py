@@ -76,7 +76,8 @@ class CheckGlossaryTestCase(TestCase):
         self.assertEqual(result, {'matches': []})
 
     def test_check_glossary_no_terms_returns_empty(self):
-        result = get_result(self._call({'source_text': 'Click Login to continue'}))
+        result = get_result(self._call(
+            {'source_text': 'Click Login to continue'}))
         self.assertEqual(result, {'matches': []})
 
     def test_check_glossary_match_case_insensitive(self):
@@ -101,34 +102,46 @@ class CheckGlossaryTestCase(TestCase):
         self.assertEqual(len(result['matches']), 1)
 
     def test_check_glossary_with_language_code_includes_preferred_translation(self):
-        term = make_glossary_term(self.project, term='Login', case_sensitive=False)
-        make_glossary_translation(term, language_code='DE', preferred_translation='Anmelden')
-        result = get_result(self._call({'source_text': 'Click Login to continue', 'language_code': 'DE'}))
+        term = make_glossary_term(
+            self.project, term='Login', case_sensitive=False)
+        make_glossary_translation(
+            term, language_code='DE', preferred_translation='Anmelden')
+        result = get_result(self._call(
+            {'source_text': 'Click Login to continue', 'language_code': 'DE'}))
         self.assertEqual(len(result['matches']), 1)
-        self.assertEqual(result['matches'][0]['preferred_translation'], 'Anmelden')
+        self.assertEqual(result['matches'][0]
+                         ['preferred_translation'], 'Anmelden')
 
     def test_check_glossary_without_language_code_returns_null_preferred_translation(self):
-        term = make_glossary_term(self.project, term='Login', case_sensitive=False)
-        make_glossary_translation(term, language_code='DE', preferred_translation='Anmelden')
-        result = get_result(self._call({'source_text': 'Click Login to continue'}))
+        term = make_glossary_term(
+            self.project, term='Login', case_sensitive=False)
+        make_glossary_translation(
+            term, language_code='DE', preferred_translation='Anmelden')
+        result = get_result(self._call(
+            {'source_text': 'Click Login to continue'}))
         self.assertIsNone(result['matches'][0]['preferred_translation'])
 
     def test_check_glossary_language_with_no_preferred_translation(self):
-        term = make_glossary_term(self.project, term='Login', case_sensitive=False)
-        make_glossary_translation(term, language_code='FR', preferred_translation='Connexion')
-        result = get_result(self._call({'source_text': 'Click Login to continue', 'language_code': 'DE'}))
+        term = make_glossary_term(
+            self.project, term='Login', case_sensitive=False)
+        make_glossary_translation(
+            term, language_code='FR', preferred_translation='Connexion')
+        result = get_result(self._call(
+            {'source_text': 'Click Login to continue', 'language_code': 'DE'}))
         self.assertIsNone(result['matches'][0]['preferred_translation'])
 
     def test_check_glossary_multiple_terms_multiple_matches(self):
         make_glossary_term(self.project, term='Login', case_sensitive=False)
         make_glossary_term(self.project, term='Submit', case_sensitive=False)
         make_glossary_term(self.project, term='Register', case_sensitive=False)
-        result = get_result(self._call({'source_text': 'Click Login and Submit form'}))
+        result = get_result(self._call(
+            {'source_text': 'Click Login and Submit form'}))
         self.assertEqual(len(result['matches']), 2)
 
     def test_check_glossary_read_token_allowed(self):
         make_glossary_term(self.project, term='Login', case_sensitive=False)
-        result = get_result(self._call({'source_text': 'Click Login'}, token=self.read_access))
+        result = get_result(self._call(
+            {'source_text': 'Click Login'}, token=self.read_access))
         self.assertEqual(len(result['matches']), 1)
 
 
@@ -139,7 +152,8 @@ class SuggestTranslationTestCase(TestCase):
     def setUp(self):
         self.user = make_user('dev2')
         self.project = make_project('TMApp', owner=self.user)
-        self.lang_en = Language.objects.create(code='EN', project=self.project, is_default=True)
+        self.lang_en = Language.objects.create(
+            code='EN', project=self.project, is_default=True)
         self.lang_de = make_language(self.project, 'DE')
         self.access = make_access_token(self.project, self.user)
         self.read_access = make_access_token(
@@ -167,21 +181,24 @@ class SuggestTranslationTestCase(TestCase):
         self.assertIn('not found in project', get_error(resp))
 
     def test_suggest_translation_empty_source_returns_empty(self):
-        result = get_result(self._call({'source_text': '', 'language_code': 'DE'}))
+        result = get_result(self._call(
+            {'source_text': '', 'language_code': 'DE'}))
         self.assertEqual(result, {'suggestions': []})
 
     def test_suggest_translation_no_default_language_returns_empty(self):
         project2 = make_project('NoDefault', owner=self.user)
         lang_de2 = make_language(project2, 'DE')
         access2 = make_access_token(project2, self.user)
-        result = get_result(mcp_call(self.client, access2, 'suggest_translation', {'source_text': 'Sign In', 'language_code': 'DE'}))
+        result = get_result(mcp_call(self.client, access2, 'suggest_translation', {
+                            'source_text': 'Sign In', 'language_code': 'DE'}))
         self.assertEqual(result, {'suggestions': []})
 
     def test_suggest_translation_no_candidates_above_threshold(self):
         token = make_token(self.project, 'btn.cancel')
         make_translation(token, self.lang_en, 'XXXXXXXXXXXXXXXXXXXXXXXXXXX')
         make_translation(token, self.lang_de, 'Abbrechen')
-        result = get_result(self._call({'source_text': 'Sign In', 'language_code': 'DE'}))
+        result = get_result(self._call(
+            {'source_text': 'Sign In', 'language_code': 'DE'}))
         self.assertEqual(result, {'suggestions': []})
 
     def _make_similar_tokens(self):
@@ -196,12 +213,14 @@ class SuggestTranslationTestCase(TestCase):
 
     def test_suggest_translation_returns_similar_strings(self):
         self._make_similar_tokens()
-        result = get_result(self._call({'source_text': 'Sign In to continue', 'language_code': 'DE'}))
+        result = get_result(self._call(
+            {'source_text': 'Sign In to continue', 'language_code': 'DE'}))
         self.assertGreater(len(result['suggestions']), 0)
 
     def test_suggest_translation_sorted_by_similarity_desc(self):
         self._make_similar_tokens()
-        result = get_result(self._call({'source_text': 'Sign In to continue', 'language_code': 'DE'}))
+        result = get_result(self._call(
+            {'source_text': 'Sign In to continue', 'language_code': 'DE'}))
         scores = [s['similarity_score'] for s in result['suggestions']]
         self.assertEqual(scores, sorted(scores, reverse=True))
 
@@ -210,12 +229,14 @@ class SuggestTranslationTestCase(TestCase):
             t = make_token(self.project, f'btn.signin{i}')
             make_translation(t, self.lang_en, f'Sign In button {i}')
             make_translation(t, self.lang_de, f'Anmelden Schaltfläche {i}')
-        result = get_result(self._call({'source_text': 'Sign In button', 'language_code': 'DE'}))
+        result = get_result(self._call(
+            {'source_text': 'Sign In button', 'language_code': 'DE'}))
         self.assertLessEqual(len(result['suggestions']), 5)
 
     def test_suggest_translation_result_shape(self):
         self._make_similar_tokens()
-        result = get_result(self._call({'source_text': 'Sign In to continue', 'language_code': 'DE'}))
+        result = get_result(self._call(
+            {'source_text': 'Sign In to continue', 'language_code': 'DE'}))
         if result['suggestions']:
             s = result['suggestions'][0]
             self.assertIn('token_key', s)
@@ -225,7 +246,8 @@ class SuggestTranslationTestCase(TestCase):
 
     def test_suggest_translation_read_token_allowed(self):
         self._make_similar_tokens()
-        result = get_result(mcp_call(self.client, self.read_access, 'suggest_translation', {'source_text': 'Sign In to continue', 'language_code': 'DE'}))
+        result = get_result(mcp_call(self.client, self.read_access, 'suggest_translation', {
+                            'source_text': 'Sign In to continue', 'language_code': 'DE'}))
         self.assertIn('suggestions', result)
 
 
@@ -271,7 +293,8 @@ class VerifyStringTestCase(TestCase):
 
     def test_verify_string_returns_severity_suggestion_reason(self):
         _make_ai_provider(self.project)
-        mock_result = [{'token_id': 0, 'plural_form': None, 'severity': 'warning', 'suggestion': 'Anmelden', 'reason': 'Better match'}]
+        mock_result = [{'token_id': 0, 'plural_form': None, 'severity': 'warning',
+                        'suggestion': 'Anmelden', 'reason': 'Better match'}]
         with patch('api.verification_providers.openai.OpenAIVerificationProvider.verify', return_value=mock_result):
             result = get_result(self._call(self._base_args()))
         self.assertIn('severity', result)
@@ -321,5 +344,6 @@ class VerifyStringTestCase(TestCase):
     def test_verify_string_read_token_allowed(self):
         _make_ai_provider(self.project)
         with patch('api.verification_providers.openai.OpenAIVerificationProvider.verify', return_value=[]):
-            result = get_result(self._call(self._base_args(), token=self.read_access))
+            result = get_result(self._call(
+                self._base_args(), token=self.read_access))
         self.assertIn('severity', result)
