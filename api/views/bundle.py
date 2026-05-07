@@ -1,6 +1,7 @@
 from django.db import transaction
-from django.http import HttpResponse, JsonResponse
-from rest_framework import generics, permissions, status
+from django.http import HttpResponse
+from rest_framework.response import Response
+from rest_framework import generics, status
 
 from api.file_processors.compare_file import CompareFileWriter
 from api.file_processors.export_file_type import ExportFile
@@ -69,14 +70,15 @@ class BundleListCreateAPI(generics.GenericAPIView):
         bundles = TranslationBundle.objects.filter(
             project=project
         ).order_by('-created_at')
-        return JsonResponse([_serialize_bundle(b) for b in bundles], safe=False)
+        return Response([_serialize_bundle(b) for b in bundles])
 
     def post(self, request, pk):
         project = _get_project_for_editor(pk, request.user)
         if not project:
             return error_response('Not found', status.HTTP_404_NOT_FOUND)
 
-        version_name = request.data.get('version_name') or _next_version_name(project)
+        version_name = request.data.get(
+            'version_name') or _next_version_name(project)
 
         if version_name.lower() in RESERVED_VERSION_NAMES:
             return error_response(
@@ -118,7 +120,7 @@ class BundleListCreateAPI(generics.GenericAPIView):
                     ))
             TranslationBundleMap.objects.bulk_create(maps, batch_size=500)
 
-        return JsonResponse(_serialize_bundle(bundle), status=status.HTTP_201_CREATED)
+        return Response(_serialize_bundle(bundle), status=status.HTTP_201_CREATED)
 
 
 class BundleDetailAPI(generics.GenericAPIView):
@@ -130,7 +132,8 @@ class BundleDetailAPI(generics.GenericAPIView):
             return None, error_response('Not found', status.HTTP_404_NOT_FOUND)
 
         try:
-            bundle = TranslationBundle.objects.get(id=bundle_id, project=project)
+            bundle = TranslationBundle.objects.get(
+                id=bundle_id, project=project)
         except TranslationBundle.DoesNotExist:
             return None, error_response('Bundle not found', status.HTTP_404_NOT_FOUND)
 
@@ -140,10 +143,11 @@ class BundleDetailAPI(generics.GenericAPIView):
         bundle, err = self._get_bundle(pk, bundle_id, request.user)
         if err:
             return err
-        return JsonResponse(_serialize_bundle(bundle))
+        return Response(_serialize_bundle(bundle))
 
     def delete(self, request, pk, bundle_id):
-        bundle, err = self._get_bundle(pk, bundle_id, request.user, admin_only=True)
+        bundle, err = self._get_bundle(
+            pk, bundle_id, request.user, admin_only=True)
         if err:
             return err
 
@@ -154,7 +158,7 @@ class BundleDetailAPI(generics.GenericAPIView):
             )
 
         bundle.delete()
-        return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
+        return Response({}, status=status.HTTP_204_NO_CONTENT)
 
 
 class BundleActivateAPI(generics.GenericAPIView):
@@ -165,16 +169,18 @@ class BundleActivateAPI(generics.GenericAPIView):
             return error_response('Not found', status.HTTP_404_NOT_FOUND)
 
         try:
-            bundle = TranslationBundle.objects.get(id=bundle_id, project=project)
+            bundle = TranslationBundle.objects.get(
+                id=bundle_id, project=project)
         except TranslationBundle.DoesNotExist:
             return error_response('Bundle not found', status.HTTP_404_NOT_FOUND)
 
         with transaction.atomic():
-            TranslationBundle.objects.filter(project=project, is_active=True).update(is_active=False)
+            TranslationBundle.objects.filter(
+                project=project, is_active=True).update(is_active=False)
             bundle.is_active = True
             bundle.save(update_fields=['is_active'])
 
-        return JsonResponse(_serialize_bundle(bundle))
+        return Response(_serialize_bundle(bundle))
 
 
 class BundleDeactivateAPI(generics.GenericAPIView):
@@ -185,13 +191,14 @@ class BundleDeactivateAPI(generics.GenericAPIView):
             return error_response('Not found', status.HTTP_404_NOT_FOUND)
 
         try:
-            bundle = TranslationBundle.objects.get(id=bundle_id, project=project)
+            bundle = TranslationBundle.objects.get(
+                id=bundle_id, project=project)
         except TranslationBundle.DoesNotExist:
             return error_response('Bundle not found', status.HTTP_404_NOT_FOUND)
 
         bundle.is_active = False
         bundle.save(update_fields=['is_active'])
-        return JsonResponse(_serialize_bundle(bundle))
+        return Response(_serialize_bundle(bundle))
 
 
 class BundleCompareAPI(generics.GenericAPIView):
@@ -214,7 +221,7 @@ class BundleCompareAPI(generics.GenericAPIView):
         if err:
             return error_response(err, status.HTTP_404_NOT_FOUND)
 
-        return JsonResponse(diff)
+        return Response(diff)
 
 
 class BundleCompareExportAPI(generics.GenericAPIView):
@@ -275,9 +282,11 @@ def _compute_compare_diff(project, from_id, to_id):
         in_to = key in to_data
 
         if in_from and not in_to:
-            removed.append({'token': token_key, 'language': lang_code, 'from': from_data[key]})
+            removed.append(
+                {'token': token_key, 'language': lang_code, 'from': from_data[key]})
         elif not in_from and in_to:
-            added.append({'token': token_key, 'language': lang_code, 'value': to_data[key]})
+            added.append(
+                {'token': token_key, 'language': lang_code, 'value': to_data[key]})
         elif from_data[key] != to_data[key]:
             changed.append({
                 'token': token_key,
@@ -298,20 +307,24 @@ def _compute_compare_diff(project, from_id, to_id):
 
     if from_bundle is not None and to_id == 'live':
         from_token_names = set(
-            from_bundle.maps.exclude(token_name='').values_list('token_name', flat=True).distinct()
+            from_bundle.maps.exclude(token_name='').values_list(
+                'token_name', flat=True).distinct()
         )
         live_token_names = set(
-            StringToken.objects.filter(project=project).values_list('token', flat=True)
+            StringToken.objects.filter(
+                project=project).values_list('token', flat=True)
         )
         new_tokens = sorted(live_token_names - from_token_names)
         deleted_tokens = sorted(from_token_names - live_token_names)
 
     elif to_bundle is not None and from_id == 'live':
         to_token_names = set(
-            to_bundle.maps.exclude(token_name='').values_list('token_name', flat=True).distinct()
+            to_bundle.maps.exclude(token_name='').values_list(
+                'token_name', flat=True).distinct()
         )
         live_token_names = set(
-            StringToken.objects.filter(project=project).values_list('token', flat=True)
+            StringToken.objects.filter(
+                project=project).values_list('token', flat=True)
         )
         new_tokens = sorted(to_token_names - live_token_names)
         deleted_tokens = sorted(live_token_names - to_token_names)
@@ -359,7 +372,8 @@ class BundleExportAPI(generics.GenericAPIView):
             return error_response('Not found', status.HTTP_404_NOT_FOUND)
 
         try:
-            bundle = TranslationBundle.objects.get(id=bundle_id, project=project)
+            bundle = TranslationBundle.objects.get(
+                id=bundle_id, project=project)
         except TranslationBundle.DoesNotExist:
             return error_response('Bundle not found', status.HTTP_404_NOT_FOUND)
 
@@ -375,7 +389,8 @@ class BundleExportAPI(generics.GenericAPIView):
             lang_codes = [c.strip().upper() for c in codes_param.split(',')]
         else:
             lang_codes = list(
-                Language.objects.filter(project=project).values_list('code', flat=True)
+                Language.objects.filter(
+                    project=project).values_list('code', flat=True)
             )
 
         maps = (
@@ -394,10 +409,11 @@ class BundleExportAPI(generics.GenericAPIView):
 
         processor = FileProcessor(type=file_type)
         for code, bundle_maps in by_language.items():
-            records = [TranslationModel.from_bundle_map(m) for m in bundle_maps]
+            records = [TranslationModel.from_bundle_map(
+                m) for m in bundle_maps]
             try:
                 processor.append(records=records, code=code)
-            except Exception as e:
-                return error_response(str(e), status.HTTP_400_BAD_REQUEST)
+            except Exception:
+                return error_response('Failed to process records', status.HTTP_400_BAD_REQUEST)
 
         return processor.http_response()

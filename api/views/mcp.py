@@ -1,21 +1,24 @@
 import difflib
 import json
+import logging
 import random
 import re
 
 from django.db.models import Q
-from django.http import JsonResponse
-from django.views import View
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
 from api.models.history import HistoryRecord
 from api.models.language import Language
 from api.models.string_token import StringToken
 from api.models.tag import Tag
 from api.models.translations import Translation
-from api.views.plugin import validate_access_token
+from api.views.plugin import AccessTokenAuth
 
 _TM_FLOOR = 0.60
 _TM_MAX_RETURN = 5
+
+logger = logging.getLogger(__name__)
 _TM_MAX_SCAN = 500
 _TM_SOURCE_TRUNCATE = 500
 
@@ -222,23 +225,19 @@ _TOOLS = [
     },
 ]
 
-
 # View
 
-class McpView(View):
+
+class McpView(APIView):
     """Single endpoint implementing the MCP Streamable HTTP transport."""
+    authentication_classes = [AccessTokenAuth]
+    permission_classes = []
 
     def get(self, request):
-        _, error = validate_access_token(request.META.get('HTTP_ACCESS_TOKEN'))
-        if error:
-            return error
-        return JsonResponse({"name": "strings-repository", "version": "1.0", "protocol": "2024-11-05"})
+        return Response({"name": "strings-repository", "version": "1.0", "protocol": "2024-11-05"})
 
     def post(self, request):
-        access, error = validate_access_token(
-            request.META.get('HTTP_ACCESS_TOKEN'))
-        if error:
-            return error
+        access = request.auth
 
         try:
             body = json.loads(request.body)
@@ -256,13 +255,13 @@ class McpView(View):
         if method == 'tools/call':
             return self._tools_call(id_, params, access)
         if method.startswith('notifications/'):
-            return JsonResponse({})
+            return Response({})
         return self._error(id_, -32601, f"Method not found: {method}")
 
     # Protocol handlers
 
     def _initialize(self, id_):
-        return JsonResponse({
+        return Response({
             "jsonrpc": "2.0", "id": id_,
             "result": {
                 "protocolVersion": "2024-11-05",
@@ -272,7 +271,7 @@ class McpView(View):
         })
 
     def _tools_list(self, id_):
-        return JsonResponse({"jsonrpc": "2.0", "id": id_, "result": {"tools": _TOOLS}})
+        return Response({"jsonrpc": "2.0", "id": id_, "result": {"tools": _TOOLS}})
 
     def _tools_call(self, id_, params, access):
         name = params.get('name')
@@ -300,16 +299,17 @@ class McpView(View):
 
         try:
             result = handler(args, access)
-        except Exception as exc:
-            return self._error(id_, -32603, str(exc))
+        except Exception:
+            logger.exception("Unhandled exception while executing MCP tool '%s'", name)
+            return self._error(id_, -32603, "Internal server error.")
 
-        return JsonResponse({
+        return Response({
             "jsonrpc": "2.0", "id": id_,
             "result": {"content": [{"type": "text", "text": json.dumps(result)}]},
         })
 
     def _error(self, id_, code, message):
-        return JsonResponse({"jsonrpc": "2.0", "id": id_, "error": {"code": code, "message": message}})
+        return Response({"jsonrpc": "2.0", "id": id_, "error": {"code": code, "message": message}})
 
     # Developer tools
 
@@ -668,7 +668,8 @@ class McpView(View):
         lang_code = args.get('language_code', '').strip().upper()
 
         if not source_text or not translation_text or not lang_code:
-            raise ValueError('source_text, translation_text, and language_code are required')
+            raise ValueError(
+                'source_text, translation_text, and language_code are required')
 
         try:
             ai_provider = access.project.ai_provider
@@ -681,7 +682,8 @@ class McpView(View):
         ]
         requested = args.get('checks') or []
         if requested:
-            effective_checks = [c for c in requested if c in all_accuracy_checks]
+            effective_checks = [
+                c for c in requested if c in all_accuracy_checks]
             if not effective_checks:
                 effective_checks = all_accuracy_checks
         else:
@@ -698,7 +700,8 @@ class McpView(View):
         }]
 
         provider = get_verification_provider(ai_provider)
-        results = provider.verify(items, effective_checks, access.project.description or '')
+        results = provider.verify(
+            items, effective_checks, access.project.description or '')
 
         if not results:
             return {'severity': 'ok', 'suggestion': '', 'reason': 'No issues found.'}

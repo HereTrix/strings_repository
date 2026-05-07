@@ -1,6 +1,6 @@
 import logging
 
-from django.http import JsonResponse
+from rest_framework.response import Response
 from rest_framework import generics, status
 
 from api.crypto import decrypt, encrypt
@@ -50,17 +50,17 @@ class AIProviderAPI(generics.GenericAPIView):
             pk=pk, roles__user=request.user
         ).first()
         if not project:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            return JsonResponse(_serialize_provider(project.ai_provider))
+            return Response(_serialize_provider(project.ai_provider))
         except ProjectAIProvider.DoesNotExist:
-            return JsonResponse({'enabled': False, 'providers': PROVIDERS_LIST})
+            return Response({'enabled': False, 'providers': PROVIDERS_LIST})
 
     def post(self, request, pk):
         project = _get_admin_project(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
 
         provider_type = request.data.get('provider_type', '').strip()
         api_key = request.data.get('api_key', '').strip()
@@ -71,34 +71,39 @@ class AIProviderAPI(generics.GenericAPIView):
             if request_timeout < 1:
                 raise ValueError
         except (ValueError, TypeError):
-            return JsonResponse({'error': 'request_timeout must be a positive integer'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'request_timeout must be a positive integer'}, status=status.HTTP_400_BAD_REQUEST)
 
-        translation_instructions = request.data.get('translation_instructions', '').strip()
-        verification_instructions = request.data.get('verification_instructions', '').strip()
-        glossary_extraction_instructions = request.data.get('glossary_extraction_instructions', '').strip()
-        translation_memory_instructions = request.data.get('translation_memory_instructions', '').strip()
+        translation_instructions = request.data.get(
+            'translation_instructions', '').strip()
+        verification_instructions = request.data.get(
+            'verification_instructions', '').strip()
+        glossary_extraction_instructions = request.data.get(
+            'glossary_extraction_instructions', '').strip()
+        translation_memory_instructions = request.data.get(
+            'translation_memory_instructions', '').strip()
 
         if len(translation_instructions) > 4000:
-            return JsonResponse({'error': 'translation_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'translation_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
         if len(verification_instructions) > 4000:
-            return JsonResponse({'error': 'verification_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'verification_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
         if len(glossary_extraction_instructions) > 4000:
-            return JsonResponse({'error': 'glossary_extraction_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'glossary_extraction_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
         if len(translation_memory_instructions) > 4000:
-            return JsonResponse({'error': 'translation_memory_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'translation_memory_instructions must be 4000 characters or fewer'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not provider_type:
-            return JsonResponse({'error': 'provider_type is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'provider_type is required'}, status=status.HTTP_400_BAD_REQUEST)
         if provider_type not in dict(ProjectAIProvider.ProviderType.choices):
-            return JsonResponse({'error': 'Invalid provider_type'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid provider_type'}, status=status.HTTP_400_BAD_REQUEST)
         if not model_name:
-            return JsonResponse({'error': 'model_name is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'model_name is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         if endpoint_url:
             try:
                 validate_url_for_outbound(endpoint_url)
             except ValueError as e:
-                return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                logger.error(e)
+                return Response({'error': 'URL validation failed'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             ai_provider = project.ai_provider
@@ -115,7 +120,7 @@ class AIProviderAPI(generics.GenericAPIView):
             ai_provider.save()
         except ProjectAIProvider.DoesNotExist:
             if not api_key:
-                return JsonResponse({'error': 'api_key is required'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'api_key is required'}, status=status.HTTP_400_BAD_REQUEST)
             ai_provider = ProjectAIProvider(
                 project=project,
                 provider_type=provider_type,
@@ -130,16 +135,16 @@ class AIProviderAPI(generics.GenericAPIView):
             )
             ai_provider.save()
 
-        return JsonResponse(_serialize_provider(ai_provider))
+        return Response(_serialize_provider(ai_provider))
 
     def delete(self, request, pk):
         project = _get_admin_project(pk, request.user)
         if not project:
-            return JsonResponse({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             project.ai_provider.delete()
         except ProjectAIProvider.DoesNotExist:
-            return JsonResponse({'error': 'No AI provider configured'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'No AI provider configured'}, status=status.HTTP_404_NOT_FOUND)
 
-        return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
+        return Response({}, status=status.HTTP_204_NO_CONTENT)

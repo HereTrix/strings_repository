@@ -532,7 +532,8 @@ class BundleCompareExportAPITestCase(TestCase):
 
     def _xlsx_text(self, content):
         """Extract all text from xlsx shared strings XML."""
-        import zipfile, re
+        import zipfile
+        import re
         zf = zipfile.ZipFile(io.BytesIO(content))
         try:
             xml = zf.read('xl/sharedStrings.xml').decode()
@@ -575,7 +576,8 @@ class BundleCompareExportAPITestCase(TestCase):
         resp = self.client.get(self._url(**{
             'from': self.bundle.pk, 'to': 'live', 'mode': 'changes'}))
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('compare_changes.xlsx', resp.get('Content-Disposition', ''))
+        self.assertIn('compare_changes.xlsx',
+                      resp.get('Content-Disposition', ''))
 
     def test_export_diff_default_mode(self):
         """Omitting mode defaults to diff."""

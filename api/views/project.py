@@ -1,6 +1,6 @@
 from django.db import transaction
-from django.http import JsonResponse
-from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework import generics, status
 from api.filters.string_token_filter import StringTokenFilter
 from api.filters.translation_filter import TranslationTokenFilter
 from api.languages.langcoder import LANGUAGE_CODE_KEY, Langcoder
@@ -30,7 +30,7 @@ class ProjectAPI(generics.RetrieveUpdateDestroyAPIView):
             roles__role__in=ProjectRole.change_participants_roles
         )
         project.delete()
-        return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
+        return Response({}, status=status.HTTP_204_NO_CONTENT)
 
 
 class CreateProjectAPI(generics.CreateAPIView):
@@ -75,7 +75,7 @@ class ProjectAvailableLanguagesAPI(generics.ListAPIView):
             if lang[LANGUAGE_CODE_KEY] not in used_codes
         ]
         serializer = self.get_serializer(unused, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
 
 
 class LanguageListAPI(generics.ListAPIView):
@@ -156,7 +156,7 @@ class LanguageProgressAPI(generics.GenericAPIView):
         try:
             project = Project.objects.get(pk=pk, roles__user=request.user)
         except Project.DoesNotExist:
-            return JsonResponse({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
         total = StringToken.objects.filter(
             project=project, status='active').count()
@@ -173,7 +173,7 @@ class LanguageProgressAPI(generics.GenericAPIView):
                 'total': total,
                 'percent': percent,
             }
-        return JsonResponse(result)
+        return Response(result)
 
 
 class ProjectTagsAPI(generics.GenericAPIView):
@@ -185,4 +185,4 @@ class ProjectTagsAPI(generics.GenericAPIView):
                 tokens__project__roles__user=request.user
             ).distinct().values_list('tag', flat=True)
         )
-        return JsonResponse(tags, safe=False)
+        return Response(tags)

@@ -1,4 +1,5 @@
 import base64
+import logging
 from datetime import timedelta
 
 from django.conf import settings
@@ -18,6 +19,8 @@ from webauthn.helpers.structs import (
 
 from api.models.users import PasskeyCredential, PasskeyChallenge, TwoFAVerification
 from api.throttles import PasskeyAuthRateThrottle
+
+logger = logging.getLogger(__name__)
 
 
 def _expected_origin():
@@ -85,7 +88,7 @@ class PasskeyRegisterCompleteAPI(APIView):
                 require_user_verification=False,
             )
         except Exception as e:
-            print(e)
+            logger.error(e)
             challenge_obj.delete()
             return Response({'error': 'Passkey verification failed'}, status=400)
 

@@ -28,10 +28,12 @@ def run_glossary_extraction_job(job_id: int):
     try:
         ai_provider = job.project.ai_provider
     except Exception:
-        _fail_extraction_job(job, 'No AI provider configured for this project.')
+        _fail_extraction_job(
+            job, 'No AI provider configured for this project.')
         return
 
-    source_lang = Language.objects.filter(project=job.project, is_default=True).first()
+    source_lang = Language.objects.filter(
+        project=job.project, is_default=True).first()
     if source_lang:
         qs = Translation.objects.filter(
             token__project=job.project,
@@ -54,10 +56,11 @@ def run_glossary_extraction_job(job_id: int):
 
     try:
         provider = get_verification_provider(ai_provider)
-        suggestions = provider.extract_glossary(strings, job.project.description or '')
+        suggestions = provider.extract_glossary(
+            strings, job.project.description or '')
     except Exception as e:
         logger.exception('Glossary extraction job %s failed: %s', job_id, e)
-        _fail_extraction_job(job, str(e))
+        _fail_extraction_job(job, 'Extraction job failed')
         return
 
     normalised = []
