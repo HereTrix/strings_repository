@@ -1,6 +1,6 @@
 import re
 import zipfile
-from xml.dom import minidom
+from defusedxml import minidom
 
 from django.http import HttpResponse
 

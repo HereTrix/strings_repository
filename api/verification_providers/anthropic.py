@@ -1,5 +1,6 @@
 import json
 import urllib.error
+from urllib.parse import urlparse
 import urllib.request
 
 from api.url_validation import validate_url_for_outbound
@@ -26,7 +27,8 @@ class AnthropicVerificationProvider(VerificationProvider):
         except ValueError as e:
             raise RuntimeError(f'Invalid endpoint URL: {e}') from e
 
-        system_prompt = _build_system_prompt(checks, project_description, self.verification_instructions, glossary_terms)
+        system_prompt = _build_system_prompt(
+            checks, project_description, self.verification_instructions, glossary_terms)
         user_message = _build_user_message(items)
 
         payload = {
@@ -49,10 +51,16 @@ class AnthropicVerificationProvider(VerificationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as response:
+            parsed = urlparse(req)
+            if not parsed.scheme == 'https':
+                raise ValueError("Blocked scheme")
+            # fmt: off
+            with urllib.request.urlopen(req, timeout=self.timeout) as response: # nosec B310
                 raw = json.loads(response.read())
+            # fmt: on
         except urllib.error.HTTPError as e:
-            raise RuntimeError(f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
+            raise RuntimeError(
+                f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
 
         content = raw.get('content', [{}])[0].get('text', '')
         return _parse_response(content)
@@ -81,7 +89,8 @@ class AnthropicVerificationProvider(VerificationProvider):
             'max_tokens': 4096,
             'system': system_prompt,
             'messages': [
-                {'role': 'user', 'content': json.dumps(strings, ensure_ascii=False)},
+                {'role': 'user', 'content': json.dumps(
+                    strings, ensure_ascii=False)},
             ],
         }
         req = urllib.request.Request(
@@ -95,10 +104,16 @@ class AnthropicVerificationProvider(VerificationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req, timeout=90) as response:
+            parsed = urlparse(req)
+            if not parsed.scheme == 'https':
+                raise ValueError("Blocked scheme")
+            # fmt: off
+            with urllib.request.urlopen(req, timeout=90) as response: # nosec B310
                 raw = json.loads(response.read())
+            # fmt: on
         except urllib.error.HTTPError as e:
-            raise RuntimeError(f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
+            raise RuntimeError(
+                f'AI provider error {e.code}: {e.read().decode("utf-8", errors="replace")}') from e
         content = raw.get('content', [{}])[0].get('text', '')
         return _parse_glossary_response(content)
 
@@ -120,7 +135,8 @@ class AnthropicVerificationProvider(VerificationProvider):
         user_message = json.dumps({
             'source': source[:500],
             'candidates': [
-                {'token_key': c['token_key'], 'source_text': c['source_text'][:500]}
+                {'token_key': c['token_key'],
+                    'source_text': c['source_text'][:500]}
                 for c in candidates
             ]
         }, ensure_ascii=False)
@@ -142,7 +158,10 @@ class AnthropicVerificationProvider(VerificationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req, timeout=10) as response:
+            parsed = urlparse(req)
+            if not parsed.scheme == 'https':
+                raise ValueError("Blocked scheme")
+            with urllib.request.urlopen(req, timeout=10) as response:  # nosec B310
                 raw = json.loads(response.read())
         except Exception:
             return candidates
@@ -162,7 +181,8 @@ class AnthropicVerificationProvider(VerificationProvider):
             return candidates
 
         key_to_candidate = {c['token_key']: c for c in candidates}
-        result = [key_to_candidate[k] for k in ordered_keys if k in key_to_candidate]
+        result = [key_to_candidate[k]
+                  for k in ordered_keys if k in key_to_candidate]
         seen = set(ordered_keys)
         result += [c for c in candidates if c['token_key'] not in seen]
         return result

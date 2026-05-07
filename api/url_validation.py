@@ -24,8 +24,6 @@ def validate_url_for_outbound(url: str) -> None:
     Checks: scheme must be http or https; hostname must resolve to a public IP.
     All resolved addresses (A and AAAA) are checked; rejects if any is private.
     """
-    if settings.DEBUG:
-        return
 
     parsed = urlparse(url)
     if parsed.scheme not in ('http', 'https'):
@@ -40,6 +38,9 @@ def validate_url_for_outbound(url: str) -> None:
         results = socket.getaddrinfo(hostname, None)
     except socket.gaierror as e:
         raise ValueError(f"Cannot resolve hostname {hostname!r}: {e}") from e
+
+    if settings.DEBUG:  # disable socket check for debug
+        return
 
     for (_, _, _, _, sockaddr) in results:
         ip_str = sockaddr[0]

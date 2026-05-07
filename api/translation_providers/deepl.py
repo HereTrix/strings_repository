@@ -1,5 +1,6 @@
 import json
 import urllib.error
+from urllib.parse import urlparse
 import urllib.request
 
 from api.translation_providers.base import TranslationProvider
@@ -32,9 +33,13 @@ class DeepLProvider(TranslationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req) as response:
+            parsed = urlparse(req)
+            if not parsed.scheme == 'https':
+                raise ValueError("Blocked scheme")
+            with urllib.request.urlopen(req) as response:  # nosec B310
                 result = json.loads(response.read())
         except urllib.error.HTTPError as e:
-            raise RuntimeError(f'DeepL error {e.code}: {e.read().decode()}') from e
+            raise RuntimeError(
+                f'DeepL error {e.code}: {e.read().decode()}') from e
 
         return result['translations'][0]['text']

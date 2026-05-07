@@ -1,6 +1,6 @@
 import io
 import zipfile
-from xml.dom import minidom
+from defusedxml import minidom
 
 from django.test import TestCase
 
@@ -105,7 +105,8 @@ class AndroidResourceWriterTestCase(TestCase):
         self.assertIn('my comment', xml)
 
     def test_plural_entry(self):
-        records = [TranslationModel.create('item', '', plural_forms={'one': 'one item', 'other': 'many'})]
+        records = [TranslationModel.create('item', '', plural_forms={
+                                           'one': 'one item', 'other': 'many'})]
         writer = AndroidResourceFileWriter()
         writer.append(records=records, code='en')
         xml = _zip_xml(writer.http_response(), 'en')

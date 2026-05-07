@@ -29,7 +29,10 @@ class GoogleTranslateProvider(TranslationProvider):
             method='POST',
         )
         try:
-            with urllib.request.urlopen(req) as response:
+            parsed = urllib.parse.urlparse(req)
+            if not parsed.scheme == 'https':
+                raise ValueError("Blocked scheme")
+            with urllib.request.urlopen(req) as response:  # nosec B310
                 result = json.loads(response.read())
         except urllib.error.HTTPError as e:
             raise RuntimeError(

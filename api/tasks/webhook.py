@@ -21,7 +21,8 @@ def send_webhook(endpoint_id: int, event_type: str, payload: dict):
         return
 
     body = json.dumps(payload).encode('utf-8')
-    signature = hmac.new(endpoint.signing_secret.encode(), body, hashlib.sha256).hexdigest()
+    signature = hmac.new(endpoint.signing_secret.encode(),
+                         body, hashlib.sha256).hexdigest()
 
     headers = {
         'Content-Type': 'application/json',
@@ -38,20 +39,26 @@ def send_webhook(endpoint_id: int, event_type: str, payload: dict):
     try:
         validate_url_for_outbound(url)
     except ValueError as e:
-        logger.warning('Webhook endpoint %s blocked by SSRF guard: %s', endpoint_id, e)
+        logger.warning(
+            'Webhook endpoint %s blocked by SSRF guard: %s', endpoint_id, e)
         return
 
-    log = WebhookDeliveryLog(endpoint=endpoint, event_type=event_type, payload_sent=payload)
+    log = WebhookDeliveryLog(
+        endpoint=endpoint, event_type=event_type, payload_sent=payload)
 
     try:
-        req = urllib.request.Request(url, data=body, headers=headers, method='POST')
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        req = urllib.request.Request(
+            url, data=body, headers=headers, method='POST')
+        # fmt: off
+        with urllib.request.urlopen(req, timeout=10) as resp: # nosec B310: URL validated by validate_url_for_outbound()
             log.status_code = resp.status
+        # fmt: on
     except urllib.error.HTTPError as e:
         log.status_code = e.code
         log.error = str(e)
     except Exception as e:
         log.error = str(e)
-        logger.warning('Webhook delivery failed for endpoint %s: %s', endpoint_id, e)
+        logger.warning(
+            'Webhook delivery failed for endpoint %s: %s', endpoint_id, e)
     finally:
         log.save()
