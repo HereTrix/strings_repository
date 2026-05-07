@@ -1,5 +1,5 @@
 import { FC, useState } from "react"
-import { Button, Container, Form, Row } from "react-bootstrap"
+import { Button, Container, Form } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
 import Profile from "../../types/Profile"
 import { APIMethod, http } from "../../utils/network"
@@ -33,8 +33,6 @@ const ProfileDetailsPage: FC<ProfileDetailsProps> = ({ profile }) => {
 
         if (result.error) {
             setError(result.error)
-        } else {
-
         }
     }
 

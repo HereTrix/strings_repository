@@ -1,51 +1,51 @@
 name: Code Quality & Security
 
 on:
-    push:
-        branches: [main]
-    pull_request:
+  push:
+    branches: [main]
+  pull_request:
 
 permissions: read-all
 
 jobs:
-    backend-security:
-        name: Backend Security (Bandit)
-        runs-on: ubuntu-latest
+  backend-security:
+    name: Backend Security (Bandit)
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+    steps:
+      - name: Checkout
+        uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
 
-            - name: Setup Python
-              uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-              with:
-                  python-version: "3.14"
+      - name: Setup Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.14"
 
-            - name: Install Bandit
-              run: pip install bandit
+      - name: Install Bandit
+        run: pip install bandit
 
-            - name: Run Bandit security scan
-              run: bandit -c bandit.yml -r api/ -ll
+      - name: Run Bandit security scan
+        run: bandit -c bandit.yml -r api/ -ll
 
-    frontend-lint:
-        name: Frontend Lint (ESLint)
-        runs-on: ubuntu-latest
+  frontend-lint:
+    name: Frontend Lint (ESLint)
+    runs-on: ubuntu-latest
 
-        defaults:
-            run:
-                working-directory: webui
+    defaults:
+      run:
+        working-directory: webui
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+    steps:
+      - name: Checkout
+        uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
 
-            - name: Setup Node
-              uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
-              with:
-                  node-version: "25"
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "25"
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Run ESLint
-              run: npx eslint .
+      - name: Run ESLint
+        run: npx eslint -c eslint.config.js

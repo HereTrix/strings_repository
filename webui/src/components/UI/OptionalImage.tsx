@@ -35,7 +35,7 @@ const useImageError = () => {
 
 const OptionalImage: FC<OptionalImageProps> = ({ src, alt, width = 50, height = 50 }) => {
 
-    const [setImg, hasError, retry, imgRef] = useImageError();
+    const [setImg, hasError] = useImageError();
 
     if (hasError || (!src || src === '')) {
         return <label

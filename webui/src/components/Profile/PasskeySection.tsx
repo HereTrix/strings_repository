@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Alert, Button, Form, Spinner } from 'react-bootstrap'
 import { APIMethod, http } from '../../utils/network'
-import { base64urlToBuffer, bufferToBase64url, serializeAttestationCredential } from '../../utils/webauthn'
+import { base64urlToBuffer, serializeAttestationCredential } from '../../utils/webauthn'
 import { PasskeyInfo } from '../../types/Passkey'
 
 interface PasskeySectionProps {

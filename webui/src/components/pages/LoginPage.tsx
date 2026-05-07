@@ -1,9 +1,9 @@
 import { useState } from "react"
-import { Alert, Button, Container, Form, Spinner, Toast, ToastContainer } from "react-bootstrap";
+import { Alert, Button, Container, Form, Spinner } from "react-bootstrap";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { APIMethod, http } from "../../utils/network";
-import { base64urlToBuffer, bufferToBase64url, serializeAssertionCredential } from "../../utils/webauthn";
+import { base64urlToBuffer, serializeAssertionCredential } from "../../utils/webauthn";
 import ErrorAlert from "../UI/ErrorAlert";
 import Profile from "../../types/Profile";
 

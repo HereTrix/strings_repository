@@ -2,7 +2,7 @@ import { Badge, Button, Dropdown, ListGroup, Row, Spinner, Stack } from "react-b
 import PluralFormsPanel from "../UI/PluralFormsPanel"
 import DiffView from "../UI/DiffView"
 import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, GlossaryHint, PluralForms, TranslationModel } from "../../types/Translation"
-import { FC, useEffect, useRef, useState } from "react"
+import { FC, useEffect, useState } from "react"
 import TagsContainer from "../UI/TagsContainer"
 import MarkdownField from "../UI/MarkdownField"
 import { APIMethod, http } from "../../utils/network"

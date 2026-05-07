@@ -47,7 +47,7 @@ const BundleExportModal: FC<BundleExportModalProps> = ({ project, bundle, show, 
         setError(undefined)
 
         const codes = selectedLanguages.map(l => l.code).join(",")
-        const params = new Map<string, any>()
+        const params = new Map<string, string>()
         params.set("type", selectedType.type)
         if (codes) params.set("codes", codes)
 

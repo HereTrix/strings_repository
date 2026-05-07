@@ -28,8 +28,6 @@ const canDeprecateMissing = (role: ProjectRole) =>
 
 const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
 
-    const navigate = useNavigate()
-
     const [error, setError] = useState<string>()
     const [tags, setTags] = useState<string[]>([])
     const [result, setResult] = useState<ImportResult | undefined>()

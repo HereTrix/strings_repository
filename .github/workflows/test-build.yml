@@ -10,7 +10,7 @@ on:
       - main
 
 jobs:
-  test:
+  backend-test:
     name: Django tests
     runs-on: ubuntu-latest
 
@@ -47,5 +47,31 @@ jobs:
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
         with:
           files: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
+
+  frontend-test:
+    name: Web UI tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "25"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+        with:
+          files: coverage/coverage-final.json
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true

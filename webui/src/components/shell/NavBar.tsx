@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import LogoutButton from './Logout';
 import { Button, Container, Nav, Navbar, Image, Dropdown } from 'react-bootstrap';
 import { APIMethod, http } from '../../utils/network';

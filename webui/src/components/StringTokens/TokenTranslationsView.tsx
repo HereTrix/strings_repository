@@ -1,4 +1,4 @@
-import { FC, useRef, useState } from "react"
+import { FC, useState } from "react"
 import { APIMethod, http } from "../../utils/network"
 import TokenTranslation, { TokenTranslationsResponse } from "../../types/TokenTranslation"
 import { Badge, Button, Dropdown, ListGroup, Row, Spinner, Stack } from "react-bootstrap"
@@ -45,8 +45,6 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
     const [hasFetchedTm, setHasFetchedTm] = useState(false)
 
     const [error, setError] = useState<string>()
-
-    const ref = useRef<HTMLTextAreaElement>(null)
 
     const hasPluralForms = Object.keys(pluralForms).length > 0
 

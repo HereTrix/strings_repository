@@ -101,7 +101,7 @@ const AccessTokenPage: FC<AccessTokenProps> = ({ project, show, onHide }) => {
         })
 
         if (data.value) {
-            var tokens = accessToken
+            let tokens = accessToken
             if (!tokens) {
                 tokens = []
             }
