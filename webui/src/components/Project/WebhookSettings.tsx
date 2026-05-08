@@ -3,7 +3,7 @@ import {
     Alert, Badge, Button, Form, ListGroup, ListGroupItem, Spinner, Stack
 } from "react-bootstrap"
 import Project, { ProjectRole } from "../../types/Project"
-import { APIMethod, http } from "../../utils/network"
+import { APIMethod, BodyPayload, http } from "../../utils/network"
 import ErrorAlert from "../UI/ErrorAlert"
 
 // Types
@@ -128,7 +128,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({ project }) => {
         setError(undefined)
 
         const isNew = editingId === 'new'
-        const payload: Record<string, unknown> = {
+        const payload: BodyPayload = {
             title: form.title,
             url: form.url,
             template: form.template,

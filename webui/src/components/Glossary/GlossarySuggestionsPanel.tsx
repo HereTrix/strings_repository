@@ -2,7 +2,7 @@ import { FC, useState } from "react"
 import { Alert, Badge, Button, Card, Form, Stack, Table } from "react-bootstrap"
 import Project from "../../types/Project"
 import { GlossarySuggestion } from "../../types/Glossary"
-import { APIMethod, http } from "../../utils/network"
+import { APIMethod, BodyPayload, http } from "../../utils/network"
 
 interface GlossarySuggestionsPanelProps {
   project: Project
@@ -42,7 +42,7 @@ const GlossarySuggestionsPanel: FC<GlossarySuggestionsPanelProps> = ({ project, 
     const state = states[index]
     updateState(index, { acting: true, error: null })
 
-    const body: Record<string, unknown> = { index, action }
+    const body: BodyPayload = { index, action }
     if (action === 'accept' && state.editMode) {
       body.term = state.editedTerm
       body.definition = state.editedDefinition
@@ -86,11 +86,11 @@ const GlossarySuggestionsPanel: FC<GlossarySuggestionsPanelProps> = ({ project, 
               <Stack direction="horizontal" gap={2}>
                 {state.editMode
                   ? <Form.Control
-                      size="sm"
-                      value={state.editedTerm}
-                      onChange={e => updateState(index, { editedTerm: e.target.value })}
-                      style={{ maxWidth: 200 }}
-                    />
+                    size="sm"
+                    value={state.editedTerm}
+                    onChange={e => updateState(index, { editedTerm: e.target.value })}
+                    style={{ maxWidth: 200 }}
+                  />
                   : <span className="fw-semibold">{suggestion.term}</span>
                 }
                 {statusBadge(suggestion.status)}
@@ -129,13 +129,13 @@ const GlossarySuggestionsPanel: FC<GlossarySuggestionsPanelProps> = ({ project, 
             <Card.Body>
               {state.editMode
                 ? <Form.Control
-                    as="textarea"
-                    rows={2}
-                    value={state.editedDefinition}
-                    onChange={e => updateState(index, { editedDefinition: e.target.value })}
-                    className="mb-2"
-                    placeholder="Definition"
-                  />
+                  as="textarea"
+                  rows={2}
+                  value={state.editedDefinition}
+                  onChange={e => updateState(index, { editedDefinition: e.target.value })}
+                  className="mb-2"
+                  placeholder="Definition"
+                />
                 : suggestion.definition && <p className="mb-2">{suggestion.definition}</p>
               }
               {suggestion.translations.length > 0 && (
@@ -148,12 +148,12 @@ const GlossarySuggestionsPanel: FC<GlossarySuggestionsPanelProps> = ({ project, 
                         <td>
                           {state.editMode
                             ? <Form.Control
-                                size="sm"
-                                value={state.editedTranslations[t.language_code] ?? t.preferred_translation}
-                                onChange={e => updateState(index, {
-                                  editedTranslations: { ...state.editedTranslations, [t.language_code]: e.target.value }
-                                })}
-                              />
+                              size="sm"
+                              value={state.editedTranslations[t.language_code] ?? t.preferred_translation}
+                              onChange={e => updateState(index, {
+                                editedTranslations: { ...state.editedTranslations, [t.language_code]: e.target.value }
+                              })}
+                            />
                             : t.preferred_translation
                           }
                         </td>

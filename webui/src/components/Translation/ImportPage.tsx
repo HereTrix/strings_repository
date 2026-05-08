@@ -3,9 +3,8 @@ import Project, { ProjectRole } from "../../types/Project"
 import { Alert, Button, Dropdown, Form, Modal } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
 import ErrorAlert from "../UI/ErrorAlert"
-import { APIMethod, http, upload } from "../../utils/network"
+import { APIMethod, BodyPayload, http, upload } from "../../utils/network"
 import { Typeahead } from "react-bootstrap-typeahead"
-import { useNavigate } from "react-router-dom"
 
 type ImportPageProps = {
     project: Project
@@ -39,7 +38,6 @@ const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
     const {
         register,
         handleSubmit,
-        formState: { errors },
     } = useForm<Inputs>()
 
     const onSubmit: SubmitHandler<Inputs> = async (data) => {
@@ -57,16 +55,18 @@ const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
 
         const tagToSend: string[] = selectedTags ?? []
 
+        const payload: BodyPayload = {
+            file: data.file[0],
+            code: selectedLanguage,
+            tags: tagToSend,
+            project_id: project.id,
+            deprecate_missing: deprecateMissing ? "true" : "false",
+        }
+
         const result = await upload<ImportResult>({
             method: APIMethod.post,
             path: `/api/import`,
-            data: {
-                "file": data.file[0],
-                "code": selectedLanguage,
-                "tags": tagToSend,
-                "project_id": project.id,
-                "deprecate_missing": deprecateMissing ? "true" : "false",
-            }
+            data: payload
         })
 
         if (result.value) {
@@ -129,7 +129,7 @@ const ImportPage: FC<ImportPageProps> = ({ project, code, show, onHide }) => {
                             placeholder="Select tags..."
                             onChange={(data) => {
                                 setSelectedTags(
-                                    data.map((val: any) => typeof val === 'string' ? val : val.tag)
+                                    data.map((val) => typeof val === 'string' ? val : val.tag)
                                 )
                             }}
                             selected={selectedTags}

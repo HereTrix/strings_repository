@@ -15,7 +15,6 @@ const PasswordPage = () => {
     const {
         register,
         handleSubmit,
-        formState: { errors },
         reset
     } = useForm<Inputs>()
 

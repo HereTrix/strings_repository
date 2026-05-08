@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useState } from "react"
-import { APIMethod, http } from "../../utils/network"
+import { APIMethod, http, QueryPayload } from "../../utils/network"
 import Translation, { getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel, UNTRANSLATED_FILTER } from "../../types/Translation"
 import { Badge, Card, Container, ListGroup, Modal } from "react-bootstrap"
 import PaginatedResponse from "../../types/PaginatedResponse"
@@ -33,7 +33,7 @@ const TranslationPage: FC<TranslationPageProps> = ({ code, project, scopeId, sco
     const [error, setError] = useState<string>()
 
     const fetchData = useCallback(async (pageOffset: number) => {
-        const params: Record<string, any> = {}
+        const params: QueryPayload = {}
         if (filters.tags?.length) params.tags = filters.tags
         if (filters.query) params.q = filters.query
         if (filters.status === UNTRANSLATED_FILTER) params.untranslated = 'true'
@@ -92,7 +92,12 @@ const TranslationPage: FC<TranslationPageProps> = ({ code, project, scopeId, sco
         const result = await http({
             method: APIMethod.post,
             path: "/api/translation",
-            data: { project_id: project.id, code, token: translation.token, translation: translation.translation }
+            data: {
+                project_id: project.id,
+                code,
+                token: translation.token,
+                translation: translation.translation ?? "",
+            }
         })
         if (result.error) setError(result.error)
     }

@@ -25,7 +25,7 @@ const LoginPage = () => {
 
     const navigate = useNavigate()
 
-    const [validated, setValidated] = useState(false)
+    const [validated] = useState(false)
     const [error, setError] = useState<string>()
     const [passkeyLoading, setPasskeyLoading] = useState(false)
     const [passkeyError, setPasskeyError] = useState<string | null>(null)
@@ -33,7 +33,6 @@ const LoginPage = () => {
     const {
         register,
         handleSubmit,
-        formState: { errors },
     } = useForm<Inputs>()
 
     const onSubmit: SubmitHandler<Inputs> = async (data) => {
@@ -71,7 +70,7 @@ const LoginPage = () => {
         setPasskeyLoading(true)
         setPasskeyError(null)
 
-        const beginRes = await http<{ publicKey: any }>({
+        const beginRes = await http<{ publicKey: string }>({
             isAuth: true,
             method: APIMethod.post,
             path: '/api/passkey/auth/begin',
@@ -92,7 +91,7 @@ const LoginPage = () => {
                 publicKey: {
                     ...opts,
                     challenge: base64urlToBuffer(opts.challenge),
-                    allowCredentials: (opts.allowCredentials || []).map((c: any) => ({
+                    allowCredentials: (opts.allowCredentials || []).map((c: PublicKeyCredentialDescriptorJSON) => ({
                         ...c,
                         id: base64urlToBuffer(c.id),
                     })),
@@ -113,12 +112,15 @@ const LoginPage = () => {
         }
 
         const credJson = serializeAssertionCredential(credential as PublicKeyCredential)
+        const payload = {
+            credential: JSON.parse(JSON.stringify(credJson)),
+        }
 
         const completeRes = await http<{ token: string }>({
             isAuth: true,
             method: APIMethod.post,
             path: '/api/passkey/auth/complete',
-            data: { credential: credJson },
+            data: payload,
         })
 
         if (completeRes.error || !completeRes.value) {

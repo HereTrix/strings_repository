@@ -14,7 +14,6 @@ const ProfileActivatePage = () => {
     const {
         register,
         handleSubmit,
-        formState: { errors },
         reset
     } = useForm<Inputs>()
 

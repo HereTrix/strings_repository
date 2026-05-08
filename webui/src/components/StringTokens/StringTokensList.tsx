@@ -3,7 +3,7 @@ import StringToken, { getStatusName, getStatusVariant, STATUS_OPTIONS } from "..
 import PaginatedResponse from "../../types/PaginatedResponse"
 import Project, { ProjectRole } from "../../types/Project"
 import { Badge, Button, Card, Container, Dropdown, ListGroup } from "react-bootstrap"
-import { APIMethod, http } from "../../utils/network"
+import { APIMethod, http, QueryPayload } from "../../utils/network"
 import AddTokenPage from "./AddTokenPage"
 import ErrorAlert from "../UI/ErrorAlert"
 import InfiniteScroll from "react-infinite-scroll-component"
@@ -43,7 +43,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     }
 
     const fetchData = useCallback(async (pageOffset: number) => {
-        const params: Record<string, any> = {}
+        const params: QueryPayload = {}
         if (filters.tags?.length) params.tags = filters.tags
         if (filters.query) params.q = filters.query
         if (filters.untranslated) params.untranslated = 'true'

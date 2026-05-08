@@ -1,6 +1,6 @@
 interface Translation {
     token: string
-    translation: string | undefined
+    translation?: string
 }
 
 export type PluralForms = Partial<Record<'zero' | 'one' | 'two' | 'few' | 'many' | 'other', string>>

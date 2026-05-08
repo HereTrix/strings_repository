@@ -12,6 +12,10 @@ const LogoutButton = () => {
             path: "/api/logout"
         })
 
+        if (result.error) {
+            // Ignore logout error
+        }
+
         localStorage.removeItem("auth")
         navigate("/login", { replace: true })
     }

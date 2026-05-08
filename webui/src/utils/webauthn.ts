@@ -10,7 +10,7 @@ export function base64urlToBuffer(b64: string): Uint8Array {
 }
 
 export function serializeAttestationCredential(credential: PublicKeyCredential): object {
-  if (typeof (credential as any).toJSON === 'function') return (credential as any).toJSON()
+  if (typeof credential.toJSON === 'function') return credential.toJSON()
   const resp = credential.response as AuthenticatorAttestationResponse
   return {
     id: credential.id,
@@ -18,13 +18,13 @@ export function serializeAttestationCredential(credential: PublicKeyCredential):
     type: credential.type,
     response: {
       clientDataJSON: bufferToBase64url(resp.clientDataJSON),
-      attestationObject: bufferToBase64url((resp as any).attestationObject),
+      attestationObject: bufferToBase64url(resp.attestationObject),
     },
   }
 }
 
-export function serializeAssertionCredential(credential: PublicKeyCredential): object {
-  if (typeof (credential as any).toJSON === 'function') return (credential as any).toJSON()
+export function serializeAssertionCredential(credential: PublicKeyCredential) {
+  if (typeof credential.toJSON === 'function') return credential.toJSON()
   const resp = credential.response as AuthenticatorAssertionResponse
   return {
     id: credential.id,

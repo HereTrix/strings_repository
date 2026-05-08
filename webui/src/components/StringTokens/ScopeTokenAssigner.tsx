@@ -2,7 +2,7 @@ import { FC, useCallback, useEffect, useRef, useState } from "react"
 import { Button, Col, Form, Row, Spinner } from "react-bootstrap"
 import InfiniteScroll from "react-infinite-scroll-component"
 import TagFilter from "../UI/TagFilter"
-import { APIMethod, http } from "../../utils/network"
+import { APIMethod, http, QueryPayload } from "../../utils/network"
 import Scope from "../../types/Scope"
 import StringToken from "../../types/StringToken"
 import PaginatedResponse from "../../types/PaginatedResponse"
@@ -19,32 +19,32 @@ const BATCH = 20
 const ScopeTokenAssigner: FC<Props> = ({ projectId, scope, onUpdate }) => {
     const [assignedIds, setAssignedIds] = useState<Set<number>>(new Set(scope.token_ids))
 
-    const [availQuery, setAvailQuery]     = useState('')
-    const [availItems, setAvailItems]     = useState<StringToken[]>([])
-    const [availOffset, setAvailOffset]   = useState(0)
+    const [availQuery, setAvailQuery] = useState('')
+    const [availItems, setAvailItems] = useState<StringToken[]>([])
+    const [availOffset, setAvailOffset] = useState(0)
     const [availHasMore, setAvailHasMore] = useState(false)
     const [availLoading, setAvailLoading] = useState(false)
 
-    const [assignedQuery, setAssignedQuery]     = useState('')
-    const [assignedItems, setAssignedItems]     = useState<StringToken[]>([])
-    const [assignedOffset, setAssignedOffset]   = useState(0)
+    const [assignedQuery, setAssignedQuery] = useState('')
+    const [assignedItems, setAssignedItems] = useState<StringToken[]>([])
+    const [assignedOffset, setAssignedOffset] = useState(0)
     const [assignedHasMore, setAssignedHasMore] = useState(false)
 
     const [selectedTags, setSelectedTags] = useState<string[]>([])
-    const [projectTags, setProjectTags]   = useState<string[]>([])
+    const [projectTags, setProjectTags] = useState<string[]>([])
 
     const [error, setError] = useState<string>()
 
     // Stable container IDs so InfiniteScroll can find its scrollable parent
     const instanceId = useRef(`sta-${scope.id}-${Math.random().toString(36).slice(2)}`)
-    const availId    = `${instanceId.current}-avail`
+    const availId = `${instanceId.current}-avail`
     const assignedId = `${instanceId.current}-assigned`
 
     // ── fetchers ─────────────────────────────────────────────────────────────
 
     const fetchAvailable = useCallback(async (q: string, offset: number) => {
         if (offset === 0) setAvailLoading(true)
-        const params: Record<string, any> = { q, limit: BATCH, offset }
+        const params: QueryPayload = { q, limit: BATCH, offset }
         if (selectedTags.length) params.tags = selectedTags
         const result = await http<PaginatedResponse<StringToken>>({
             method: APIMethod.get,
@@ -62,7 +62,7 @@ const ScopeTokenAssigner: FC<Props> = ({ projectId, scope, onUpdate }) => {
     }, [projectId, selectedTags])
 
     const fetchAssigned = useCallback(async (q: string, offset: number) => {
-        const params: Record<string, any> = { scope: scope.id, q, limit: BATCH, offset }
+        const params: QueryPayload = { scope: scope.id, q, limit: BATCH, offset }
         if (selectedTags.length) params.tags = selectedTags
         const result = await http<PaginatedResponse<StringToken>>({
             method: APIMethod.get,
@@ -96,7 +96,7 @@ const ScopeTokenAssigner: FC<Props> = ({ projectId, scope, onUpdate }) => {
         setAvailHasMore(false)
         setAssignedOffset(0)
         fetchAssigned('', 0)
-    }, [scope.id]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [scope.id])
 
     // ── debounced search for available ────────────────────────────────────────
 
@@ -124,7 +124,7 @@ const ScopeTokenAssigner: FC<Props> = ({ projectId, scope, onUpdate }) => {
         if (availHasMore && !availLoading && availItems.length > 0 && visibleAvail.length < 5) {
             fetchAvailable(availQuery, availOffset)
         }
-    }, [visibleAvail.length]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [visibleAvail.length])
 
     // ── add / remove ─────────────────────────────────────────────────────────
 

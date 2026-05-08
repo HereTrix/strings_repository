@@ -5,7 +5,7 @@ import Translation, { EDITABLE_STATUSES, getStatusName, getStatusVariant, Glossa
 import { FC, useEffect, useState } from "react"
 import TagsContainer from "../UI/TagsContainer"
 import MarkdownField from "../UI/MarkdownField"
-import { APIMethod, http } from "../../utils/network"
+import { APIMethod, BodyPayload, http } from "../../utils/network"
 import TranslationMemoryPanel from './TranslationMemoryPanel'
 import { TMSuggestion } from '../../types/TranslationMemory'
 
@@ -32,7 +32,7 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
     const [savedText, setSavedText] = useState<string | undefined>(translation.translation)
     const [showDiff, setShowDiff] = useState(false)
     const [pluralForms, setPluralForms] = useState<PluralForms>(
-        (translation as any).plural_forms ?? {}
+        translation.plural_forms ?? {}
     )
     const [pluralsOpen, setPluralsOpen] = useState(false)
     const [suggestion, setSuggestion] = useState<string>()
@@ -69,14 +69,19 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
     const translate = async () => {
         setTranslating(true)
         setSuggestion(undefined)
+
+        const payload: BodyPayload = { target_language: code }
+        if (translation.default_translation) {
+            payload.text = translation.default_translation
+        }
+        if (defaultLanguageCode) {
+            payload.source_language = defaultLanguageCode
+        }
+
         const result = await http<{ translation: string }>({
             method: APIMethod.post,
             path: `/api/project/${project_id}/machine-translate`,
-            data: {
-                text: translation.default_translation,
-                target_language: code,
-                source_language: defaultLanguageCode,
-            },
+            data: payload,
         })
         setTranslating(false)
         if (result.value) setSuggestion(result.value.translation)

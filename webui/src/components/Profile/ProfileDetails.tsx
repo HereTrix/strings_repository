@@ -21,7 +21,6 @@ const ProfileDetailsPage: FC<ProfileDetailsProps> = ({ profile }) => {
     const {
         register,
         handleSubmit,
-        formState: { errors }
     } = useForm<Inputs>()
 
     const onSubmit: SubmitHandler<Inputs> = async (data) => {

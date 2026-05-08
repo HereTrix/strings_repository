@@ -22,7 +22,6 @@ const AddProjectPage: FC<AddProjectProps> = ({ show, onHide, onSuccess }) => {
     const {
         register,
         handleSubmit,
-        formState: { errors },
     } = useForm<Inputs>()
 
     const onSubmit: SubmitHandler<Inputs> = async (data) => {

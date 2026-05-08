@@ -16,14 +16,13 @@ type Inputs = {
 const ActivateUserPage = () => {
 
     const navigate = useNavigate()
-    const [validated, setValidated] = useState(false);
+    const [validated] = useState(false);
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<boolean>(false)
 
     const {
         register,
         handleSubmit,
-        formState: { errors },
     } = useForm<Inputs>()
 
     const onSubmit: SubmitHandler<Inputs> = async (data) => {

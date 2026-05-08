@@ -12,7 +12,7 @@ type AccessTokenProps = {
 
 type AccessTokenParams = {
     permission: string
-    expiration: string | undefined
+    expiration?: string
 }
 
 interface AccessToken {

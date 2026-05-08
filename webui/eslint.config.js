@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
 import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
@@ -10,6 +11,7 @@ export default defineConfig([
     {
         plugins: {
             react: reactPlugin,
+            "react-hooks": reactHooks,
         },
 
         languageOptions: {

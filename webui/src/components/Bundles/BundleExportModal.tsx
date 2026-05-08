@@ -2,7 +2,7 @@ import fileDownload from "js-file-download"
 import { FC, JSX, useEffect, useState } from "react"
 import { Button, Dropdown, Modal, Stack } from "react-bootstrap"
 import { Typeahead } from "react-bootstrap-typeahead"
-import { APIMethod, download, http } from "../../utils/network"
+import { APIMethod, download, http, QueryPayload } from "../../utils/network"
 import { Bundle } from "../../types/Bundle"
 import Language from "../../types/Language"
 import OptionalImage from "../UI/OptionalImage"
@@ -47,9 +47,9 @@ const BundleExportModal: FC<BundleExportModalProps> = ({ project, bundle, show, 
         setError(undefined)
 
         const codes = selectedLanguages.map(l => l.code).join(",")
-        const params = new Map<string, string>()
-        params.set("type", selectedType.type)
-        if (codes) params.set("codes", codes)
+        const params: QueryPayload = {}
+        params.type = selectedType.type
+        if (codes) params.codes = codes
 
         const result = await download({
             method: APIMethod.get,
