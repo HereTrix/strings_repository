@@ -1,35 +1,37 @@
+import io
+
 from django.test import TestCase
 
 from api.file_processors.excel_file import ExcelFileWriter, ExcelSingleSheetFileWriter, FileConstants
 from api.models.transport_models import TranslationModel
 
 
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
 class ExcelFileWriterTestCase(TestCase):
 
-    def test_http_response_returns_xlsx_content_type(self):
+    def test_content_type_attribute(self):
+        writer = ExcelFileWriter()
+        self.assertIn('excel', writer.content_type)
+
+    def test_write_non_empty(self):
         writer = ExcelFileWriter()
         writer.append(records=[TranslationModel.create('key', 'val')], code='en')
-        response = writer.http_response()
-        self.assertIn('excel', response['Content-Type'])
+        self.assertGreater(len(_write_bytes(writer)), 0)
 
-    def test_http_response_non_empty(self):
+    def test_filename_attribute(self):
         writer = ExcelFileWriter()
-        writer.append(records=[TranslationModel.create('key', 'val')], code='en')
-        response = writer.http_response()
-        self.assertGreater(len(response.content), 0)
-
-    def test_content_disposition(self):
-        writer = ExcelFileWriter()
-        writer.append(records=[], code='en')
-        response = writer.http_response()
-        self.assertIn('translations.xlsx', response['Content-Disposition'])
+        self.assertIn('translations.xlsx', writer.filename)
 
     def test_plural_forms_do_not_raise(self):
         records = [TranslationModel.create('item', '', plural_forms={'one': 'one', 'other': 'many'})]
         writer = ExcelFileWriter()
         writer.append(records=records, code='en')
-        response = writer.http_response()
-        self.assertGreater(len(response.content), 0)
+        self.assertGreater(len(_write_bytes(writer)), 0)
 
 
 class ExcelSingleSheetWriterTestCase(TestCase):
@@ -56,14 +58,11 @@ class ExcelSingleSheetWriterTestCase(TestCase):
         self.assertEqual(record['en[one]'], 'one')
         self.assertEqual(record['en[other]'], 'many')
 
-    def test_http_response_returns_xlsx_content_type(self):
+    def test_content_type_attribute(self):
         writer = ExcelSingleSheetFileWriter()
-        writer.append(records=[TranslationModel.create('key', 'val')], code='en')
-        response = writer.http_response()
-        self.assertIn('excel', response['Content-Type'])
+        self.assertIn('excel', writer.content_type)
 
-    def test_http_response_non_empty(self):
+    def test_write_non_empty(self):
         writer = ExcelSingleSheetFileWriter()
         writer.append(records=[TranslationModel.create('key', 'val')], code='en')
-        response = writer.http_response()
-        self.assertGreater(len(response.content), 0)
+        self.assertGreater(len(_write_bytes(writer)), 0)

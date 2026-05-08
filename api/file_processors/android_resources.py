@@ -1,9 +1,8 @@
+import io
 import re
 import zipfile
 from defusedxml import minidom
 from xml.dom.minidom import Document
-
-from django.http import HttpResponse
 
 from api.file_processors.common import escape_quotes
 from api.file_processors.export_file_type import ExportFile
@@ -14,10 +13,12 @@ PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
 
 class AndroidResourceFileWriter:
+    content_type = 'application/zip'
+    filename = 'resources.zip'
 
     def __init__(self):
-        self.response = HttpResponse(content_type='application/zip')
-        self.zip_file = zipfile.ZipFile(self.response, 'w')
+        self._buf = io.BytesIO()
+        self.zip_file = zipfile.ZipFile(self._buf, 'w')
 
     def path(self, code):
         return f'/values-{code.lower()}/strings{ExportFile.android.file_extension()}'
@@ -72,10 +73,9 @@ class AndroidResourceFileWriter:
         data = root.toprettyxml()
         self.zip_file.writestr(self.path(code=code), data)
 
-    def http_response(self):
-        self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
+    def write(self, buf) -> None:
         self.zip_file.close()
-        return self.response
+        buf.write(self._buf.getvalue())
 
 
 class AndroidResourceFileReader:

@@ -1,5 +1,4 @@
 import io
-from django.http import HttpResponse
 import xlsxwriter
 
 from api.file_processors.common import TranslationFileWriter
@@ -20,6 +19,8 @@ class FileConstants:
 
 
 class ExcelFileWriter(TranslationFileWriter):
+    content_type = 'application/ms-excel'
+    filename = 'translations.xlsx'
 
     def __init__(self):
         self.output = io.BytesIO()
@@ -61,19 +62,15 @@ class ExcelFileWriter(TranslationFileWriter):
                     form, '') if record.plural_forms else '')
             row += 1
 
-    def http_response(self):
+    def write(self, buf) -> None:
         self.wb.close()
         self.output.seek(0)
-
-        response = HttpResponse(
-            content=self.output.read(),
-            content_type='application/ms-excel'
-        )
-        response['Content-Disposition'] = 'attachment; filename=translations.xlsx'
-        return response
+        buf.write(self.output.read())
 
 
 class ExcelSingleSheetFileWriter:
+    content_type = 'application/ms-excel'
+    filename = 'translations.xlsx'
 
     def __init__(self) -> None:
         self.records = {}
@@ -99,7 +96,7 @@ class ExcelSingleSheetFileWriter:
         if code not in self.languages:
             self.languages.append(code)
 
-    def http_response(self):
+    def write(self, buf) -> None:
         output = io.BytesIO()
         wb = xlsxwriter.Workbook(output, {'in_memory': True})
         ws = wb.add_worksheet()
@@ -130,10 +127,4 @@ class ExcelSingleSheetFileWriter:
 
         wb.close()
         output.seek(0)
-
-        response = HttpResponse(
-            content=output.read(),
-            content_type='application/ms-excel'
-        )
-        response['Content-Disposition'] = 'attachment; filename=translations.xlsx'
-        return response
+        buf.write(output.read())

@@ -1,3 +1,7 @@
+import io
+
+from django.http import HttpResponse
+
 from api.file_processors.android_resources import AndroidResourceFileWriter, AndroidResourceFileReader
 from api.file_processors.common_json_file import CommonJSONFileReader
 from api.file_processors.csv_file import CSVFileReader, CSVFileWriter
@@ -47,8 +51,13 @@ class FileProcessor():
     def append(self, records: list[TranslationModel], code: str):
         self.writer.append(records=records, code=code)
 
-    def http_response(self):
-        return self.writer.http_response()
+    def build_response(self) -> HttpResponse:
+        buf = io.BytesIO()
+        self.writer.write(buf)
+        buf.seek(0)
+        response = HttpResponse(content=buf.read(), content_type=self.writer.content_type)
+        response['Content-Disposition'] = f'attachment; filename="{self.writer.filename}"'
+        return response
 
 
 READER_MAP = {

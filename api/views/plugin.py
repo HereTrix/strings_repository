@@ -210,7 +210,7 @@ def _export_live(project, user, codes, tags, file_type):
         except Exception as e:
             return Response({'error': 'Failed to process errors'}, status=400)
 
-    return processor.http_response()
+    return processor.build_response()
 
 
 def _export_bundle(bundle, codes, file_type):
@@ -235,4 +235,4 @@ def _export_bundle(bundle, codes, file_type):
         except Exception as e:
             return Response({'error': 'Failed to process records'}, status=400)
 
-    return processor.http_response()
+    return processor.build_response()

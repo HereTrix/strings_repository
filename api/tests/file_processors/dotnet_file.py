@@ -20,9 +20,15 @@ def _data(name: str, value: str) -> str:
     return f'<data name="{name}" xml:space="preserve"><value>{value}</value></data>'
 
 
-def _zip_resx(response, code: str) -> str:
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+def _zip_resx(data: bytes, code: str) -> str:
     path = f'/WebResources.{code.lower()}.resx'
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
         return zf.read(path).decode()
 
 
@@ -62,7 +68,7 @@ class DotNetWriterTestCase(TestCase):
         records = [TranslationModel.create('greeting', 'Hello')]
         writer = DotNetFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_resx(writer.http_response(), 'en')
+        xml = _zip_resx(_write_bytes(writer), 'en')
         self.assertIn('name="greeting"', xml)
         self.assertIn('<value>Hello</value>', xml)
 
@@ -70,7 +76,7 @@ class DotNetWriterTestCase(TestCase):
         records = [TranslationModel.create('key', '<b>bold</b> & more')]
         writer = DotNetFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_resx(writer.http_response(), 'en')
+        xml = _zip_resx(_write_bytes(writer), 'en')
         self.assertIn('&lt;b&gt;', xml)
         self.assertIn('&amp;', xml)
 
@@ -78,14 +84,14 @@ class DotNetWriterTestCase(TestCase):
         records = [TranslationModel.create('key', 'val', 'my comment')]
         writer = DotNetFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_resx(writer.http_response(), 'en')
+        xml = _zip_resx(_write_bytes(writer), 'en')
         self.assertIn('my comment', xml)
 
     def test_plural_emits_suffixed_keys(self):
         records = [TranslationModel.create('item', '', plural_forms={'one': 'one item', 'other': 'many'})]
         writer = DotNetFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_resx(writer.http_response(), 'en')
+        xml = _zip_resx(_write_bytes(writer), 'en')
         self.assertIn('name="item[one]"', xml)
         self.assertIn('name="item[other]"', xml)
 
@@ -95,7 +101,7 @@ class DotNetWriterTestCase(TestCase):
         records = [TranslationModel.create('item', '', comment='note', plural_forms={'one': 'one', 'other': 'many'})]
         writer = DotNetFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_resx(writer.http_response(), 'en')
+        xml = _zip_resx(_write_bytes(writer), 'en')
         self.assertEqual(xml.count('note'), 1)
 
     def test_plural_forms_emitted_in_canonical_order(self):
@@ -103,7 +109,7 @@ class DotNetWriterTestCase(TestCase):
         records = [TranslationModel.create('item', '', plural_forms={'other': 'many', 'one': 'one'})]
         writer = DotNetFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_resx(writer.http_response(), 'en')
+        xml = _zip_resx(_write_bytes(writer), 'en')
         one_pos = xml.index('item[one]')
         other_pos = xml.index('item[other]')
         self.assertLess(one_pos, other_pos)
@@ -111,11 +117,9 @@ class DotNetWriterTestCase(TestCase):
     def test_zip_path_uses_language_code(self):
         writer = DotNetFileWriter()
         writer.append(records=[TranslationModel.create('k', 'v')], code='DE')
-        with zipfile.ZipFile(io.BytesIO(writer.http_response().content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             self.assertIn('/WebResources.de.resx', zf.namelist())
 
-    def test_http_response_content_disposition(self):
+    def test_filename_attribute(self):
         writer = DotNetFileWriter()
-        writer.append(records=[], code='en')
-        response = writer.http_response()
-        self.assertIn('resources.zip', response['Content-Disposition'])
+        self.assertIn('resources.zip', writer.filename)

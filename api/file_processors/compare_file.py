@@ -10,12 +10,17 @@ class CompareFileWriter:
     mode='diff'    — one row per entry: Token | Language | From | To | Change
     mode='changes' — only new/changed values: Token | Language | Value
     """
+    content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
     def __init__(self, diff: dict, mode: str = 'diff'):
         self.diff = diff
         self.mode = mode
 
-    def write(self, response):
+    @property
+    def filename(self):
+        return f'compare_{self.mode}.xlsx'
+
+    def write(self, buf) -> None:
         output = io.BytesIO()
         wb = xlsxwriter.Workbook(output, {'in_memory': True})
 
@@ -26,8 +31,7 @@ class CompareFileWriter:
 
         wb.close()
         output.seek(0)
-        response.headers['Content-Disposition'] = f'attachment; filename=compare_{self.mode}.xlsx'
-        response.write(output.read())
+        buf.write(output.read())
 
     def _write_diff(self, wb):
         ws = wb.add_worksheet('Diff')

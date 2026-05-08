@@ -1,6 +1,6 @@
-import zipfile
+import io
 import json
-from django.http import HttpResponse
+import zipfile
 
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.models.transport_models import TranslationModel
@@ -60,6 +60,9 @@ class XCStringsFileReader(TranslationFileReader):
 
 
 class XCStringsFileWriter(TranslationFileWriter):
+    content_type = 'application/zip'
+    filename = 'resources.zip'
+
     def __init__(self):
         self.data = {
             "version": "1.1",
@@ -103,13 +106,9 @@ class XCStringsFileWriter(TranslationFileWriter):
 
             self.data['strings'][item.token] = entry
 
-    def http_response(self):
-        response = HttpResponse(content_type='application/zip')
-        zip_file = zipfile.ZipFile(response, 'w')
-        zip_file.writestr(
-            'Localizable.xcstrings',
-            json.dumps(self.data, indent=4, ensure_ascii=False)
-        )
-        response['Content-Disposition'] = 'attachment; filename="resources.zip"'
+    def write(self, buf) -> None:
+        zbuf = io.BytesIO()
+        zip_file = zipfile.ZipFile(zbuf, 'w')
+        zip_file.writestr('Localizable.xcstrings', json.dumps(self.data, indent=4, ensure_ascii=False))
         zip_file.close()
-        return response
+        buf.write(zbuf.getvalue())

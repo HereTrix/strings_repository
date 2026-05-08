@@ -13,9 +13,15 @@ def _make_file(content) -> io.BytesIO:
     return io.BytesIO(content.encode())
 
 
-def _zip_properties(response, code: str) -> str:
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+def _zip_properties(data: bytes, code: str) -> str:
     path = f'/{code.lower()}.properties'
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
         return zf.read(path).decode()
 
 
@@ -76,21 +82,21 @@ class PropertiesWriterTestCase(TestCase):
         records = [TranslationModel.create('greeting', 'Hello')]
         writer = PropertiesFileWriter()
         writer.append(records=records, code='en')
-        content = _zip_properties(writer.http_response(), 'en')
+        content = _zip_properties(_write_bytes(writer), 'en')
         self.assertIn('greeting=Hello', content)
 
     def test_comment_prefixed_with_hash(self):
         records = [TranslationModel.create('key', 'val', 'my comment')]
         writer = PropertiesFileWriter()
         writer.append(records=records, code='en')
-        content = _zip_properties(writer.http_response(), 'en')
+        content = _zip_properties(_write_bytes(writer), 'en')
         self.assertIn('# my comment', content)
 
     def test_multiline_comment(self):
         records = [TranslationModel.create('key', 'val', 'line1\nline2')]
         writer = PropertiesFileWriter()
         writer.append(records=records, code='en')
-        content = _zip_properties(writer.http_response(), 'en')
+        content = _zip_properties(_write_bytes(writer), 'en')
         self.assertIn('# line1', content)
         self.assertIn('# line2', content)
 
@@ -98,14 +104,14 @@ class PropertiesWriterTestCase(TestCase):
         records = [TranslationModel.create('key=name', 'val')]
         writer = PropertiesFileWriter()
         writer.append(records=records, code='en')
-        content = _zip_properties(writer.http_response(), 'en')
+        content = _zip_properties(_write_bytes(writer), 'en')
         self.assertIn(r'key\=name', content)
 
     def test_plural_emits_suffixed_lines(self):
         records = [TranslationModel.create('item', '', plural_forms={'one': 'one item', 'other': 'many'})]
         writer = PropertiesFileWriter()
         writer.append(records=records, code='en')
-        content = _zip_properties(writer.http_response(), 'en')
+        content = _zip_properties(_write_bytes(writer), 'en')
         self.assertIn('item[one]=one item', content)
         self.assertIn('item[other]=many', content)
 
@@ -115,11 +121,11 @@ class PropertiesWriterTestCase(TestCase):
         records = [TranslationModel.create('item', '', comment='note', plural_forms={'one': 'one', 'other': 'many'})]
         writer = PropertiesFileWriter()
         writer.append(records=records, code='en')
-        content = _zip_properties(writer.http_response(), 'en')
+        content = _zip_properties(_write_bytes(writer), 'en')
         self.assertEqual(content.count('# note'), 1)
 
     def test_zip_path_uses_language_code(self):
         writer = PropertiesFileWriter()
         writer.append(records=[TranslationModel.create('k', 'v')], code='DE')
-        with zipfile.ZipFile(io.BytesIO(writer.http_response().content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             self.assertIn('/de.properties', zf.namelist())

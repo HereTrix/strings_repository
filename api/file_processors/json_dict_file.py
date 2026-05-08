@@ -1,6 +1,6 @@
-import zipfile
+import io
 import json
-from django.http import HttpResponse
+import zipfile
 
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
@@ -11,10 +11,12 @@ PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
 
 class JsonDictFileWriter(TranslationFileWriter):
+    content_type = 'application/zip'
+    filename = 'resources.zip'
 
     def __init__(self) -> None:
-        self.response = HttpResponse(content_type='application/zip')
-        self.zip_file = zipfile.ZipFile(self.response, 'w')
+        self._buf = io.BytesIO()
+        self.zip_file = zipfile.ZipFile(self._buf, 'w')
 
     def path(self, code):
         return f'/{code.lower()}{ExportFile.json_dict.file_extension()}'
@@ -45,10 +47,9 @@ class JsonDictFileWriter(TranslationFileWriter):
             json.dumps(data, indent=4, ensure_ascii=False)
         )
 
-    def http_response(self):
-        self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
+    def write(self, buf) -> None:
         self.zip_file.close()
-        return self.response
+        buf.write(self._buf.getvalue())
 
 
 class JsonDictFileReader(TranslationFileReader):

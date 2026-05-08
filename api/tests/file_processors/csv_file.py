@@ -20,10 +20,16 @@ def _make_file(rows: list[dict], fieldnames: list[str] | None = None) -> io.Byte
     return io.BytesIO(buf.getvalue().encode('utf-8'))
 
 
-def _zip_csv(response, code: str) -> list[dict]:
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+def _zip_csv(data: bytes, code: str) -> list[dict]:
     """Extract and parse the CSV for a given language code from the ZIP response."""
     path = f'/{code.lower()}/strings.csv'
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
         content = zf.read(path).decode('utf-8')
     return list(csv.DictReader(io.StringIO(content)))
 
@@ -140,29 +146,25 @@ class CSVFileReaderTestCase(TestCase):
 
 class CSVFileWriterTestCase(TestCase):
 
-    def test_zip_content_type(self):
+    def test_content_type_attribute(self):
         writer = CSVFileWriter()
-        writer.append(records=[TranslationModel.create('k', 'v')], code='en')
-        response = writer.http_response()
-        self.assertIn('zip', response['Content-Type'])
+        self.assertIn('zip', writer.content_type)
 
-    def test_content_disposition(self):
+    def test_filename_attribute(self):
         writer = CSVFileWriter()
-        writer.append(records=[], code='en')
-        response = writer.http_response()
-        self.assertIn('resources.zip', response['Content-Disposition'])
+        self.assertIn('resources.zip', writer.filename)
 
     def test_zip_path_uses_lowercase_language_code(self):
         writer = CSVFileWriter()
         writer.append(records=[TranslationModel.create('k', 'v')], code='DE')
-        with zipfile.ZipFile(io.BytesIO(writer.http_response().content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             self.assertIn('/de/strings.csv', zf.namelist())
 
     def test_basic_record_round_trips(self):
         records = [TranslationModel.create('greeting', 'Hello')]
         writer = CSVFileWriter()
         writer.append(records=records, code='en')
-        rows = _zip_csv(writer.http_response(), 'en')
+        rows = _zip_csv(_write_bytes(writer), 'en')
         self.assertEqual(rows[0][_KEY_COL], 'greeting')
         self.assertEqual(rows[0][_TRANSLATION_COL], 'Hello')
 
@@ -173,7 +175,7 @@ class CSVFileWriterTestCase(TestCase):
         ]
         writer = CSVFileWriter()
         writer.append(records=records, code='en')
-        rows = _zip_csv(writer.http_response(), 'en')
+        rows = _zip_csv(_write_bytes(writer), 'en')
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0][_KEY_COL], 'a')
         self.assertEqual(rows[1][_KEY_COL], 'b')
@@ -182,21 +184,21 @@ class CSVFileWriterTestCase(TestCase):
         records = [TranslationModel.create('k', 'v', tags=['ui', 'onboarding'])]
         writer = CSVFileWriter()
         writer.append(records=records, code='en')
-        rows = _zip_csv(writer.http_response(), 'en')
+        rows = _zip_csv(_write_bytes(writer), 'en')
         self.assertEqual(rows[0][_TAGS_COL], 'ui,onboarding')
 
     def test_comment_written(self):
         records = [TranslationModel.create('k', 'v', comment='Do not translate brand name')]
         writer = CSVFileWriter()
         writer.append(records=records, code='en')
-        rows = _zip_csv(writer.http_response(), 'en')
+        rows = _zip_csv(_write_bytes(writer), 'en')
         self.assertEqual(rows[0][_COMMENT_COL], 'Do not translate brand name')
 
     def test_plural_forms_written_to_bracketed_columns(self):
         records = [TranslationModel.create('items', '', plural_forms={'one': 'One item', 'other': 'Many items'})]
         writer = CSVFileWriter()
         writer.append(records=records, code='en')
-        rows = _zip_csv(writer.http_response(), 'en')
+        rows = _zip_csv(_write_bytes(writer), 'en')
         self.assertEqual(rows[0]['[one]'], 'One item')
         self.assertEqual(rows[0]['[other]'], 'Many items')
 
@@ -204,13 +206,13 @@ class CSVFileWriterTestCase(TestCase):
         records = [TranslationModel.create('items', '', plural_forms={'one': 'One item'})]
         writer = CSVFileWriter()
         writer.append(records=records, code='en')
-        rows = _zip_csv(writer.http_response(), 'en')
+        rows = _zip_csv(_write_bytes(writer), 'en')
         self.assertEqual(rows[0]['[other]'], '')
 
     def test_all_six_plural_columns_always_present(self):
         writer = CSVFileWriter()
         writer.append(records=[TranslationModel.create('k', 'v')], code='en')
-        rows = _zip_csv(writer.http_response(), 'en')
+        rows = _zip_csv(_write_bytes(writer), 'en')
         for form in ('zero', 'one', 'two', 'few', 'many', 'other'):
             self.assertIn(f'[{form}]', rows[0])
 
@@ -218,8 +220,7 @@ class CSVFileWriterTestCase(TestCase):
         writer = CSVFileWriter()
         writer.append(records=[TranslationModel.create('k', 'Hello')], code='en')
         writer.append(records=[TranslationModel.create('k', 'Hola')], code='es')
-        response = writer.http_response()
-        with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             names = zf.namelist()
         self.assertIn('/en/strings.csv', names)
         self.assertIn('/es/strings.csv', names)
@@ -228,13 +229,13 @@ class CSVFileWriterTestCase(TestCase):
         records = [TranslationModel.create('greeting', '日本語')]
         writer = CSVFileWriter()
         writer.append(records=records, code='en')
-        rows = _zip_csv(writer.http_response(), 'en')
+        rows = _zip_csv(_write_bytes(writer), 'en')
         self.assertEqual(rows[0][_TRANSLATION_COL], '日本語')
 
     def test_empty_records_produces_header_only(self):
         writer = CSVFileWriter()
         writer.append(records=[], code='en')
-        rows = _zip_csv(writer.http_response(), 'en')
+        rows = _zip_csv(_write_bytes(writer), 'en')
         self.assertEqual(rows, [])
 
 
@@ -245,7 +246,7 @@ class CSVRoundTripTestCase(TestCase):
         writer = CSVFileWriter()
         writer.append(records=records, code=code)
         path = f'/{code.lower()}/strings.csv'
-        with zipfile.ZipFile(io.BytesIO(writer.http_response().content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             content = zf.read(path)
         return CSVFileReader().read(io.BytesIO(content))
 

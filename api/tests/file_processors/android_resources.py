@@ -12,9 +12,15 @@ def _make_file(content: str) -> io.BytesIO:
     return io.BytesIO(content.encode())
 
 
-def _zip_xml(response, code: str) -> str:
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+def _zip_xml(data: bytes, code: str) -> str:
     path = f'/values-{code.lower()}/strings.xml'
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
         return zf.read(path).decode()
 
 
@@ -78,7 +84,7 @@ class AndroidResourceWriterTestCase(TestCase):
         records = [TranslationModel.create('key', 'value')]
         writer = AndroidResourceFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_xml(writer.http_response(), 'en')
+        xml = _zip_xml(_write_bytes(writer), 'en')
         dom = minidom.parseString(xml)
         nodes = dom.getElementsByTagName('string')
         self.assertEqual(len(nodes), 1)
@@ -87,21 +93,21 @@ class AndroidResourceWriterTestCase(TestCase):
     def test_zip_path_uses_language_code(self):
         writer = AndroidResourceFileWriter()
         writer.append(records=[TranslationModel.create('k', 'v')], code='DE')
-        with zipfile.ZipFile(io.BytesIO(writer.http_response().content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             self.assertIn('/values-de/strings.xml', zf.namelist())
 
     def test_html_entity_triggers_cdata(self):
         records = [TranslationModel.create('key', 'hello &amp; world')]
         writer = AndroidResourceFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_xml(writer.http_response(), 'en')
+        xml = _zip_xml(_write_bytes(writer), 'en')
         self.assertIn('CDATA', xml)
 
     def test_comment_added_as_xml_comment(self):
         records = [TranslationModel.create('key', 'val', 'my comment')]
         writer = AndroidResourceFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_xml(writer.http_response(), 'en')
+        xml = _zip_xml(_write_bytes(writer), 'en')
         self.assertIn('my comment', xml)
 
     def test_plural_entry(self):
@@ -109,7 +115,7 @@ class AndroidResourceWriterTestCase(TestCase):
                                            'one': 'one item', 'other': 'many'})]
         writer = AndroidResourceFileWriter()
         writer.append(records=records, code='en')
-        xml = _zip_xml(writer.http_response(), 'en')
+        xml = _zip_xml(_write_bytes(writer), 'en')
         dom = minidom.parseString(xml)
         plurals = dom.getElementsByTagName('plurals')
         self.assertEqual(len(plurals), 1)
@@ -119,8 +125,6 @@ class AndroidResourceWriterTestCase(TestCase):
         self.assertIn('one', quantities)
         self.assertIn('other', quantities)
 
-    def test_http_response_content_disposition(self):
+    def test_filename_attribute(self):
         writer = AndroidResourceFileWriter()
-        writer.append(records=[], code='en')
-        response = writer.http_response()
-        self.assertIn('resources.zip', response['Content-Disposition'])
+        self.assertIn('resources.zip', writer.filename)

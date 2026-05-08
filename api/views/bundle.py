@@ -1,3 +1,5 @@
+import io
+
 from django.db import transaction
 from django.http import HttpResponse
 from rest_framework.response import Response
@@ -251,10 +253,12 @@ class BundleCompareExportAPI(generics.GenericAPIView):
         if err:
             return error_response(err, status.HTTP_404_NOT_FOUND)
 
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        CompareFileWriter(diff=diff, mode=mode).write(response)
+        writer = CompareFileWriter(diff=diff, mode=mode)
+        buf = io.BytesIO()
+        writer.write(buf)
+        buf.seek(0)
+        response = HttpResponse(content=buf.read(), content_type=writer.content_type)
+        response['Content-Disposition'] = f'attachment; filename="{writer.filename}"'
         return response
 
 
@@ -416,4 +420,4 @@ class BundleExportAPI(generics.GenericAPIView):
             except Exception:
                 return error_response('Failed to process records', status.HTTP_400_BAD_REQUEST)
 
-        return processor.http_response()
+        return processor.build_response()

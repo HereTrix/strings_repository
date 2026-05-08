@@ -1,7 +1,6 @@
-from defusedxml import minidom
+import io
 import zipfile
-
-from django.http import HttpResponse
+from defusedxml import minidom
 
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
@@ -32,10 +31,12 @@ def _xml_escape(text):
 
 
 class DotNetFileWriter(TranslationFileWriter):
+    content_type = 'application/zip'
+    filename = 'resources.zip'
 
     def __init__(self) -> None:
-        self.response = HttpResponse(content_type='application/zip')
-        self.zip_file = zipfile.ZipFile(self.response, 'w')
+        self._buf = io.BytesIO()
+        self.zip_file = zipfile.ZipFile(self._buf, 'w')
 
     def path(self, code):
         return f'/WebResources.{code.lower()}{ExportFile.resx.file_extension()}'
@@ -78,10 +79,9 @@ class DotNetFileWriter(TranslationFileWriter):
         cleared = _xml_escape(translation or '')
         return text + f'    <data name="{token}" xml:space="preserve">\n        <value>{cleared}</value>\n    </data>\n'
 
-    def http_response(self):
-        self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
+    def write(self, buf) -> None:
         self.zip_file.close()
-        return self.response
+        buf.write(self._buf.getvalue())
 
     __header = '''     <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
