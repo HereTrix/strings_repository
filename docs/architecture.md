@@ -98,6 +98,32 @@ All endpoints are under `/api/`. The REST API is consumed by:
 
 CORS is enabled only for `/api/plugin/*` and `/api/mcp`; the main API does not need it because the SPA is served by the same process.
 
+## MCP Endpoint
+
+The MCP server lives in `api/views/mcp/` as a package split by domain:
+
+| Module | Responsibility |
+|--------|---------------|
+| `view.py` | `McpView` — HTTP entry point, JSON-RPC dispatch, error handling |
+| `schemas.py` | `TOOLS` list (input schemas for `tools/list`) |
+| `tools_project.py` | `get_project`, `get_languages` |
+| `tools_tokens.py` | `list_tokens`, `get_token`, `create_token`, `set_translation`, `batch_create_tokens` |
+| `tools_ai.py` | `search_similar_tokens`, `suggest_token_key`, `get_token_naming_patterns`, `check_glossary`, `suggest_translation`, `verify_string` |
+
+`__init__.py` re-exports `McpView` so `api/urls/plugin.py` imports it unchanged.
+
+Each tool is a plain function `(args: dict, access: ProjectAccessToken) -> dict`. `McpView._tools_call` maps tool names to functions via a static `_HANDLERS` dict and wraps every call in a uniform error boundary (`NotFoundException`, `AIProviderNotConfigured`, catch-all).
+
+Tests mirror the same domain split under `api/tests/views/mcp/`:
+
+| Module | Covers |
+|--------|--------|
+| `test_protocol.py` | Auth, `initialize`, `tools/list`, notifications, parse errors |
+| `test_tools_project.py` | `get_project`, `get_languages` |
+| `test_tools_tokens.py` | Token CRUD and `batch_create_tokens` |
+| `test_tools_ai.py` | All AI-assist tools |
+| `helpers.py` | Shared `mcp_call`, `get_result`, `get_error`, `make_ai_provider` |
+
 ## Frontend Build
 
 The React app (TypeScript, React Router) is compiled by webpack and output to `webui/static/site/`. Django's `collectstatic` copies it into the static files directory served by gunicorn. The frontend has no separate server in production.
