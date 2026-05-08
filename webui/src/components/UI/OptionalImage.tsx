@@ -9,7 +9,8 @@ type OptionalImageProps = {
 
 // taken from https://dev.to/know_dhruv/react-handle-image-loading-error-gracefully-using-custom-hook-21c2
 const useImageError = () => {
-    const [el, setEl] = useState<any>(null); // contains image reference
+    // eslint-disable-next-line
+    const [el, setEl] = useState<any>(); // contains image reference
     const [error, setError] = useState(false); // contains error flag
 
     const _handleError = () => { setError(true); }  // set error
@@ -35,7 +36,7 @@ const useImageError = () => {
 
 const OptionalImage: FC<OptionalImageProps> = ({ src, alt, width = 50, height = 50 }) => {
 
-    const [setImg, hasError, retry, imgRef] = useImageError();
+    const [setImg, hasError] = useImageError();
 
     if (hasError || (!src || src === '')) {
         return <label

@@ -1,5 +1,5 @@
-import { FC, useRef, useState } from "react"
-import { APIMethod, http } from "../../utils/network"
+import { FC, useState } from "react"
+import { APIMethod, BodyPayload, http } from "../../utils/network"
 import TokenTranslation, { TokenTranslationsResponse } from "../../types/TokenTranslation"
 import { Badge, Button, Dropdown, ListGroup, Row, Spinner, Stack } from "react-bootstrap"
 import OptionalImage from "../UI/OptionalImage"
@@ -46,8 +46,6 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
 
     const [error, setError] = useState<string>()
 
-    const ref = useRef<HTMLTextAreaElement>(null)
-
     const hasPluralForms = Object.keys(pluralForms).length > 0
 
     const onTranslationChange = (text: string) => {
@@ -68,14 +66,21 @@ const TokenTranslationsItem: FC<TokenTranslationsItemProps> = ({
     const translate = async () => {
         setTranslating(true)
         setSuggestion('')
+
+        const payload: BodyPayload = {
+            target_language: item.code,
+        }
+        if (default_translation) {
+            payload.text = default_translation
+        }
+        if (default_language) {
+            payload.source_language = default_language
+        }
+
         const result = await http<{ translation: string }>({
             method: APIMethod.post,
             path: `/api/project/${project_id}/machine-translate`,
-            data: {
-                text: default_translation,
-                target_language: item.code,
-                source_language: default_language,
-            },
+            data: payload,
         })
         setTranslating(false)
         if (result.value) setSuggestion(result.value.translation)

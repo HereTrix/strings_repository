@@ -73,8 +73,8 @@ const RunVerificationModal: FC<RunVerificationModalProps> = ({ show, project, on
             path: `/api/project/${project.id}/verify`,
             data: {
                 mode,
-                target_language: targetLanguage || undefined,
-                scope_id: scopeId || undefined,
+                target_language: targetLanguage,
+                scope_id: scopeId,
                 tags,
                 new_only: newOnly,
                 checks,

@@ -11,6 +11,7 @@ import HistoryPage from "../History/HistoryPage"
 import ImportPage from "../Translation/ImportPage"
 import BundlesPage from "../Bundles/BundlesPage"
 import ScopeManager from "../StringTokens/ScopeManager"
+import ErrorAlert from "../UI/ErrorAlert";
 
 const VerificationPage = React.lazy(() => import('../Verification/VerificationPage'))
 const GlossaryPage = React.lazy(() => import('../Glossary/GlossaryPage'))
@@ -152,6 +153,7 @@ const ProjectPage = () => {
                         onHide={() => setShowExport(false)} />
                 }
             </>}
+            {error && <ErrorAlert error={error} onClose={() => setError(undefined)} />}
         </Container >
     )
 }

@@ -23,7 +23,7 @@ type LanguageListItemProp = {
     onNavigate: () => void
 }
 
-const LanguageListItem: FC<LanguageListItemProp> = ({ language, project_id, canManage, progress, onDelete, onSetDefault, onNavigate }): JSX.Element => {
+const LanguageListItem: FC<LanguageListItemProp> = ({ language, canManage, progress, onDelete, onSetDefault, onNavigate }): JSX.Element => {
 
     return (
         <ListGroup.Item

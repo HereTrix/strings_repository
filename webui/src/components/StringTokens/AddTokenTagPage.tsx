@@ -53,7 +53,7 @@ const AddTokenTagPage: FC<AddTokenTagPageProps> = ({ token, tags, onHide, onSucc
                     placeholder="Select tags..."
                     onChange={(data) => {
                         setSelectedTags(
-                            data.map((val: any) => typeof val === 'string' ? val : val.tag)
+                            data.map((val) => typeof val === 'string' ? val : val.tag)
                         )
                     }}
                     selected={selectedTags}

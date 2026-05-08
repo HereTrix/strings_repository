@@ -12,7 +12,7 @@ type AccessTokenProps = {
 
 type AccessTokenParams = {
     permission: string
-    expiration: string | undefined
+    expiration?: string
 }
 
 interface AccessToken {
@@ -101,7 +101,7 @@ const AccessTokenPage: FC<AccessTokenProps> = ({ project, show, onHide }) => {
         })
 
         if (data.value) {
-            var tokens = accessToken
+            let tokens = accessToken
             if (!tokens) {
                 tokens = []
             }

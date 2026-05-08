@@ -1,4 +1,4 @@
-import { Button, Container } from "react-bootstrap"
+import { Container } from "react-bootstrap"
 import { useNavigate } from "react-router-dom"
 import { APIMethod, http } from "../../utils/network"
 
@@ -11,6 +11,10 @@ const LogoutButton = () => {
             method: APIMethod.post,
             path: "/api/logout"
         })
+
+        if (result.error) {
+            // Ignore logout error
+        }
 
         localStorage.removeItem("auth")
         navigate("/login", { replace: true })

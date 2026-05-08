@@ -1,7 +1,7 @@
 import fileDownload from "js-file-download";
 import { FC, JSX, useEffect, useState } from "react";
-import { Button, Col, Dropdown, DropdownButton, Modal, Row, Stack } from "react-bootstrap";
-import { download, APIMethod, http } from "../../utils/network";
+import { Button, Dropdown, Modal, Row, Stack } from "react-bootstrap";
+import { download, APIMethod, http, QueryPayload } from "../../utils/network";
 import Project from "../../types/Project";
 import { Typeahead } from "react-bootstrap-typeahead";
 import Language from "../../types/Language";
@@ -72,15 +72,15 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
 
         const codes = selectedLanguages.map((lang) => lang.code).join(",")
 
-        var params = new Map<string, any>()
-        params.set('codes', codes)
-        params.set('project_id', project.id)
+        const params: QueryPayload = {}
+        params.codes = codes
+        params.project_id = project.id
         if (selectedType) {
-            params.set('type', selectedType.type)
+            params.type = selectedType.type
         }
 
         if (selectedTags) {
-            params.set('tags', selectedTags.join(","))
+            params.tags = selectedTags.join(",")
         }
 
         const result = await download({
@@ -113,7 +113,7 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
                     selected={selectedLanguages}
                     renderMenuItemChildren={(item) => {
 
-                        var language = item as Language
+                        const language = item as Language
                         return (
                             <Stack direction="horizontal" gap={3}>
                                 <OptionalImage
@@ -136,7 +136,7 @@ const ExportPage: FC<ExportPageProps> = ({ project, code, show, onHide }): JSX.E
                     placeholder="Select tags..."
                     onChange={(data) => {
                         setSelectedTags(
-                            data.map((val: any) => typeof val === 'string' ? val : val.tag)
+                            data.map((val) => typeof val === 'string' ? val : val.tag)
                         )
                     }}
                     selected={selectedTags}

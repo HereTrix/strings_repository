@@ -1,6 +1,7 @@
 ![build status](https://github.com/HereTrix/strings_repository/actions/workflows/main-build.yml/badge.svg)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/HereTrix/strings_repository/badge)](https://scorecard.dev/viewer/?uri=github.com/HereTrix/strings_repository)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12778/badge)](https://www.bestpractices.dev/projects/12778)
+[![codecov](https://codecov.io/github/HereTrix/strings_repository/graph/badge.svg?token=88H054FJKN)](https://codecov.io/github/HereTrix/strings_repository)
 
 # StringsRepository
 
@@ -338,6 +339,10 @@ https://github.com/HereTrix/strings_repository/wiki
 
 * Figma plugin
   https://github.com/HereTrix/strings_repository-figma-plugin
+
+## Contributing
+
+Contributions are welcome!
 
 ## License
 

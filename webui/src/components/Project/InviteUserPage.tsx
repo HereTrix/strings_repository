@@ -1,6 +1,6 @@
 import { FC, useState } from "react"
 import { Button, Container, Dropdown, Modal, Row } from "react-bootstrap"
-import { APIMethod, http } from "../../utils/network"
+import { APIMethod, BodyPayload, http } from "../../utils/network"
 
 type InviteUserPage = {
     projectId: number
@@ -14,17 +14,19 @@ type Invitation = {
     code: string
 }
 
-const InviteUserPage: FC<InviteUserPage> = ({ projectId, roles, show, onHide, onSuccess }) => {
+const InviteUserPage: FC<InviteUserPage> = ({ projectId, roles, show, onHide }) => {
 
     const [error, setError] = useState<string>()
     const [code, setCode] = useState<string>()
-    const [selectedRole, setSelectedRole] = useState<string>()
+    const [selectedRole, setSelectedRole] = useState<string | null>(null)
+
+    const payload: BodyPayload = { role: selectedRole }
 
     const generateCode = async () => {
         const data = await http<Invitation>({
             method: APIMethod.post,
             path: `/api/project/${projectId}/invite`,
-            data: { 'role': selectedRole }
+            data: payload
         })
 
         if (data.value) {

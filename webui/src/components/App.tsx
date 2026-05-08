@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { history } from '../utils/history'
+import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import { setNavigate } from '../utils/navigation';
 const LoginPage = React.lazy(() => import("./pages/LoginPage"))
 const TwoFALoginPage = React.lazy(() => import("./Auth/TwoFALoginPage"))

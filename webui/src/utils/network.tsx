@@ -8,12 +8,43 @@ export enum APIMethod {
     delete = "DELETE"
 }
 
+type QueryValue =
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | string[]
+
+export type JSONValue =
+    | string
+    | number
+    | boolean
+    | null
+    | JSONValue[]
+    | { [key: string]: JSONValue }
+
+type JSONPayload = Record<string, JSONValue>
+
+type FormDataValue =
+    | string
+    | string[]
+    | number
+    | boolean
+    | Blob
+    | File
+
+type FormDataPayload = Record<string, FormDataValue>
+
+export type BodyPayload = JSONPayload | FormDataPayload
+export type QueryPayload = Record<string, QueryValue>
+
 export type APIRequest = {
     isAuth?: boolean
     method: APIMethod
     path: string
-    params?: any | null
-    data?: any | null
+    params?: QueryPayload
+    data?: BodyPayload
 }
 
 export interface APIResponse<T> {
@@ -35,10 +66,22 @@ function authHeaders(isAuth?: boolean): [string, string][] {
     return headers
 }
 
-function buildPath(path: string, params?: any): string {
+function buildPath(path: string, params?: Record<string, QueryValue>): string {
     if (!params) return path
-    const query = new URLSearchParams(params)
-    return `${path}?${query.toString()}`
+    const query = new URLSearchParams()
+
+    Object.entries(params ?? {}).forEach(([key, value]) => {
+        if (value == null) return
+
+        if (Array.isArray(value)) {
+            value.forEach((v) => query.append(key, v))
+        } else {
+            query.append(key, String(value))
+        }
+    })
+    const queryString = query.toString()
+
+    return queryString ? `${path}?${queryString}` : path
 }
 
 function handleUnauthorized(isAuth?: boolean) {
@@ -103,8 +146,8 @@ export async function http<T>(request: APIRequest): Promise<APIResponse<T>> {
 
 export async function upload<T>(request: APIRequest): Promise<APIResponse<T>> {
     const formData = new FormData()
-    for (const key in request.data) {
-        formData.append(key, request.data[key])
+    for (const [key, value] of Object.entries(request.data ?? {})) {
+        formData.append(key, String(value));
     }
 
     const headers = authHeaders(request.isAuth)
