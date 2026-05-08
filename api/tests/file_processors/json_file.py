@@ -12,9 +12,15 @@ def _make_file(data: dict) -> io.BytesIO:
     return io.BytesIO(json.dumps(data).encode())
 
 
-def _zip_json(response, code: str) -> dict:
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+def _zip_json(data: bytes, code: str) -> dict:
     path = f'/{code.lower()}.json'
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
         return json.loads(zf.read(path).decode())
 
 
@@ -73,20 +79,20 @@ class JsonFileWriterTestCase(TestCase):
         records = [TranslationModel.create('greeting', 'Hello')]
         writer = JsonFileWriter()
         writer.append(records=records, code='en')
-        data = _zip_json(writer.http_response(), 'en')
+        data = _zip_json(_write_bytes(writer), 'en')
         self.assertEqual(data['greeting'], 'Hello')
 
     def test_zip_path_uses_language_code(self):
         writer = JsonFileWriter()
         writer.append(records=[TranslationModel.create('k', 'v')], code='FR')
-        with zipfile.ZipFile(io.BytesIO(writer.http_response().content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             self.assertIn('/fr.json', zf.namelist())
 
     def test_plural_forms_expanded_as_suffixed_keys(self):
         records = [TranslationModel.create('item', '', plural_forms={'one': 'one item', 'other': 'many'})]
         writer = JsonFileWriter()
         writer.append(records=records, code='en')
-        data = _zip_json(writer.http_response(), 'en')
+        data = _zip_json(_write_bytes(writer), 'en')
         self.assertEqual(data['item_one'], 'one item')
         self.assertEqual(data['item_other'], 'many')
 
@@ -94,11 +100,9 @@ class JsonFileWriterTestCase(TestCase):
         records = [TranslationModel.create('key', '日本語')]
         writer = JsonFileWriter()
         writer.append(records=records, code='en')
-        data = _zip_json(writer.http_response(), 'en')
+        data = _zip_json(_write_bytes(writer), 'en')
         self.assertEqual(data['key'], '日本語')
 
-    def test_http_response_content_disposition(self):
+    def test_filename_attribute(self):
         writer = JsonFileWriter()
-        writer.append(records=[], code='en')
-        response = writer.http_response()
-        self.assertIn('resources.zip', response['Content-Disposition'])
+        self.assertIn('resources.zip', writer.filename)

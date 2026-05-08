@@ -12,9 +12,15 @@ def _make_file(data: dict) -> io.BytesIO:
     return io.BytesIO(json.dumps(data).encode())
 
 
-def _zip_json(response, code: str) -> dict:
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+def _zip_json(data: bytes, code: str) -> dict:
     path = f'/{code.lower()}.json'
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
         return json.loads(zf.read(path).decode())
 
 
@@ -65,14 +71,14 @@ class JsonDictWriterTestCase(TestCase):
         records = [TranslationModel.create('greeting', 'Hello')]
         writer = JsonDictFileWriter()
         writer.append(records=records, code='en')
-        data = _zip_json(writer.http_response(), 'en')
+        data = _zip_json(_write_bytes(writer), 'en')
         self.assertEqual(data['greeting']['value'], 'Hello')
 
     def test_comment_and_tags_serialized(self):
         records = [TranslationModel.create('key', 'val', comment='note', tags=['t1'])]
         writer = JsonDictFileWriter()
         writer.append(records=records, code='en')
-        data = _zip_json(writer.http_response(), 'en')
+        data = _zip_json(_write_bytes(writer), 'en')
         self.assertEqual(data['key']['comment'], 'note')
         self.assertEqual(data['key']['tags'], ['t1'])
 
@@ -80,7 +86,7 @@ class JsonDictWriterTestCase(TestCase):
         records = [TranslationModel.create('item', '', plural_forms={'one': 'one', 'other': 'many'})]
         writer = JsonDictFileWriter()
         writer.append(records=records, code='en')
-        data = _zip_json(writer.http_response(), 'en')
+        data = _zip_json(_write_bytes(writer), 'en')
         self.assertEqual(data['item']['plural']['one'], 'one')
         self.assertEqual(data['item']['plural']['other'], 'many')
 
@@ -88,11 +94,11 @@ class JsonDictWriterTestCase(TestCase):
         records = [TranslationModel.create('key', '')]
         writer = JsonDictFileWriter()
         writer.append(records=records, code='en')
-        data = _zip_json(writer.http_response(), 'en')
+        data = _zip_json(_write_bytes(writer), 'en')
         self.assertNotIn('value', data['key'])
 
     def test_zip_path_uses_language_code(self):
         writer = JsonDictFileWriter()
         writer.append(records=[TranslationModel.create('k', 'v')], code='DE')
-        with zipfile.ZipFile(io.BytesIO(writer.http_response().content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             self.assertIn('/de.json', zf.namelist())

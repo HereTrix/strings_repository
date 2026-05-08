@@ -132,3 +132,41 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker rm -f testct || true
+
+  sign_release:
+    name: Create signed release
+    runs-on: ubuntu-latest
+    needs: push_to_registry
+    if: github.event_name == 'push'
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+        with:
+          fetch-depth: 0
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@cb9bde2e2c9cdf3e6c075e0a4578b39c3c45f8a8
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Generate checksums and sign
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          IMAGE="ghcr.io/${{ github.repository }}:${TAG}"
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE" --format '{{.Manifest.Digest}}' 2>/dev/null || echo "see image on ghcr.io")
+          echo "${DIGEST}  ${IMAGE}" > checksums.txt
+          gpg --armor --detach-sign checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@c062e08bd532815e2082a7e09ce9571a6d9aed3c
+        with:
+          generate_release_notes: true
+          make_latest: true
+          files: |
+            checksums.txt
+            checksums.txt.asc

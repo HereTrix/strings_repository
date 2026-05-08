@@ -4,11 +4,13 @@ from datetime import datetime
 
 
 class HistoryFileWriter:
+    content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    filename = 'history.xlsx'
 
     def __init__(self, data):
         self.data = data
 
-    def write(self, response):
+    def write(self, buf) -> None:
         output = io.BytesIO()
         wb = xlsxwriter.Workbook(output, {'in_memory': True})
         ws = wb.add_worksheet('Report')
@@ -39,5 +41,4 @@ class HistoryFileWriter:
 
         wb.close()
         output.seek(0)
-        response.headers['Content-Disposition'] = 'attachment; filename=history.xlsx'
-        response.write(output.read())
+        buf.write(output.read())

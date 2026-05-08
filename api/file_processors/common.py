@@ -21,10 +21,13 @@ class TranslationFileReader(Protocol):
 
 
 class TranslationFileWriter(Protocol):
+    content_type: str
+    filename: str
+
     @abstractmethod
     def append(self, records: list[TranslationModel], code: str) -> None:
         ...
 
     @abstractmethod
-    def http_response(self):
+    def write(self, buf) -> None:
         ...

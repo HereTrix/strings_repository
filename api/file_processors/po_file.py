@@ -1,5 +1,5 @@
+import io
 import zipfile
-from django.http import HttpResponse
 import polib
 
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
@@ -11,10 +11,12 @@ PLURAL_FORM_ORDER = PluralTranslation.PluralForm.PLURAL_FORM_ORDER()
 
 
 class POFileWriter(TranslationFileWriter):
+    content_type = 'application/zip'
+    filename = 'resources.zip'
 
     def __init__(self):
-        self.response = HttpResponse(content_type='application/zip')
-        self.zip_file = zipfile.ZipFile(self.response, 'w')
+        self._buf = io.BytesIO()
+        self.zip_file = zipfile.ZipFile(self._buf, 'w')
 
     def append(self, records, code):
         po = polib.POFile()
@@ -51,10 +53,9 @@ class POFileWriter(TranslationFileWriter):
     def path(self, code):
         return f'{code.lower()}{ExportFile.po.file_extension()}'
 
-    def http_response(self):
-        self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
+    def write(self, buf) -> None:
         self.zip_file.close()
-        return self.response
+        buf.write(self._buf.getvalue())
 
 
 class POFileReader(TranslationFileReader):

@@ -11,8 +11,14 @@ def _make_file(content: str) -> io.BytesIO:
     return io.BytesIO(content.encode())
 
 
-def _zip_content(response, path: str) -> str:
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+def _zip_content(data: bytes, path: str) -> str:
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
         return zf.read(path).decode()
 
 
@@ -68,22 +74,20 @@ class AppleStringsWriterTestCase(TestCase):
         records = [TranslationModel.create('key', 'value')]
         writer = AppleStringsFileWriter()
         writer.append(records=records, code='en')
-        response = writer.http_response()
-        content = _zip_content(response, '/en.lproj/Localizable.strings')
+        content = _zip_content(_write_bytes(writer), '/en.lproj/Localizable.strings')
         self.assertIn('"key" = "value";', content)
 
     def test_zip_path_uses_language_code(self):
         writer = AppleStringsFileWriter()
         writer.append(records=[TranslationModel.create('k', 'v')], code='FR')
-        response = writer.http_response()
-        with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             self.assertIn('/fr.lproj/Localizable.strings', zf.namelist())
 
     def test_entry_with_comment(self):
         records = [TranslationModel.create('key', 'value', 'My comment')]
         writer = AppleStringsFileWriter()
         writer.append(records=records, code='en')
-        content = _zip_content(writer.http_response(), '/en.lproj/Localizable.strings')
+        content = _zip_content(_write_bytes(writer), '/en.lproj/Localizable.strings')
         self.assertIn('/*My comment*/', content)
         self.assertIn('"key" = "value";', content)
 
@@ -91,19 +95,17 @@ class AppleStringsWriterTestCase(TestCase):
         records = [TranslationModel.create('key', 'hello&nbsp;%s')]
         writer = AppleStringsFileWriter()
         writer.append(records=records, code='en')
-        content = _zip_content(writer.http_response(), '/en.lproj/Localizable.strings')
+        content = _zip_content(_write_bytes(writer), '/en.lproj/Localizable.strings')
         self.assertIn('hello %@', content)
 
     def test_plural_entry(self):
         records = [TranslationModel.create('item', '', plural_forms={'one': 'one item', 'other': 'many'})]
         writer = AppleStringsFileWriter()
         writer.append(records=records, code='en')
-        content = _zip_content(writer.http_response(), '/en.lproj/Localizable.strings')
+        content = _zip_content(_write_bytes(writer), '/en.lproj/Localizable.strings')
         self.assertIn('"item_one" = "one item";', content)
         self.assertIn('"item_other" = "many";', content)
 
-    def test_http_response_content_disposition(self):
+    def test_filename_attribute(self):
         writer = AppleStringsFileWriter()
-        writer.append(records=[], code='en')
-        response = writer.http_response()
-        self.assertIn('resources.zip', response['Content-Disposition'])
+        self.assertIn('resources.zip', writer.filename)

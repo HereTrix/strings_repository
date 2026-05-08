@@ -29,7 +29,7 @@ class FileProcessorTestCase(TestCase):
         from api.models.transport_models import TranslationModel
         fp = FileProcessor(ExportFile.json)
         fp.append(records=[TranslationModel.create('key', 'val')], code='en')
-        response = fp.http_response()
+        response = fp.build_response()
         self.assertIsNotNone(response)
 
 

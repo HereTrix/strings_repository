@@ -1,5 +1,5 @@
+import io
 import zipfile
-from django.http import HttpResponse
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter
 from api.file_processors.export_file_type import ExportFile
 from api.models.transport_models import TranslationModel
@@ -25,10 +25,12 @@ def _split_plural_key(token):
 
 
 class PropertiesFileWriter(TranslationFileWriter):
+    content_type = 'application/zip'
+    filename = 'resources.zip'
 
     def __init__(self):
-        self.response = HttpResponse(content_type='application/zip')
-        self.zip_file = zipfile.ZipFile(self.response, 'w')
+        self._buf = io.BytesIO()
+        self.zip_file = zipfile.ZipFile(self._buf, 'w')
 
     def path(self, code):
         return f'/{code.lower()}{ExportFile.properties.file_extension()}'
@@ -89,10 +91,9 @@ class PropertiesFileWriter(TranslationFileWriter):
         text = text.replace(r'\ ', ' ')
         return text
 
-    def http_response(self):
-        self.response['Content-Disposition'] = 'attachment; filename="resources.zip"'
+    def write(self, buf) -> None:
         self.zip_file.close()
-        return self.response
+        buf.write(self._buf.getvalue())
 
 
 class PropertiesFileReader(TranslationFileReader):

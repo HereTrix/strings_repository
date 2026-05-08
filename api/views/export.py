@@ -61,7 +61,7 @@ class ExportAPI(generics.GenericAPIView):
                 except Exception as e:
                     pass
 
-            return processor.http_response()
+            return processor.build_response()
         except Exception as e:
             return Response({
                 'error': 'File export failed'

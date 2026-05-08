@@ -16,9 +16,15 @@ def _make_po_file(entries: list[polib.POEntry]) -> io.BytesIO:
     return io.BytesIO(content.encode())
 
 
-def _zip_po(response, code: str) -> bytes:
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+def _zip_po(data: bytes, code: str) -> bytes:
     path = f'{code.lower()}.po'
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
         return zf.read(path)
 
 
@@ -67,7 +73,7 @@ class POFileWriterTestCase(TestCase):
         records = [TranslationModel.create('greeting', 'Hello')]
         writer = POFileWriter()
         writer.append(records=records, code='en')
-        raw = _zip_po(writer.http_response(), 'en')
+        raw = _zip_po(_write_bytes(writer), 'en')
         self.assertIn(b'msgid "greeting"', raw)
         self.assertIn(b'msgstr "Hello"', raw)
 
@@ -75,7 +81,7 @@ class POFileWriterTestCase(TestCase):
         records = [TranslationModel.create('item', '', plural_forms={'one': 'one item', 'other': 'many'})]
         writer = POFileWriter()
         writer.append(records=records, code='en')
-        raw = _zip_po(writer.http_response(), 'en')
+        raw = _zip_po(_write_bytes(writer), 'en')
         self.assertIn(b'msgid_plural', raw)
         self.assertIn(b'msgstr[0]', raw)
 
@@ -83,17 +89,15 @@ class POFileWriterTestCase(TestCase):
         records = [TranslationModel.create('key', 'val', 'my note')]
         writer = POFileWriter()
         writer.append(records=records, code='en')
-        raw = _zip_po(writer.http_response(), 'en')
+        raw = _zip_po(_write_bytes(writer), 'en')
         self.assertIn(b'my note', raw)
 
     def test_zip_path_uses_language_code(self):
         writer = POFileWriter()
         writer.append(records=[TranslationModel.create('k', 'v')], code='FR')
-        with zipfile.ZipFile(io.BytesIO(writer.http_response().content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             self.assertIn('fr.po', zf.namelist())
 
-    def test_http_response_content_disposition(self):
+    def test_filename_attribute(self):
         writer = POFileWriter()
-        writer.append(records=[], code='en')
-        response = writer.http_response()
-        self.assertIn('resources.zip', response['Content-Disposition'])
+        self.assertIn('resources.zip', writer.filename)

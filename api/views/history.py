@@ -1,5 +1,7 @@
+import io
 from datetime import datetime
 import logging
+
 from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
@@ -80,12 +82,12 @@ class ProjectHistoryExportAPI(generics.GenericAPIView):
                 )
             records = records.order_by('updated_at')
 
-            response = HttpResponse(
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            response['Content-Disposition'] = 'attachment; filename=report.xlsx'
-
             writer = HistoryFileWriter(data=records)
-            writer.write(response=response)
+            buf = io.BytesIO()
+            writer.write(buf)
+            buf.seek(0)
+            response = HttpResponse(content=buf.read(), content_type=writer.content_type)
+            response['Content-Disposition'] = f'attachment; filename="{writer.filename}"'
             return response
         except Exception as e:
             logger.error(e)

@@ -84,11 +84,16 @@ class XCStringsReaderTestCase(TestCase):
         self.assertEqual(result, [])
 
 
+def _write_bytes(writer) -> bytes:
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
 class XCStringsWriterTestCase(TestCase):
 
     def _get_output(self, writer) -> dict:
-        response = writer.http_response()
-        with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+        with zipfile.ZipFile(io.BytesIO(_write_bytes(writer))) as zf:
             return json.loads(zf.read('Localizable.xcstrings').decode())
 
     def test_basic_translation(self):
