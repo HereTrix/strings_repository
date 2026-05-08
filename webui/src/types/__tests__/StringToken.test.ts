@@ -1,4 +1,4 @@
-import StringToken, {
+import {
     getStatusName,
     getStatusVariant,
     STATUS_OPTIONS,

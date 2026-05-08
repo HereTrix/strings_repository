@@ -1,5 +1,4 @@
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { history } from "../../utils/history";
+import { Navigate } from "react-router-dom";
 import NavBar from "../shell/NavBar";
 import { JSX } from "react";
 

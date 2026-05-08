@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Alert, Button, Form, Spinner } from 'react-bootstrap'
 import { APIMethod, http } from '../../utils/network'
-import { base64urlToBuffer, bufferToBase64url, serializeAttestationCredential } from '../../utils/webauthn'
+import { base64urlToBuffer, serializeAttestationCredential } from '../../utils/webauthn'
 import { PasskeyInfo } from '../../types/Passkey'
 
 interface PasskeySectionProps {
@@ -25,7 +25,7 @@ const PasskeySection = ({ passkeys, onPasskeysChange }: PasskeySectionProps) => 
     setRegistering(true)
     setError(null)
 
-    const beginRes = await http<{ publicKey: any; name: string }>({
+    const beginRes = await http<{ publicKey: string; name: string }>({
       method: APIMethod.post,
       path: '/api/passkey/register/begin',
       data: { name: newKeyName },
@@ -46,7 +46,7 @@ const PasskeySection = ({ passkeys, onPasskeysChange }: PasskeySectionProps) => 
           ...options,
           challenge: base64urlToBuffer(options.challenge),
           user: { ...options.user, id: base64urlToBuffer(options.user.id) },
-          excludeCredentials: (options.excludeCredentials || []).map((c: any) => ({
+          excludeCredentials: (options.excludeCredentials || []).map((c: PublicKeyCredentialDescriptorJSON) => ({
             ...c,
             id: base64urlToBuffer(c.id),
           })),
@@ -68,10 +68,15 @@ const PasskeySection = ({ passkeys, onPasskeysChange }: PasskeySectionProps) => 
 
     const credJson = serializeAttestationCredential(credential as PublicKeyCredential)
 
+    const payload = {
+      credential: JSON.parse(JSON.stringify(credJson)),
+      name: newKeyName
+    }
+
     const completeRes = await http<PasskeyInfo>({
       method: APIMethod.post,
       path: '/api/passkey/register/complete',
-      data: { credential: credJson, name: newKeyName },
+      data: payload,
     })
 
     if (completeRes.error || !completeRes.value) {

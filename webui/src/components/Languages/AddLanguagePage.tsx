@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react"
-import { Button, Col, Modal, Row, Stack } from "react-bootstrap"
+import { Button, Modal, Row, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../../utils/network"
 import Language from "../../types/Language"
 import { Typeahead } from "react-bootstrap-typeahead"
@@ -75,7 +75,7 @@ const AddLanguagePage: FC<AddLanguagePageProps> = ({ project_id, show, onHide, o
                         selected={selectedLanguages}
                         renderMenuItemChildren={(item) => {
 
-                            var language = item as Language
+                            const language = item as Language
                             return (
                                 <Stack direction="horizontal" gap={3}>
                                     <OptionalImage src={language.img} alt={language.code.toUpperCase()} width={50} height={38} />

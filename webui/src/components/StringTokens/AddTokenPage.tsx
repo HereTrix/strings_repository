@@ -1,6 +1,6 @@
 import { FC, JSX, useState } from "react"
-import { Button, Form, Modal, Row } from "react-bootstrap"
-import { APIMethod, http } from "../../utils/network"
+import { Button, Form, Modal } from "react-bootstrap"
+import { APIMethod, BodyPayload, http } from "../../utils/network"
 import { SubmitHandler, useForm } from "react-hook-form"
 import { Typeahead } from "react-bootstrap-typeahead"
 
@@ -14,30 +14,32 @@ type AddTokenPageProps = {
 
 type Inputs = {
     token: string
-    comment: string | undefined
+    comment?: string
 }
 
 const AddTokenPage: FC<AddTokenPageProps> = ({ project_id, show, tags, onHide, onSuccess }): JSX.Element => {
 
     const [error, setError] = useState([])
-    const [selectedTags, setSelectedTags] = useState<string[]>()
+    const [selectedTags, setSelectedTags] = useState<string[] | null>(null)
 
     const {
         register,
         handleSubmit,
-        formState: { errors },
     } = useForm<Inputs>()
 
     const onSubmit: SubmitHandler<Inputs> = async (data) => {
+        const payload: BodyPayload = {
+            project: project_id,
+            token: data.token,
+            tags: selectedTags
+        }
+        if (data.comment) {
+            payload.comment = data.comment
+        }
         const result = await http({
             method: APIMethod.post,
             path: "/api/string_token",
-            data: {
-                "project": project_id,
-                "token": data.token,
-                "comment": data.comment,
-                "tags": selectedTags
-            }
+            data: payload
         })
 
         if (result.error) {
@@ -75,10 +77,10 @@ const AddTokenPage: FC<AddTokenPageProps> = ({ project_id, show, tags, onHide, o
                             placeholder="Select tags..."
                             onChange={(data) => {
                                 setSelectedTags(
-                                    data.map((val: any) => typeof val === 'string' ? val : val.tag)
+                                    data.map((val) => typeof val === 'string' ? val : val.tag)
                                 )
                             }}
-                            selected={selectedTags}
+                            selected={selectedTags ?? undefined}
                             className="my-2"
                         />
                     </Form.Group>

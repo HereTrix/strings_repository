@@ -1,5 +1,5 @@
 import { FC, useState } from "react"
-import { Button, Container, Form, Modal, ModalBody, Row } from "react-bootstrap"
+import { Button, Form, Modal } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
 import { APIMethod, http } from "../../utils/network"
 
@@ -22,7 +22,6 @@ const AddProjectPage: FC<AddProjectProps> = ({ show, onHide, onSuccess }) => {
     const {
         register,
         handleSubmit,
-        formState: { errors },
     } = useForm<Inputs>()
 
     const onSubmit: SubmitHandler<Inputs> = async (data) => {
