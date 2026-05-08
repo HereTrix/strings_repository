@@ -10,4 +10,5 @@ from api.tests.file_processors.properties_file import *
 from api.tests.file_processors.po_file import *
 from api.tests.file_processors.mo_file import *
 from api.tests.file_processors.excel_file import *
+from api.tests.file_processors.arb_file import *
 from api.tests.file_processors.file_processor import *
