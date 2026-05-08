@@ -52,6 +52,14 @@ StringsRepository is a self-hosted application. The following security propertie
 - Input validation on all API endpoints
 - Django's built-in CSRF protection, SQL injection protection, and XSS escaping
 
+## Cryptographic Design Notes
+
+**TOTP and HMAC-SHA1**
+
+TOTP two-factor authentication (RFC 6238) uses HMAC-SHA1 as its pseudorandom function. SHA-1 has known collision weaknesses, but those weaknesses do not affect this use case: TOTP codes are short-lived, single-use, and the attacker does not control the HMAC input (the counter value). The relevant security property is second-preimage resistance, which SHA-1 retains at full strength.
+
+The HMAC-SHA1 default is retained for broad authenticator-app compatibility. RFC 6238 specifies HMAC-SHA1 as the baseline algorithm, and widely-deployed apps (Google Authenticator, Apple Passwords) implement only HMAC-SHA1. Switching to HMAC-SHA256 would silently break setup for users of those apps. Operators who control their user base and can standardise on a modern authenticator (e.g. Aegis) may change the algorithm by setting the `algorithm` field on `TOTPDevice` objects at provisioning time.
+
 **What the software does not provide:**
 - Network-level security (firewall rules, DDoS protection) — these are the responsibility of the operator
 - Automatic TLS termination — operators must configure a reverse proxy (nginx, Caddy, etc.) with TLS
@@ -82,7 +90,7 @@ git tag --verify v1.2.3
 ```
 
 **Operator responsibilities:**
-- Run the application behind a TLS-terminating reverse proxy
+- Run the application behind a TLS-terminating reverse proxy configured to use TLS 1.2 or later. Use TLS 1.3 where possible — it mandates perfect forward secrecy (PFS) for all cipher suites. For TLS 1.2, restrict the configuration to ECDHE-based cipher suites (e.g. `ECDHE-RSA-AES256-GCM-SHA384`) to ensure PFS; disable static RSA key exchange (`RSA` prefix ciphers), which does not provide PFS.
 - Keep the Docker image and host OS up to date
 - Rotate `APP_SECRET_KEY` if it is ever exposed
 - Restrict database access to the application process only
