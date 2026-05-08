@@ -13,6 +13,7 @@ from api.file_processors.dotnet_file import DotNetFileReader
 from api.file_processors.properties_file import PropertiesFileReader
 from api.file_processors.po_file import POFileReader
 from api.file_processors.mo_file import MOFileReader
+from api.file_processors.arb_file import ARBFileReader
 
 
 class FileProcessorTestCase(TestCase):
@@ -72,6 +73,10 @@ class FileImporterTestCase(TestCase):
     def test_mo_extension_uses_mo_reader(self):
         importer = FileImporter(self._mock_file('test.mo'))
         self.assertIsInstance(importer.reader, MOFileReader)
+
+    def test_arb_extension_uses_arb_reader(self):
+        importer = FileImporter(self._mock_file('test.arb'))
+        self.assertIsInstance(importer.reader, ARBFileReader)
 
     def test_unsupported_extension_raises(self):
         with self.assertRaises(FileImporter.UnsupportedFile):

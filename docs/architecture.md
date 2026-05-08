@@ -175,6 +175,7 @@ Each writer implements:
 | `POFileWriter` | gettext `.po` | zip |
 | `MOFileWriter` | gettext `.mo` | zip |
 | `CSVFileWriter` | CSV | zip |
+| `ARBFileWriter` | Flutter ARB | zip |
 | `ExcelFileWriter` | Excel (one sheet per language) | xlsx |
 | `ExcelSingleSheetFileWriter` | Excel (all languages, one sheet) | xlsx |
 

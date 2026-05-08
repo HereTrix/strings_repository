@@ -3,6 +3,7 @@ import io
 from django.http import HttpResponse
 
 from api.file_processors.android_resources import AndroidResourceFileWriter, AndroidResourceFileReader
+from api.file_processors.arb_file import ARBFileReader, ARBFileWriter
 from api.file_processors.common_json_file import CommonJSONFileReader
 from api.file_processors.csv_file import CSVFileReader, CSVFileWriter
 from api.file_processors.dotnet_file import DotNetFileReader, DotNetFileWriter
@@ -32,6 +33,7 @@ WRITER_MAP = {
     ExportFile.po: POFileWriter,
     ExportFile.mo: MOFileWriter,
     ExportFile.csv: CSVFileWriter,
+    ExportFile.arb: ARBFileWriter,
 }
 
 
@@ -70,6 +72,7 @@ READER_MAP = {
     ImportFile.po.name: POFileReader,
     ImportFile.mo.name: MOFileReader,
     ImportFile.csv.name: CSVFileReader,
+    ImportFile.arb.name: ARBFileReader,
 }
 
 

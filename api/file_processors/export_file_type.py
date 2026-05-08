@@ -14,6 +14,7 @@ class ExportFile(enum.Enum):
     po = 'po'
     mo = 'mo'
     csv = 'csv'
+    arb = 'arb'
 
     def file_extension(self):
         match self:
@@ -41,6 +42,8 @@ class ExportFile(enum.Enum):
                 return '.mo'
             case ExportFile.csv:
                 return '.csv'
+            case ExportFile.arb:
+                return '.arb'
 
     def vendor(self):
         match self:
@@ -68,3 +71,5 @@ class ExportFile(enum.Enum):
                 return 'Binary MO'
             case ExportFile.csv:
                 return 'CSV'
+            case ExportFile.arb:
+                return 'Flutter ARB'

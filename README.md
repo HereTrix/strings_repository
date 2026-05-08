@@ -58,6 +58,7 @@
 | `po`           | Portable Object               | `.po`         |
 | `mo`           | Binary MO                     | `.mo`         |
 | `csv`          | CSV                           | `.csv`        |
+| `arb`          | Flutter ARB                   | `.arb`        |
 
 ## Translation Bundles
 
