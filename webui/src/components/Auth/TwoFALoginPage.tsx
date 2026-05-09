@@ -19,6 +19,12 @@ const TwoFALoginPage = () => {
 
     const { register, handleSubmit } = useForm<Inputs>()
 
+    const onCancel = async () => {
+        await http({ method: APIMethod.post, path: "/api/logout" })
+        localStorage.removeItem("auth")
+        navigate("/login", { replace: true })
+    }
+
     const onSubmit: SubmitHandler<Inputs> = async (data) => {
         const result = await http<TwoFALoginResponse>({
             method: APIMethod.post,
@@ -54,9 +60,14 @@ const TwoFALoginPage = () => {
                                 {...register("code")}
                             />
                         </Form.Group>
-                        <Button type="submit" className="my-2">
-                            Verify
-                        </Button>
+                        <div className="d-flex justify-content-between">
+                            <Button type="submit" className="my-2">
+                                Verify
+                            </Button>
+                            <Button variant="link" className="my-2 ms-2" onClick={onCancel}>
+                                Cancel
+                            </Button>
+                        </div>
                     </Form.Group>
                 </Form>
             </Container>

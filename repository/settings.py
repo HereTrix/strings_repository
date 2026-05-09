@@ -219,6 +219,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+        'api.permissions.TwoFASessionPermission',
         'api.permissions.ProjectTwoFAPermission',
     ],
     'EXCEPTION_HANDLER': 'api.exception_handler.custom_exception_handler',

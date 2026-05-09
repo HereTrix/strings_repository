@@ -9,6 +9,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Planned
 - **Internationalization (i18n):** Localize the web UI to support languages other than English, enabling non-English-speaking teams to use the application in their own language.
 
+## [2.3.1] - 2026-05-09
+- Fix ussue with 2FA enabled access
+
 ## [2.3.0] - 2026-05-09
 
 ### Added
