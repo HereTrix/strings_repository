@@ -6,12 +6,38 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   dco:
     name: Developer Certificate of Origin
     runs-on: ubuntu-latest
     steps:
-      - name: Check DCO sign-off
-        uses: dcoapp/dco-action@4c7f86ee67ede1d5e5e2dc6b8afc0b16d8e28f55
+      - name: Check out the repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Verify all commits are signed off
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          missing=()
+          while IFS= read -r sha; do
+            msg=$(git log -1 --format='%B' "$sha")
+            if ! echo "$msg" | grep -qiE '^Signed-off-by: .+ <.+@.+>'; then
+              missing+=("$sha")
+            fi
+          done < <(git log --format='%H' "$BASE".."$HEAD")
+
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "The following commits are missing a Signed-off-by trailer:"
+            for sha in "${missing[@]}"; do
+              echo "  $sha  $(git log -1 --format='%s' "$sha")"
+            done
+            echo ""
+            echo "Add 'Signed-off-by: Name <email>' to each commit message,"
+            echo "or use 'git commit -s' for future commits."
+            exit 1
+          fi
+          echo "All commits are signed off."
