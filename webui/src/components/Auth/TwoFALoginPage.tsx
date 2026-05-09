@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState } from "react"
-import { Button, Container, Form } from "react-bootstrap"
+import { Button, Container, Form, Stack } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
 import { APIMethod, http } from "../../utils/network"
@@ -18,6 +18,12 @@ const TwoFALoginPage = () => {
     const [error, setError] = useState<string>()
 
     const { register, handleSubmit } = useForm<Inputs>()
+
+    const onCancel = async () => {
+        await http({ method: APIMethod.post, path: "/api/logout" })
+        localStorage.removeItem("auth")
+        navigate("/login", { replace: true })
+    }
 
     const onSubmit: SubmitHandler<Inputs> = async (data) => {
         const result = await http<TwoFALoginResponse>({
@@ -54,9 +60,14 @@ const TwoFALoginPage = () => {
                                 {...register("code")}
                             />
                         </Form.Group>
-                        <Button type="submit" className="my-2">
-                            Verify
-                        </Button>
+                        <div className="d-flex justify-content-between">
+                            <Button type="submit" className="my-2">
+                                Verify
+                            </Button>
+                            <Button variant="link" className="my-2 ms-2" onClick={onCancel}>
+                                Cancel
+                            </Button>
+                        </div>
                     </Form.Group>
                 </Form>
             </Container>

@@ -16,6 +16,42 @@ _GATE_MESSAGE = (
     "Enable two-factor authentication to access it."
 )
 
+_SESSION_MESSAGE = "Complete 2FA login to access this resource."
+
+
+class TwoFASessionPermission(BasePermission):
+    """
+    Global permission applied via DEFAULT_PERMISSION_CLASSES.
+
+    If the authenticated user has a confirmed 2FA device, their current Knox
+    token must have a TwoFAVerification record (i.e. they completed the 2FA
+    login step). Otherwise the request is denied with code "2fa_login_required"
+    so the frontend can redirect to /2fa-login.
+
+    Views that declare explicit permission_classes override DEFAULT_PERMISSION_CLASSES
+    entirely, so they bypass this check automatically:
+      - Plugin/MCP views (AllowAny or custom token auth)
+      - TwoFALoginAPI and other 2fa/* endpoints (IsAuthenticated only)
+      - Login, signup, passkey auth (AllowAny)
+    """
+
+    message = _SESSION_MESSAGE
+    code = "2fa_login_required"
+
+    def has_permission(self, request, _view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return True  # Deferred to IsAuthenticated
+
+        if not user_has_device(user, confirmed=True):
+            return True  # No 2FA device configured
+
+        token_key = getattr(request.auth, 'token_key', None)
+        if not token_key:
+            return False
+
+        return TwoFAVerification.objects.filter(token_key=token_key).exists()
+
 
 class ProjectTwoFAPermission(BasePermission):
     """
