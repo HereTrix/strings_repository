@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.urls import path
 from api.views.project import (
     ProjectAPI, CreateProjectAPI, ProjectListAPI,

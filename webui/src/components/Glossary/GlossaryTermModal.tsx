@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useEffect, useState } from "react"
 import { Alert, Button, Form, Modal, Spinner } from "react-bootstrap"
 import Project from "../../types/Project"

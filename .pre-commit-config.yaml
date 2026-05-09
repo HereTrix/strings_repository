@@ -1,0 +1,18 @@
+repos:
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: insert-license
+        files: \.py$
+        args:
+          - --license-filepath
+          - .license-header.txt
+          - --comment-style
+          - "#"
+      - id: insert-license
+        files: \.(ts|tsx)$
+        args:
+          - --license-filepath
+          - .license-header.txt
+          - --comment-style
+          - "//"

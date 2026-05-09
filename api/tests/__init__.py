@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from api.tests.file_processors import *
 from api.tests.views import *
 from api.tests.filters import *

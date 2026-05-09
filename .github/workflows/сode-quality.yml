@@ -48,4 +48,4 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: npx eslint -c eslint.config.js
+        run: npx eslint -c eslint.config.js --max-warnings 0

@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import React, { FC, Suspense, useEffect, useRef, useState } from "react"
 import { Button, ListGroup, Spinner, Stack } from "react-bootstrap"
 import Project, { ProjectRole } from "../../types/Project"

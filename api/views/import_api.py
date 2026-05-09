@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status, views

@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 export interface GlossaryTranslation {
   language_code: string
   preferred_translation: string

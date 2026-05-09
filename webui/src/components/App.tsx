@@ -1,5 +1,8 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import React, { useEffect } from 'react';
-import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { setNavigate } from '../utils/navigation';
 const LoginPage = React.lazy(() => import("./pages/LoginPage"))
 const TwoFALoginPage = React.lazy(() => import("./Auth/TwoFALoginPage"))
@@ -22,11 +25,33 @@ function NavigationRegister() {
   return null;
 }
 
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'Dashboard',
+  '/login': 'Login',
+  '/2fa-login': 'Two-Factor Login',
+  '/2fa-required': 'Two-Factor Authentication',
+  '/activate': 'Activate Account',
+  '/profile': 'Profile',
+};
+
+function PageTitleManager() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const base = 'Strings Repository';
+    const segment = pathname.startsWith('/project') ? 'Project' : PAGE_TITLES[pathname];
+    document.title = segment ? `${segment} – ${base}` : base;
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
 
   return (
     <BrowserRouter>
       <NavigationRegister />
+      <PageTitleManager />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/2fa-login" element={<TwoFALoginPage />} />

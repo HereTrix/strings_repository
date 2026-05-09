@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 class TranslationModel:
 
     def create(token, translation, comment=None, tags=None, code=None, plural_forms=None):

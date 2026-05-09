@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from rest_framework.pagination import LimitOffsetPagination, Response
 
 

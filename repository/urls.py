@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 """repository URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:

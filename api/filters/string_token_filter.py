@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 import django_filters
 from api.models.translations import StringToken
 from django.db.models import Q

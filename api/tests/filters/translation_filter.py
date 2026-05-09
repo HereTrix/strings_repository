@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from unittest.mock import MagicMock
 
 from django.test import TestCase

@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 class TranslationProvider:
     def translate(self, text: str, target_lang: str, source_lang: str | None = None) -> str:
         raise NotImplementedError

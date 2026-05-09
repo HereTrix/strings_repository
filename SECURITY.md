@@ -52,6 +52,22 @@ StringsRepository is a self-hosted application. The following security propertie
 - Input validation on all API endpoints
 - Django's built-in CSRF protection, SQL injection protection, and XSS escaping
 
+## Threat Model and Assurance Case
+
+A complete threat model covering assets, trust boundaries, threat actors, and mitigations is published in [docs/threat-model.md](docs/threat-model.md). It documents how each security requirement stated in this policy is justified.
+
+## Cryptographic Algorithm Agility
+
+The application is designed so that operators can switch cryptographic algorithms without a code change if a primitive is broken.
+
+**Password hashing** is controlled by Django's `PASSWORD_HASHERS` setting (see `repository/settings.py`). The default is PBKDF2-SHA256. To switch to Argon2id or bcrypt, install the required extra dependency (`argon2-cffi` or `bcrypt`) and move the desired hasher to the top of the list. Existing password hashes are automatically re-hashed on next login.
+
+**Field encryption key derivation** is controlled by the `FIELD_ENCRYPTION_KEY_HASH` environment variable. Supported values: `sha256` (default), `sha384`, `sha512`. The derived key feeds into Fernet (AES-128-CBC + HMAC-SHA256) for at-rest encryption of API keys, webhook URLs, and webhook auth tokens. **Changing this value requires re-encrypting all stored fields** — rotate it only during a planned maintenance window with a documented migration.
+
+**Webhook payload signing** uses HMAC-SHA256. This is part of the external API contract and cannot be changed without a versioned API migration.
+
+**TOTP** uses HMAC-SHA1 by default for broad authenticator-app compatibility (see note below).
+
 ## Cryptographic Design Notes
 
 **TOTP and HMAC-SHA1**

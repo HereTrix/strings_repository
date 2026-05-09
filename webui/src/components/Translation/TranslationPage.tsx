@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useCallback, useEffect, useState } from "react"
 import { APIMethod, http, QueryPayload } from "../../utils/network"
 import Translation, { getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel, UNTRANSLATED_FILTER } from "../../types/Translation"
@@ -137,21 +140,26 @@ const TranslationPage: FC<TranslationPageProps> = ({ code, project, scopeId, sco
                         {scope.images.length > 0 && (
                             <div className="d-flex flex-wrap gap-2">
                                 {scope.images.map(img => (
-                                    <img
+                                    <button
                                         key={img.id}
-                                        src={img.url}
-                                        alt=""
-                                        style={{
-                                            height: 64,
-                                            maxWidth: 140,
-                                            objectFit: 'cover',
-                                            borderRadius: 6,
-                                            cursor: 'pointer',
-                                            border: '1px solid var(--bs-border-color)',
-                                        }}
+                                        type="button"
+                                        aria-label="Enlarge image"
                                         onClick={() => setLightboxUrl(img.url)}
-                                        title="Click to enlarge"
-                                    />
+                                        style={{ background: 'none', border: 'none', padding: 0 }}
+                                    >
+                                        <img
+                                            src={img.url}
+                                            alt=""
+                                            style={{
+                                                height: 64,
+                                                maxWidth: 140,
+                                                objectFit: 'cover',
+                                                borderRadius: 6,
+                                                cursor: 'pointer',
+                                                border: '1px solid var(--bs-border-color)',
+                                            }}
+                                        />
+                                    </button>
                                 ))}
                             </div>
                         )}

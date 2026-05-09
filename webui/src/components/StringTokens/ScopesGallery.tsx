@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useEffect, useState } from "react"
 import { Badge, Card, Col, Row } from "react-bootstrap"
 import { APIMethod, http } from "../../utils/network"

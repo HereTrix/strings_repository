@@ -9,6 +9,21 @@ Thank you for your interest in contributing! This document describes how to cont
 - Submit pull requests for bug fixes or new features
 - Improve documentation
 
+## Good First Issues
+
+New and casual contributors can find small, well-scoped tasks labelled [**good first issue**](https://github.com/HereTrix/strings_repository/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) on the issue tracker. These are intentionally limited in scope and come with enough context to get started without deep knowledge of the codebase.
+
+## Development Setup
+
+After cloning, install the pre-commit hooks:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+This automatically adds the required copyright header to any new source file before it is committed.
+
 ## Developer Certificate of Origin
 
 All contributions must be signed off with the [Developer Certificate of Origin (DCO)](https://developercertificate.org/). Add a `Signed-off-by` line to each commit:
@@ -30,8 +45,8 @@ This certifies that you wrote the code or have the right to submit it under the 
 ### TypeScript (frontend)
 
 - Follow the project's [ESLint](https://eslint.org/) configuration in `webui/eslint.config.js`.
-- All PRs must pass ESLint with no errors.
-- Run locally: `cd webui && npx eslint -c eslint.config.js`
+- All PRs must pass ESLint with zero errors **and** zero warnings (`--max-warnings 0`). Warnings are treated as errors.
+- Run locally: `cd webui && npx eslint -c eslint.config.js --max-warnings 0`
 
 Both checks run automatically in CI on every pull request.
 
@@ -71,6 +86,37 @@ cd webui && npm test
 5. Sign off your commits with `git commit -s`.
 6. Open a pull request against `main` with a clear description of what changed and why.
 7. At least one maintainer review is required before merging.
+
+## Code Review Requirements
+
+Every pull request must be reviewed and approved by at least one maintainer before it can be merged. The reviewer is responsible for checking:
+
+**Correctness**
+- The change does what the PR description says it does.
+- Edge cases and error conditions are handled.
+
+**Tests**
+- New functionality is covered by automated tests.
+- Bug fixes include a regression test.
+- No existing tests are broken without justification.
+
+**Security**
+- No new injection vectors (SQL, XSS, command injection, path traversal).
+- No secrets, credentials, or sensitive data added to source files.
+- Authentication and authorisation checks are present where required.
+- Bandit and ESLint security rules pass with no new suppressions unless justified in the PR description.
+
+**Code quality**
+- Code follows the style guides defined in [Coding Standards](#coding-standards).
+- No unnecessary complexity or dead code introduced.
+- Copyright and SPDX headers are present in any new source files.
+
+**A pull request is acceptable when:**
+- All CI checks pass (tests, coverage, Bandit, ESLint, DCO).
+- All reviewer comments are resolved.
+- At least one maintainer has approved the PR.
+
+Maintainers must not approve their own pull requests.
 
 ## Reporting Bugs
 

@@ -44,21 +44,21 @@
 
 ## Supported File Formats
 
-| Type value     | Format                        | Extension     |
-| -------------- | ----------------------------- | ------------- |
-| `strings`      | Apple (.strings)              | `.strings`    |
-| `xcstrings`    | Apple Xcode (.xcstrings)      | `.xcstrings`  |
-| `xml`          | Android                       | `.xml`        |
-| `excel`        | Excel (separate sheets)       | `.xlsx`       |
-| `xlsx`         | Excel (single sheet)          | `.xlsx`       |
-| `json`         | JSON — Key/Value (i18next)    | `.json`       |
-| `json_dict`    | JSON — Key/Dictionary         | `.json`       |
-| `resx`         | ASP.NET                       | `.resx`       |
-| `properties`   | Java                          | `.properties` |
-| `po`           | Portable Object               | `.po`         |
-| `mo`           | Binary MO                     | `.mo`         |
-| `csv`          | CSV                           | `.csv`        |
-| `arb`          | Flutter ARB                   | `.arb`        |
+| Type value     | Format                        | Extension     | Import | Export |
+| -------------- | ----------------------------- | ------------- | ------ | ------ |
+| `strings`      | Apple (.strings)              | `.strings`    | ✓      | ✓      |
+| `xcstrings`    | Apple Xcode (.xcstrings)      | `.xcstrings`  | ✓      | ✓      |
+| `xml`          | Android                       | `.xml`        | ✓      | ✓      |
+| `excel`        | Excel (separate sheets)       | `.xlsx`       |        | ✓      |
+| `xlsx`         | Excel (single sheet)          | `.xlsx`       |        | ✓      |
+| `json`         | JSON — Key/Value (i18next)    | `.json`       | ✓      | ✓      |
+| `json_dict`    | JSON — Key/Dictionary         | `.json`       |        | ✓      |
+| `resx`         | ASP.NET                       | `.resx`       | ✓      | ✓      |
+| `properties`   | Java                          | `.properties` | ✓      | ✓      |
+| `po`           | Portable Object               | `.po`         | ✓      | ✓      |
+| `mo`           | Binary MO                     | `.mo`         | ✓      | ✓      |
+| `csv`          | CSV                           | `.csv`        | ✓      | ✓      |
+| `arb`          | Flutter ARB                   | `.arb`        | ✓      | ✓      |
 
 ## Translation Bundles
 
@@ -209,6 +209,36 @@ Reports are capped per project (default: 10; configurable by the project owner).
 
 ## Configuration
 
+## Quick Start
+
+The fastest way to run StringsRepository is with Docker using SQLite:
+
+```bash
+docker run -d -p 8080:8080 \
+  -v sr_data:/app/media \
+  -e APP_SECRET_KEY=change-me \
+  -e DB_ENGINE=sqlite3 \
+  -e DB_NAME=/app/db.sqlite3 \
+  -e DJANGO_SUPERUSER_USERNAME=admin \
+  -e DJANGO_SUPERUSER_EMAIL=admin@example.com \
+  -e DJANGO_SUPERUSER_PASSWORD=adminpassword \
+  -e WEBAUTHN_RP_ID=localhost \
+  ghcr.io/heretrix/strings_repository:main
+```
+
+Then open **http://localhost:8080** and sign in with the credentials above.
+
+Once logged in:
+
+1. **Create a project** — click **New Project** and give it a name.
+2. **Add languages** — go to **Project → Languages** and add your target languages.
+3. **Add string keys** — use **Project → Tokens** to create your first localization key.
+4. **Export translations** — go to **Project → Export**, choose a file format, and download.
+
+For production deployments (PostgreSQL, TLS, persistent storage) see [Installation](#installation) below.
+
+## Configuration
+
 Before installation, configure the required environment variables.
 
 | Variable                    | Description                                              |
@@ -224,8 +254,12 @@ Before installation, configure the required environment variables.
 | `DJANGO_SUPERUSER_USERNAME` | Admin username                                           |
 | `DJANGO_SUPERUSER_EMAIL`    | Admin email                                              |
 | `DJANGO_SUPERUSER_PASSWORD` | Admin password                                           |
-| `WEBAUTHN_RP_ID`            | Webauth ID (your domain)                                 |
-| `WEBAUTHN_RP_NAME`          | Webauth display name (StringsRepository by default)      |
+| `WEBAUTHN_RP_ID`            | WebAuthn relying party ID (your domain)                  |
+| `WEBAUTHN_RP_NAME`          | WebAuthn display name (StringsRepository by default)     |
+| `WEBAUTHN_ORIGIN`           | WebAuthn origin URL (e.g. `https://your.domain`)         |
+| `CORS_ORIGINS`              | Comma-separated allowed CORS origins (optional)          |
+| `DEBUG`                     | Set to `True` to enable Django debug mode (default: False) |
+| `FIELD_ENCRYPTION_KEY_HASH` | Hash algorithm for field-encryption key derivation: `sha256` (default), `sha384`, `sha512`. Changing this requires re-encrypting all stored fields. |
 
 ### Supported databases
 

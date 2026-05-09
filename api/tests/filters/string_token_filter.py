@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.test import TestCase
 
 from api.filters.string_token_filter import StringTokenFilter

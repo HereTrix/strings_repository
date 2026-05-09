@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.db.models import Q
 
 from api.models.history import HistoryRecord

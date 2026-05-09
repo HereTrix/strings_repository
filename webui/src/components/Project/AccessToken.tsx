@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { Button, Container, Dropdown, Form, ListGroup, ListGroupItem, Modal, Stack } from "react-bootstrap";
 import Project from "../../types/Project";
 import { FC, useEffect, useState } from "react";
@@ -62,8 +65,9 @@ const GenerateAccessTokenPage: FC<GenerateAccessTokenProps> = ({ show, onHide, o
         </Modal.Header>
         <Modal.Body>
             <Container>
-                <label>Expiration date:</label>
+                <label htmlFor="access-token-expiry">Expiration date:</label>
                 <Form.Control
+                    id="access-token-expiry"
                     type="date"
                     onChange={(e) => setExpiration(e.target.value)} />
             </Container>

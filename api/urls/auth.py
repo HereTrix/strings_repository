@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.urls import path
 from api.views.generic import SignUpAPI, SignInAPI, ProfileAPI, ChangePasswordAPI, ActivateProjectAPI
 from api.views.two_fa import TwoFASetupAPI, TwoFAVerifyAPI, TwoFADeleteAPI, TwoFALoginAPI

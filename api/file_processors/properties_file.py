@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 import io
 import zipfile
 from api.file_processors.common import TranslationFileReader, TranslationFileWriter

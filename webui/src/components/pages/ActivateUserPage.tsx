@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { useState } from "react"
 import { Button, Container, Form, Row, Toast, ToastContainer } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
@@ -141,7 +144,7 @@ const ActivateUserPage = () => {
                     <Toast.Body>
                         <Container>
                             <Row>
-                                <label className="my-2">Please go to login page</label>
+                                <span className="my-2">Please go to login page</span>
                             </Row>
                             <Button onClick={onBackToLogin} className="my-2">Go To Login</Button>
                         </Container>

@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { Badge, Button, Dropdown, ListGroup, Row, Spinner, Stack } from "react-bootstrap"
 import PluralFormsPanel from "../UI/PluralFormsPanel"
 import DiffView from "../UI/DiffView"
@@ -233,7 +236,7 @@ const TranslationListItem: FC<TranslationListItemProps> = ({
                         <Stack direction="horizontal" gap={2} className="mt-1 p-2 rounded border" style={{ background: '#f0f7ff' }}>
                             <span className="small flex-grow-1">{suggestion}</span>
                             <Button size="sm" variant="outline-success" onClick={useSuggestion}>Use</Button>
-                            <Button size="sm" variant="outline-secondary" onClick={() => setSuggestion(undefined)}>✕</Button>
+                            <Button size="sm" variant="outline-secondary" aria-label="Dismiss suggestion" onClick={() => setSuggestion(undefined)}>✕</Button>
                         </Stack>
                     )}
                     {(tmLoading || (tmSuggestions !== null && tmSuggestions.length > 0)) && (

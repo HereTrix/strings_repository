@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, JSX, useEffect, useState } from "react"
 import { Badge, Button, ListGroup, ProgressBar, Stack } from "react-bootstrap"
 import { useNavigate } from "react-router-dom"

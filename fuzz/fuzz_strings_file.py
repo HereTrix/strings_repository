@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 """Fuzz target for AppleStringsFileReader."""
 import atheris
 import io

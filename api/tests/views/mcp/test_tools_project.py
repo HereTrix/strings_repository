@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.test import TestCase, Client
 
 from api.tests.helpers import make_access_token, make_language, make_project, make_user

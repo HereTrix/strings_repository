@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.db import migrations, models
 import django.db.models.deletion
 from django.db.models import OuterRef, Subquery

@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 export type VerificationMode = 'source_quality' | 'translation_accuracy'
 export type VerificationSeverity = 'ok' | 'warning' | 'error'
 export type VerificationStatus = 'pending' | 'running' | 'complete' | 'failed'

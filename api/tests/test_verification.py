@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from datetime import datetime, timezone
 from unittest.mock import patch
 

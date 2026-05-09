@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import React, { useEffect, useState, Suspense } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { APIMethod, http } from "../../utils/network"

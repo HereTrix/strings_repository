@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { Button, Stack } from "react-bootstrap"
 import { PLURAL_FORM_ORDER, PluralForms } from "../../types/Translation"
 import { FC, useState } from "react"

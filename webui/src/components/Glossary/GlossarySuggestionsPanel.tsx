@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useState } from "react"
 import { Alert, Badge, Button, Card, Form, Stack, Table } from "react-bootstrap"
 import Project from "../../types/Project"

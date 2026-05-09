@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.urls import path
 from api.views.translation import StringTokenAPI, StringTokenStatusAPI, StringTokenTagAPI, StringTokenTranslationsAPI, TranslationAPI, TranslationStatusAPI
 from api.views.plural_translation import PluralTranslationAPI

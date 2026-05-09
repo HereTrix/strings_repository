@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 
 from api.crypto import decrypt
 from api.models.project import ProjectAIProvider, TranslationIntegration

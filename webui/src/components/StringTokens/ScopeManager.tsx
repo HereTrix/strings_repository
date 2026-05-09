@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, JSX, useCallback, useEffect, useRef, useState } from "react"
 import { Badge, Button, Col, Form, ListGroup, Modal, Row, Stack } from "react-bootstrap"
 import { APIMethod, http, upload } from "../../utils/network"

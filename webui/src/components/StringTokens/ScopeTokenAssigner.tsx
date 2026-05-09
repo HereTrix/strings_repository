@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useCallback, useEffect, useRef, useState } from "react"
 import { Button, Col, Form, Row, Spinner } from "react-bootstrap"
 import InfiniteScroll from "react-infinite-scroll-component"

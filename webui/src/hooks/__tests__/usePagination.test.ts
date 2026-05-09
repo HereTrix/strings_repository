@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { renderHook, act } from '@testing-library/react'
 import { usePagination, PAGE_LIMIT } from '../usePagination'
 

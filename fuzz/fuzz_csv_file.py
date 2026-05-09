@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 """Fuzz target for CSVFileReader."""
 import atheris
 import io

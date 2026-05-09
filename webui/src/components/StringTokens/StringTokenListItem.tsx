@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { Badge, Button, Collapse, Container, Dropdown, ListGroup, Stack } from "react-bootstrap"
 import { getStatusVariant, STATUS_OPTIONS } from "../../types/StringToken"
 import TagsContainer from "../UI/TagsContainer"

@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from api.tests.file_processors.strings_file import *
 from api.tests.file_processors.common import *
 from api.tests.file_processors.android_resources import *

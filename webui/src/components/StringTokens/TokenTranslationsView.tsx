@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useState } from "react"
 import { APIMethod, BodyPayload, http } from "../../utils/network"
 import TokenTranslation, { TokenTranslationsResponse } from "../../types/TokenTranslation"

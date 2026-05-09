@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 import ipaddress
 import socket
 from urllib.parse import urlparse

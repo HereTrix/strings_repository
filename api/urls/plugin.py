@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.urls import path
 from api.views.plugin import FetchLanguagesAPI, PluginExportAPI, PullAPI, PushAPI
 from api.views.mcp import McpView

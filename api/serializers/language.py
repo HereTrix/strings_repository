@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from rest_framework import serializers
 
 from api.languages.langcoder import LANGUAGE_FLAG_CODE_KEY, Langcoder

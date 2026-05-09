@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from rest_framework.response import Response
 from django.utils import timezone
 from rest_framework import generics, status

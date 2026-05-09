@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 """Minimal Django settings for fuzz targets."""
 
 SECRET_KEY = 'fuzz-only-insecure-key-not-for-production'

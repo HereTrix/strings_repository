@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useState } from "react"
 import { Badge, Button, ListGroup, Spinner, Stack } from "react-bootstrap"
 import { ProjectRole } from "../../types/Project"
