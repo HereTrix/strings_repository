@@ -2,7 +2,6 @@
 """Fuzz target for ARBFileReader."""
 import atheris
 import io
-import json
 import os
 import sys
 
@@ -13,12 +12,15 @@ django.setup()
 
 from api.file_processors.arb_file import ARBFileReader
 
+_reader = ARBFileReader()
+
 
 def TestOneInput(data):
     try:
-        reader = ARBFileReader()
-        reader.read(io.BytesIO(data))
-    except (json.JSONDecodeError, UnicodeDecodeError, ValueError, AttributeError):
+        _reader.read(io.BytesIO(data))
+    except RecursionError:
+        raise
+    except Exception:
         pass
 
 

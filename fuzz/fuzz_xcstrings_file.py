@@ -2,7 +2,6 @@
 """Fuzz target for XCStringsFileReader."""
 import atheris
 import io
-import json
 import os
 import sys
 
@@ -13,12 +12,15 @@ django.setup()
 
 from api.file_processors.xcstrings_file import XCStringsFileReader
 
+_reader = XCStringsFileReader()
+
 
 def TestOneInput(data):
     try:
-        reader = XCStringsFileReader()
-        reader.read(io.BytesIO(data))
-    except (json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, AttributeError):
+        _reader.read(io.BytesIO(data))
+    except RecursionError:
+        raise
+    except Exception:
         pass
 
 

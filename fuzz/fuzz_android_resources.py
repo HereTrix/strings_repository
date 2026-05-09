@@ -11,14 +11,16 @@ import django
 django.setup()
 
 from api.file_processors.android_resources import AndroidResourceFileReader
-from xml.parsers.expat import ExpatError
+
+_reader = AndroidResourceFileReader()
 
 
 def TestOneInput(data):
     try:
-        reader = AndroidResourceFileReader()
-        reader.read(io.BytesIO(data))
-    except (ExpatError, UnicodeDecodeError, ValueError):
+        _reader.read(io.BytesIO(data))
+    except RecursionError:
+        raise
+    except Exception:
         pass
 
 

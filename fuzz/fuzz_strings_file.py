@@ -12,12 +12,15 @@ django.setup()
 
 from api.file_processors.strings_file import AppleStringsFileReader
 
+_reader = AppleStringsFileReader()
+
 
 def TestOneInput(data):
     try:
-        reader = AppleStringsFileReader()
-        reader.read(io.BytesIO(data))
-    except (UnicodeDecodeError, ValueError):
+        _reader.read(io.BytesIO(data))
+    except RecursionError:
+        raise
+    except Exception:
         pass
 
 

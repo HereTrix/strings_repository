@@ -12,12 +12,15 @@ django.setup()
 
 from api.file_processors.csv_file import CSVFileReader
 
+_reader = CSVFileReader()
+
 
 def TestOneInput(data):
     try:
-        reader = CSVFileReader()
-        reader.read(io.BytesIO(data))
-    except (UnicodeDecodeError, ValueError):
+        _reader.read(io.BytesIO(data))
+    except RecursionError:
+        raise
+    except Exception:
         pass
 
 

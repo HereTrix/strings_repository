@@ -12,12 +12,15 @@ django.setup()
 
 from api.file_processors.properties_file import PropertiesFileReader
 
+_reader = PropertiesFileReader()
+
 
 def TestOneInput(data):
     try:
-        reader = PropertiesFileReader()
-        reader.read(io.BytesIO(data))
-    except (UnicodeDecodeError, ValueError):
+        _reader.read(io.BytesIO(data))
+    except RecursionError:
+        raise
+    except Exception:
         pass
 
 

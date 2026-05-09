@@ -327,6 +327,36 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
+## Upgrading
+
+Only the latest release receives security fixes and bug fixes. Upgrade as soon as a new version is available.
+
+Check [CHANGELOG.md](CHANGELOG.md) before upgrading — breaking changes and any required manual steps are listed there under the relevant version.
+
+### Docker
+
+Pull the new image and restart the container. Database migrations and static file collection run automatically on startup via the entrypoint script:
+
+```bash
+docker pull ghcr.io/heretrix/strings_repository:latest
+docker stop <container-name>
+docker rm <container-name>
+docker run ...  # same options as before
+```
+
+No manual migration step is required.
+
+### Manual installation
+
+```bash
+git pull
+pip install -r requirements.txt          # pick up new or updated dependencies
+python manage.py migrate                 # apply database migrations
+cd webui && npm ci && npm run build      # rebuild the frontend
+```
+
+Restart the application process after the above steps complete.
+
 ## Usage
 
 Detailed usage instructions are available in the project wiki:

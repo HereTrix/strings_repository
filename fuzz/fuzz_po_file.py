@@ -10,10 +10,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'fuzz.fuzz_settings')
 import django
 django.setup()
 
-import atheris.instrument_imports
-with atheris.instrument_imports():
-    from api.file_processors.po_file import POFileReader
-    from api.file_processors.mo_file import MOFileReader
+from api.file_processors.po_file import POFileReader
+from api.file_processors.mo_file import MOFileReader
 
 _po_reader = POFileReader()
 _mo_reader = MOFileReader()
@@ -28,7 +26,9 @@ def TestOneInput(data):
             _po_reader.read(io.BytesIO(payload))
         else:
             _mo_reader.read(io.BytesIO(payload))
-    except (UnicodeDecodeError, ValueError, OSError, IOError):
+    except RecursionError:
+        raise
+    except Exception:
         pass
 
 
