@@ -16,7 +16,12 @@ Maintainers have write access to the repository and are responsible for:
 - Setting project direction
 - Ensuring the security and quality of the codebase
 
-Current maintainers are listed in the GitHub repository's [CODEOWNERS](.github/CODEOWNERS) file (if present) or can be identified via the GitHub contributors page.
+Current maintainers:
+
+| Name | GitHub |
+|------|--------|
+| HereTrix | [@HereTrix](https://github.com/HereTrix) |
+| Andrei Makarov | [@anmcarrow](https://github.com/anmcarrow) |
 
 ### Contributor
 

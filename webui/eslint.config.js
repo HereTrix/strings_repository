@@ -19,6 +19,10 @@ export default defineConfig([
                 ...globals.browser,
             },
         },
+
+        linterOptions: {
+            reportUnusedDisableDirectives: "error",
+        },
     },
     globalIgnores([
         "static/**",

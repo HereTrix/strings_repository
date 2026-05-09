@@ -52,6 +52,10 @@ StringsRepository is a self-hosted application. The following security propertie
 - Input validation on all API endpoints
 - Django's built-in CSRF protection, SQL injection protection, and XSS escaping
 
+## Threat Model and Assurance Case
+
+A complete threat model covering assets, trust boundaries, threat actors, and mitigations is published in [docs/threat-model.md](docs/threat-model.md). It documents how each security requirement stated in this policy is justified.
+
 ## Cryptographic Design Notes
 
 **TOTP and HMAC-SHA1**

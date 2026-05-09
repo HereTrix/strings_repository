@@ -30,8 +30,8 @@ This certifies that you wrote the code or have the right to submit it under the 
 ### TypeScript (frontend)
 
 - Follow the project's [ESLint](https://eslint.org/) configuration in `webui/eslint.config.js`.
-- All PRs must pass ESLint with no errors.
-- Run locally: `cd webui && npx eslint -c eslint.config.js`
+- All PRs must pass ESLint with zero errors **and** zero warnings (`--max-warnings 0`). Warnings are treated as errors.
+- Run locally: `cd webui && npx eslint -c eslint.config.js --max-warnings 0`
 
 Both checks run automatically in CI on every pull request.
 
