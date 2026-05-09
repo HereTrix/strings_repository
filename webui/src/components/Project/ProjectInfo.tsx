@@ -214,7 +214,7 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project, onProviderChange }) => {
                                 </Col>
                                 <Col className="mx-2">
                                     <Stack direction="horizontal" gap={2}>
-                                        <label>Role: </label>
+                                        <span>Role: </span>
                                         {participant.can_edit
                                             ? <Dropdown>
                                                 <Dropdown.Toggle variant="success" id="dropdown-basic">

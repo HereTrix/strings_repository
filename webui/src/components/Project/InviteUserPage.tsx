@@ -56,14 +56,14 @@ const InviteUserPage: FC<InviteUserPage> = ({ projectId, roles, show, onHide }) 
                     </Dropdown.Menu>
                 </Dropdown>
                 <Button onClick={generateCode}>Generate invitation code</Button>
-                {error && <label className="error">{error}</label>}
+                {error && <span className="error">{error}</span>}
                 {code &&
                     <Container className="my-3">
                         <Row>
-                            <label>Please, send this Invitation code to participant</label>
+                            <span>Please, send this Invitation code to participant</span>
                         </Row>
                         <Row className="border rounded bg-secondary">
-                            <label className="text-center text-white my-2">{code}</label>
+                            <span className="text-center text-white my-2">{code}</span>
                         </Row>
                     </Container>
                 }

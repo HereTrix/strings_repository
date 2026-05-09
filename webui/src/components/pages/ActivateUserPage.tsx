@@ -144,7 +144,7 @@ const ActivateUserPage = () => {
                     <Toast.Body>
                         <Container>
                             <Row>
-                                <label className="my-2">Please go to login page</label>
+                                <span className="my-2">Please go to login page</span>
                             </Row>
                             <Button onClick={onBackToLogin} className="my-2">Go To Login</Button>
                         </Container>

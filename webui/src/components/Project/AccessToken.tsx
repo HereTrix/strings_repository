@@ -65,8 +65,9 @@ const GenerateAccessTokenPage: FC<GenerateAccessTokenProps> = ({ show, onHide, o
         </Modal.Header>
         <Modal.Body>
             <Container>
-                <label>Expiration date:</label>
+                <label htmlFor="access-token-expiry">Expiration date:</label>
                 <Form.Control
+                    id="access-token-expiry"
                     type="date"
                     onChange={(e) => setExpiration(e.target.value)} />
             </Container>
