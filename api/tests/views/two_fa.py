@@ -145,7 +145,10 @@ class TwoFALoginAPITestCase(TestCase):
         cache.clear()
         self.user = make_user('fa_login_user')
         self.device = _make_confirmed_device(self.user)
-        self.client = authed_client(self.user)
+        _, raw_token = AuthToken.objects.create(self.user)
+        from rest_framework.test import APIClient
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + raw_token)
 
     def _get_token_key(self):
         return AuthToken.objects.filter(user=self.user).order_by('-created').first().token_key
@@ -197,7 +200,7 @@ class ProjectTwoFAGateTestCase(TestCase):
         project = make_project('GatedProj', owner=self.user, require_2fa=True)
         resp = authed_client(self.user).get(f'/api/project/{project.pk}')
         self.assertEqual(resp.status_code, 403)
-        self.assertIn('2FA', resp.json().get('detail', ''))
+        self.assertIn('2FA', resp.json().get('error', ''))
 
     def test_project_gate_allows_user_with_verified_2fa(self):
         project = make_project('GatedProj2', owner=self.user, require_2fa=True)
@@ -231,6 +234,52 @@ class ProjectTwoFAGateTestCase(TestCase):
     def test_project_gate_not_triggered_on_profile_endpoint(self):
         resp = authed_client(self.user).get('/api/profile')
         self.assertEqual(resp.status_code, 200)
+
+
+class TwoFASessionPermissionTestCase(TestCase):
+    """
+    Tests for TwoFASessionPermission in DEFAULT_PERMISSION_CLASSES.
+
+    Uses a normal (non-require_2fa) project so failures come from
+    TwoFASessionPermission only, not ProjectTwoFAPermission.
+    """
+
+    def setUp(self):
+        self.user = make_user('session_perm_user')
+        self.project = make_project('SessionPermProject', owner=self.user)
+
+    def _knox_client(self):
+        from rest_framework.test import APIClient
+        _, raw_token = AuthToken.objects.create(self.user)
+        token_key = AuthToken.objects.filter(user=self.user).order_by('-created').first().token_key
+        c = APIClient()
+        c.credentials(HTTP_AUTHORIZATION='Token ' + raw_token)
+        return c, token_key
+
+    def test_user_without_2fa_device_is_not_blocked(self):
+        resp = authed_client(self.user).get(f'/api/project/{self.project.pk}')
+        self.assertEqual(resp.status_code, 200)
+
+    def test_unverified_knox_token_blocked_with_2fa_login_required_code(self):
+        _make_confirmed_device(self.user)
+        client, _ = self._knox_client()
+        resp = client.get(f'/api/project/{self.project.pk}')
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json().get('code'), '2fa_login_required')
+
+    def test_verified_knox_token_is_allowed(self):
+        _make_confirmed_device(self.user)
+        client, token_key = self._knox_client()
+        TwoFAVerification.objects.create(token_key=token_key)
+        resp = client.get(f'/api/project/{self.project.pk}')
+        self.assertEqual(resp.status_code, 200)
+
+    def test_force_authenticated_user_with_2fa_device_is_blocked(self):
+        # force_authenticate sets request.auth=None, so token_key is None
+        _make_confirmed_device(self.user)
+        resp = authed_client(self.user).get(f'/api/project/{self.project.pk}')
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json().get('code'), '2fa_login_required')
 
 
 class ProjectRequire2FASerializerTestCase(TestCase):
