@@ -1,0 +1,68 @@
+name: Fuzz file parsers
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1'
+
+jobs:
+  fuzz:
+    name: Atheris fuzz targets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-fuzz.txt
+
+      - name: Create required static directory
+        run: mkdir -p webui/static
+
+      - name: Fuzz AppleStringsFileReader
+        run: python fuzz/fuzz_strings_file.py -atheris_runs=50000
+        timeout-minutes: 5
+
+      - name: Fuzz AndroidResourceFileReader
+        run: python fuzz/fuzz_android_resources.py -atheris_runs=50000
+        timeout-minutes: 5
+
+      - name: Fuzz DotNetFileReader
+        run: python fuzz/fuzz_dotnet_file.py -atheris_runs=50000
+        timeout-minutes: 5
+
+      - name: Fuzz XCStringsFileReader
+        run: python fuzz/fuzz_xcstrings_file.py -atheris_runs=50000
+        timeout-minutes: 5
+
+      - name: Fuzz CSVFileReader
+        run: python fuzz/fuzz_csv_file.py -atheris_runs=50000
+        timeout-minutes: 5
+
+      - name: Fuzz POFileReader and MOFileReader
+        run: python fuzz/fuzz_po_file.py -atheris_runs=50000
+        timeout-minutes: 5
+
+      - name: Fuzz ARBFileReader
+        run: python fuzz/fuzz_arb_file.py -atheris_runs=50000
+        timeout-minutes: 5
+
+      - name: Fuzz PropertiesFileReader
+        run: python fuzz/fuzz_properties_file.py -atheris_runs=50000
+        timeout-minutes: 5

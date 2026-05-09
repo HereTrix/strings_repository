@@ -41,6 +41,7 @@ jobs:
           APP_SECRET_KEY: ci-secret-key
           DB_ENGINE: sqlite3
           DB_NAME: ci
+          DEBUG: "true"
         run: coverage run manage.py test api --verbosity=2
 
       - name: Coverage report
