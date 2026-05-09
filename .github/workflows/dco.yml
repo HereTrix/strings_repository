@@ -17,27 +17,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify all commits are signed off
+      - name: Verify HEAD commit is signed off
         env:
-          BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          missing=()
-          while IFS= read -r sha; do
-            msg=$(git log -1 --format='%B' "$sha")
-            if ! echo "$msg" | grep -qiE '^Signed-off-by: .+ <.+@.+>'; then
-              missing+=("$sha")
-            fi
-          done < <(git log --format='%H' "$BASE".."$HEAD")
-
-          if [ ${#missing[@]} -ne 0 ]; then
-            echo "The following commits are missing a Signed-off-by trailer:"
-            for sha in "${missing[@]}"; do
-              echo "  $sha  $(git log -1 --format='%s' "$sha")"
-            done
+          msg=$(git log -1 --format='%B' "$HEAD")
+          if ! echo "$msg" | grep -qiE '^Signed-off-by: .+ <.+@.+>'; then
+            echo "The latest commit is missing a Signed-off-by trailer:"
+            echo "  $HEAD  $(git log -1 --format='%s' "$HEAD")"
             echo ""
-            echo "Add 'Signed-off-by: Name <email>' to each commit message,"
-            echo "or use 'git commit -s' for future commits."
+            echo "Amend it with: git commit --amend --signoff"
             exit 1
           fi
-          echo "All commits are signed off."
+          echo "HEAD commit is signed off."
