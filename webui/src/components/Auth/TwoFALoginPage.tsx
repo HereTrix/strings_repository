@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState } from "react"
-import { Button, Container, Form, Stack } from "react-bootstrap"
+import { Button, Container, Form } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
 import { APIMethod, http } from "../../utils/network"
