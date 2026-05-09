@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { Button, Container, Dropdown, Form, ListGroup, ListGroupItem, Modal, Stack } from "react-bootstrap";
 import Project from "../../types/Project";
 import { FC, useEffect, useState } from "react";

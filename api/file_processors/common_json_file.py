@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 import json
 
 from api.file_processors.json_dict_file import JsonDictFileReader

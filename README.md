@@ -259,6 +259,7 @@ Before installation, configure the required environment variables.
 | `WEBAUTHN_ORIGIN`           | WebAuthn origin URL (e.g. `https://your.domain`)         |
 | `CORS_ORIGINS`              | Comma-separated allowed CORS origins (optional)          |
 | `DEBUG`                     | Set to `True` to enable Django debug mode (default: False) |
+| `FIELD_ENCRYPTION_KEY_HASH` | Hash algorithm for field-encryption key derivation: `sha256` (default), `sha384`, `sha512`. Changing this requires re-encrypting all stored fields. |
 
 ### Supported databases
 

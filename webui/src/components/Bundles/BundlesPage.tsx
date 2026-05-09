@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, JSX, useEffect, useState } from "react"
 import { Badge, Button, Container, ListGroup, Modal, Spinner, Stack } from "react-bootstrap"
 import { APIMethod, http } from "../../utils/network"

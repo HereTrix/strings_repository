@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.contrib.auth.models import User
 from django_otp import user_has_device
 from api.models.project import Invitation, ProjectRole

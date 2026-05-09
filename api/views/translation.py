@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from api import dispatcher
 from api.models.history import HistoryRecord
 from api.models.language import Language

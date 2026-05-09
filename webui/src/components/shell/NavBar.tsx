@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { useEffect, useState } from 'react';
 import LogoutButton from './Logout';
 import { Button, Container, Nav, Navbar, Dropdown } from 'react-bootstrap';
@@ -62,7 +65,7 @@ const NavBar = () => {
                             </Button>
                         </Nav.Item>
                         <Dropdown>
-                            <Dropdown.Toggle variant="info" className='bg-transparent border-0 p-0 d-flex align-items-end'>
+                            <Dropdown.Toggle variant="info" className='bg-transparent border-0 p-0 d-flex align-items-end' aria-label="User menu">
                                 {profile &&
                                     <OptionalImage src={''} alt={userAlt()} />
                                 }

@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import generics, status

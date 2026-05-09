@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useState } from "react"
 import { Button, Form, Modal } from "react-bootstrap"
 import { SubmitHandler, useForm } from "react-hook-form"

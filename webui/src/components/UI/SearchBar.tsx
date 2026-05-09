@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useState } from "react"
 
 type SearchBarProps = {
@@ -17,6 +20,7 @@ const SearchBar: FC<SearchBarProps> = ({ onSearch, onChange }) => {
         <div className="me-2 rounded-pill d-flex align-items-start">
             <input
                 type="search"
+                aria-label="Search"
                 placeholder="Search"
                 value={query}
                 onChange={(e) => {
@@ -32,7 +36,7 @@ const SearchBar: FC<SearchBarProps> = ({ onSearch, onChange }) => {
                     }
                 }}
             />
-            {query && <button onClick={onClear}>X</button>}
+            {query && <button onClick={onClear} aria-label="Clear search" type="button">✕</button>}
         </div>
     )
 }

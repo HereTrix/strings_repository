@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from rest_framework import serializers
 from api.models.glossary import GlossaryTerm, GlossaryTranslation, GlossaryExtractionJob
 

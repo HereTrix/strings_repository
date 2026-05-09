@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { useEffect, useState } from "react"
 import { Button, ButtonGroup, Container, ProgressBar, Stack } from "react-bootstrap"
 import { useNavigate, useParams } from "react-router-dom"

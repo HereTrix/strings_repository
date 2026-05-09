@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { GlossaryHint, PluralForms } from "./Translation"
 
 interface TokenTranslation {

@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, Fragment, ReactNode } from "react"
 import { Badge, Button, Dropdown, OverlayTrigger, Stack } from "react-bootstrap"
 import SearchBar from "./SearchBar"
@@ -78,7 +81,7 @@ const FilterBar: FC<FilterBarProps> = ({
             />
             <SearchBar onSearch={onSearch} />
             <OverlayTrigger trigger="click" placement="left" overlay={HelpPopover}>
-                <Button className="ms-auto" variant="outline-primary">i</Button>
+                <Button className="ms-auto" variant="outline-primary" aria-label="Help">i</Button>
             </OverlayTrigger>
         </Stack>
     )

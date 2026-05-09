@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useEffect, useState } from "react"
 import { Alert, Button, Container, Spinner, Stack, Table } from "react-bootstrap"
 import Project, { ProjectRole } from "../../types/Project"

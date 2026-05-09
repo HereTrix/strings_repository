@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import fileDownload from "js-file-download"
 import { FC, JSX, useState } from "react"
 import { Badge, Button, Container, Form, Spinner, Stack, Table } from "react-bootstrap"

@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useState } from "react"
 import { Button, Modal } from "react-bootstrap"
 import { APIMethod, http } from "../../utils/network"

@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useCallback, useEffect, useState } from "react"
 import StringToken, { getStatusName, getStatusVariant, STATUS_OPTIONS } from "../../types/StringToken"
 import PaginatedResponse from "../../types/PaginatedResponse"

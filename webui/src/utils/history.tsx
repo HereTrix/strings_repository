@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { NavigateFunction, Location } from "react-router-dom";
 
 interface HistoryNavigator {

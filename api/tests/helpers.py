@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 """
 Shared test helpers: user/project/language/token factories.
 """

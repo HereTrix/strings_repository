@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from api.models.project import Project, ProjectRole
 from rest_framework.response import Response
 

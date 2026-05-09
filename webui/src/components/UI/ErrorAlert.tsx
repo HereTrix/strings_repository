@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC } from "react"
 import { Toast, ToastContainer } from "react-bootstrap"
 

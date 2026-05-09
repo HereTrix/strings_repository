@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { useState } from 'react'
 import { Alert, Button, Form, Spinner } from 'react-bootstrap'
 import { APIMethod, http } from '../../utils/network'

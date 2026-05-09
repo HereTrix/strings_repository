@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from unittest.mock import patch, MagicMock
 
 from django.core.cache import cache

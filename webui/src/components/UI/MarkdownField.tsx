@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useRef, useState } from "react"
 import { Button, Stack } from "react-bootstrap"
 

@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { Navigate } from "react-router-dom";
 import NavBar from "../shell/NavBar";
 import { JSX } from "react";
@@ -14,7 +17,13 @@ function RequireAuth({ children }: { children: JSX.Element }) {
         return <Navigate to="/login" replace />;
     }
 
-    return <><NavBar />{children}</>;
+    return (
+        <>
+            <a href="#main-content" className="visually-hidden-focusable">Skip to main content</a>
+            <NavBar />
+            <main id="main-content">{children}</main>
+        </>
+    );
 }
 
 export default RequireAuth;

@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 """
 Django settings for repository project.
 
@@ -52,6 +55,11 @@ CORS_ALLOW_HEADERS = [
 ]
 
 APPEND_SLASH = False
+
+# Security hardening headers
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 # Application definition
 
@@ -132,6 +140,24 @@ else:
         }
     }
 
+
+# Password hashing — listed in preference order. The first hasher is used for
+# new passwords; the rest allow verifying passwords hashed by older algorithms.
+# To switch the active algorithm, move the desired hasher to the top.
+# bcrypt requires: pip install bcrypt
+# Argon2 requires: pip install argon2-cffi
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',       # PBKDF2 + SHA-256 (default)
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',   # PBKDF2 + SHA-1 (legacy compat)
+    'django.contrib.auth.hashers.Argon2PasswordHasher',       # Argon2id
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher', # bcrypt + SHA-256
+    'django.contrib.auth.hashers.ScryptPasswordHasher',       # scrypt
+]
+
+# Hash algorithm used to derive the field-encryption key from APP_SECRET_KEY.
+# Supported values: sha256 (default), sha384, sha512.
+# Changing this value requires re-encrypting all encrypted database fields.
+FIELD_ENCRYPTION_KEY_HASH = env_value('FIELD_ENCRYPTION_KEY_HASH', default='sha256')
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

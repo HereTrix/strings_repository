@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useCallback, useEffect, useState } from "react"
 import { APIMethod, http, QueryPayload } from "../../utils/network"
 import Translation, { getStatusName, getStatusVariant, STATUS_OPTIONS, TranslationModel, UNTRANSLATED_FILTER } from "../../types/Translation"

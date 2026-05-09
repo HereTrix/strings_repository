@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from api.tests.views.project import *
 from api.tests.views.language import *
 from api.tests.views.roles import *

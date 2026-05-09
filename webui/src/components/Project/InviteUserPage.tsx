@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useState } from "react"
 import { Button, Container, Dropdown, Modal, Row } from "react-bootstrap"
 import { APIMethod, BodyPayload, http } from "../../utils/network"

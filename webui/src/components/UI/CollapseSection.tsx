@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, ReactNode, useState } from "react"
 import { Button, Collapse, Container, Stack } from "react-bootstrap"
 

@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 import io
 import json
 from unittest.mock import MagicMock, call, patch

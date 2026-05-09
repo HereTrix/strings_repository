@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { Container } from "react-bootstrap"
 import { useNavigate } from "react-router-dom"
 import { APIMethod, http } from "../../utils/network"

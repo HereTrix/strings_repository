@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 export interface TMSuggestion {
   token_key: string
   source_text: string

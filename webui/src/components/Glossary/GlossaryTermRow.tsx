@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC } from "react"
 import { Badge, Button } from "react-bootstrap"
 import { GlossaryTerm } from "../../types/Glossary"

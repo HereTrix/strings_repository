@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useEffect, useRef, useState } from "react"
 import { Alert, Badge, Button, Form, Spinner, Stack } from "react-bootstrap"
 import Project, { ProjectRole } from "../../types/Project"

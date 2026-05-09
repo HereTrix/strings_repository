@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { FC, useEffect, useState } from "react"
 import Project, { ProjectRole } from "../../types/Project"
 import { Button, Col, Dropdown, Form, ListGroup, ListGroupItem, Stack } from "react-bootstrap"

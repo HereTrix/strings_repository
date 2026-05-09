@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from api.tasks.glossary import run_glossary_extraction_job
 from api.tasks.verification import _enforce_cap, run_verification_job
 from api.tasks.webhook import send_webhook

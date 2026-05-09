@@ -1,3 +1,6 @@
+# Copyright (c) StringsRepository Contributors
+# SPDX-License-Identifier: MIT
+
 from rest_framework.views import exception_handler as drf_exception_handler
 
 _2FA_CODE = "2fa_required"

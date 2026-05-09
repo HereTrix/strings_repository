@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import fileDownload from "js-file-download";
 import { FC, JSX, useEffect, useState } from "react";
 import { Button, Dropdown, Modal, Row, Stack } from "react-bootstrap";

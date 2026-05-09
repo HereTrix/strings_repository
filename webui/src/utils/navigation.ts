@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 let navigateFunc: ((path: string, options?: object) => void) | null = null;
 
 export const setNavigate = (fn: typeof navigateFunc) => {

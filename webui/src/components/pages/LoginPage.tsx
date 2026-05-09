@@ -1,3 +1,6 @@
+// Copyright (c) StringsRepository Contributors
+// SPDX-License-Identifier: MIT
+
 import { useState } from "react"
 import { Alert, Button, Container, Form, Spinner } from "react-bootstrap";
 import { useForm, SubmitHandler } from "react-hook-form";
