@@ -2,15 +2,16 @@
 # SPDX-License-Identifier: MIT
 
 import json
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.core.cache import cache
 from django.test import TestCase
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from knox.models import AuthToken
 
 from api.models.users import BackupCode, TwoFAVerification
+from api.permissions import ProjectTwoFAPermission, TwoFASessionPermission
 from api.tests.helpers import authed_client, make_project, make_user, add_role
 from api.models.project import ProjectRole
 
@@ -320,3 +321,50 @@ class ProjectRequire2FASerializerTestCase(TestCase):
         self.assertEqual(resp.status_code, 400)
         data = resp.json()
         self.assertIn('Only project owners', str(data))
+
+
+class TwoFASessionPermissionUnitTestCase(TestCase):
+    """Direct unit tests for TwoFASessionPermission covering branches not reached by integration tests."""
+
+    def _perm(self):
+        return TwoFASessionPermission()
+
+    def _view(self):
+        return MagicMock()
+
+    def test_unauthenticated_user_passes(self):
+        req = MagicMock()
+        req.user = AnonymousUser()
+        self.assertTrue(self._perm().has_permission(req, self._view()))
+
+    def test_none_user_passes(self):
+        req = MagicMock()
+        req.user = None
+        self.assertTrue(self._perm().has_permission(req, self._view()))
+
+
+class ProjectTwoFAPermissionUnitTestCase(TestCase):
+    """Direct unit tests for ProjectTwoFAPermission covering branches not reached by integration tests."""
+
+    def _perm(self):
+        return ProjectTwoFAPermission()
+
+    def _view(self, pk=None):
+        view = MagicMock()
+        view.kwargs = {'pk': pk} if pk is not None else {}
+        return view
+
+    def test_nonexistent_project_passes(self):
+        user = make_user('perm_unit_user')
+        req = MagicMock()
+        req.user = user
+        self.assertTrue(self._perm().has_permission(req, self._view(pk=999999)))
+
+    def test_no_token_key_blocked_on_2fa_required_project(self):
+        user = make_user('perm_unit_user2')
+        TOTPDevice.objects.create(user=user, name='default', confirmed=True)
+        project = make_project('UnitGatedProj', owner=user, require_2fa=True)
+        req = MagicMock()
+        req.user = user
+        req.auth = None  # getattr(None, 'token_key', None) == None
+        self.assertFalse(self._perm().has_permission(req, self._view(pk=project.pk)))

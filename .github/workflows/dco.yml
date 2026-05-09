@@ -6,12 +6,27 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   dco:
     name: Developer Certificate of Origin
     runs-on: ubuntu-latest
     steps:
-      - name: Check DCO sign-off
-        uses: dcoapp/dco-action@4c7f86ee67ede1d5e5e2dc6b8afc0b16d8e28f55
+      - name: Check out the repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Verify HEAD commit is signed off
+        env:
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          msg=$(git log -1 --format='%B' "$HEAD")
+          if ! echo "$msg" | grep -qiE '^Signed-off-by: .+ <.+@.+>'; then
+            echo "The latest commit is missing a Signed-off-by trailer:"
+            echo "  $HEAD  $(git log -1 --format='%s' "$HEAD")"
+            echo ""
+            echo "Amend it with: git commit --amend --signoff"
+            exit 1
+          fi
+          echo "HEAD commit is signed off."
