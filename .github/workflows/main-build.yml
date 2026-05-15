@@ -97,7 +97,7 @@ jobs:
           -e DB_ENGINE=sqlite3 \
           -e DB_NAME=test \
           -e APP_SECRET_KEY=y9Sag4UWWLHyp \
-          --name testct -d -p 8080:8080 ${{ steps.meta.outputs.tags }}
+          --name testct -d -p 8080:8080 ghcr.io/heretrix/strings_repository:${{ github.sha }}
 
           for i in $(seq 1 15); do
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' testct 2>/dev/null || echo "unknown")
