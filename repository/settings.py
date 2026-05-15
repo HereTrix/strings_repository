@@ -47,11 +47,21 @@ CORS_ALLOWED_ORIGINS = [
     o.strip() for o in env_value('CORS_ORIGINS', default='').split(',') if o.strip()
 ]
 
+# Figma plugins run in a sandboxed iframe which sends a null Origin.
+CORS_ALLOWED_ORIGIN_REGEXES = [r'^null$']
+
 CORS_URLS_REGEX = r'^/api/(plugin/.*|mcp)$'
 
 CORS_ALLOW_HEADERS = [
     'Access-Token',
-    'Content-Type'
+    'Content-Type',
+    'User-Agent',
+]
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'OPTIONS',
 ]
 
 APPEND_SLASH = False

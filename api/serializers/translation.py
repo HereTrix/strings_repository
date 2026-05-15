@@ -56,6 +56,7 @@ class StringTokenModelSerializer(serializers.Serializer):
     translation = serializers.SerializerMethodField()
     comment = serializers.CharField()
     tags = serializers.SerializerMethodField()
+    scope = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     plural_forms = serializers.SerializerMethodField()
     default_translation = serializers.SerializerMethodField()
@@ -71,6 +72,10 @@ class StringTokenModelSerializer(serializers.Serializer):
 
     def get_tags(self, obj):
         return [tag.tag for tag in obj.tags.all()]
+
+    def get_scope(self, obj):
+        scope = obj.scopes.first()
+        return scope.name if scope else None
 
     def get_status(self, obj):
         t = self._get_translation_obj(obj)

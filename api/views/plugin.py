@@ -14,6 +14,8 @@ from api.file_processors.file_processor import FileProcessor
 from api.models.bundle import TranslationBundle, TranslationBundleMap
 from api.models.language import Language
 from api.models.project import ProjectAccessToken
+from api.models.scope import Scope, ScopeImage
+from api.models.tag import Tag
 from api.models.string_token import StringToken
 from api.models.translations import Translation
 from api.models.transport_models import TranslationModel
@@ -51,6 +53,28 @@ class WriteTokenPermission(BasePermission):
         return access.permission != ProjectAccessToken.AccessTokenPermissions.read
 
 
+class TagsAPI(generics.GenericAPIView):
+    authentication_classes = [AccessTokenAuth]
+    permission_classes = []
+
+    def get(self, request):
+        access = request.auth
+        project = access.project
+
+        tags = list(
+            StringToken.objects.filter(project=project)
+            .values_list('tags__tag', flat=True)
+            .exclude(tags__tag=None)
+            .distinct()
+        )
+        scopes = list(
+            Scope.objects.filter(project=project)
+            .values_list('name', flat=True)
+            .distinct()
+        )
+        return Response({'tags': tags, 'scopes': scopes})
+
+
 class PullAPI(generics.GenericAPIView):
     authentication_classes = [AccessTokenAuth]
     permission_classes = []
@@ -58,6 +82,8 @@ class PullAPI(generics.GenericAPIView):
     def post(self, request):
         string_tokens = request.data.get('tokens')
         code = request.data.get('code')
+        filter_tags = request.data.get('tags')
+        scope = request.data.get('scope')
 
         if not code:
             return Response({
@@ -72,11 +98,21 @@ class PullAPI(generics.GenericAPIView):
 
         tokens = StringToken.objects.filter(
             project=access.project
-        ).prefetch_related('translation').filter(
+        ).prefetch_related('translation', 'tags', 'scopes').filter(
             token__in=string_tokens
-        ).distinct()
+        )
 
-        serializer = StringTokenModelSerializer(tokens, many=True)
+        if filter_tags:
+            for tag in filter_tags:
+                tokens = tokens.filter(tags__tag=tag)
+
+        if scope:
+            tokens = tokens.filter(scopes__name=scope)
+
+        tokens = tokens.distinct()
+
+        serializer = StringTokenModelSerializer(
+            tokens, many=True, context={'code': code})
         return Response(serializer.data)
 
 
@@ -107,13 +143,19 @@ class PushAPI(generics.GenericAPIView):
                     project=project,
                     token=item['token']
                 )
-                Translation.create_translation(
+                Translation.create_or_update_translation(
                     user=access.user,
                     token=string_token,
                     code=code,
                     project_id=project.id,
                     text=item['translation']
                 )
+                if 'tags' in item:
+                    tag_objects = [Tag.objects.get_or_create(tag=t)[0] for t in item['tags']]
+                    string_token.tags.set(tag_objects)
+                if 'scope' in item and item['scope']:
+                    scope, _ = Scope.objects.get_or_create(project=project, name=item['scope'])
+                    scope.tokens.add(string_token)
             except Exception as e:
                 failed.append({'token': item.get('token'),
                               'error': 'Failed to create translation'})
@@ -135,21 +177,48 @@ class FetchLanguagesAPI(generics.GenericAPIView):
         return Response(codes)
 
 
+class ContextAPI(generics.GenericAPIView):
+    authentication_classes = [AccessTokenAuth]
+    permission_classes = [WriteTokenPermission]
+
+    def post(self, request):
+        scope_name = request.data.get('scope')
+        image = request.FILES.get('image')
+
+        if not scope_name:
+            return Response({'error': 'No scope provided'}, status=status.HTTP_400_BAD_REQUEST)
+        if not image:
+            return Response({'error': 'No image provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        access = request.auth
+        project = access.project
+
+        scope, _ = Scope.objects.get_or_create(
+            project=project,
+            name=scope_name,
+        )
+
+        ScopeImage.objects.create(scope=scope, image=image)
+
+        return Response(status=status.HTTP_200_OK)
+
+
 class PluginExportAPI(generics.GenericAPIView):
     authentication_classes = [AccessTokenAuth]
     permission_classes = []
 
     def post(self, request):
         access = request.auth
-        print('<<<<', access)
 
         project = access.project
         user = access.user
 
-        codes = request.POST.getlist('codes')
-        export_type = request.POST.get('type')
-        tags = request.POST.getlist('tags')
-        bundle_version = request.POST.get('bundle_version')
+        raw_codes = request.data.get('codes') or []
+        codes = [raw_codes] if isinstance(raw_codes, str) else list(raw_codes)
+        export_type = request.data.get('type')
+        raw_tags = request.data.get('tags') or []
+        tags = [raw_tags] if isinstance(raw_tags, str) else list(raw_tags)
+        bundle_version = request.data.get('bundle_version')
 
         try:
             file_type = ExportFile(export_type)

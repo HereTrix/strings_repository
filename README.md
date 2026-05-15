@@ -62,117 +62,27 @@
 
 ## Translation Bundles
 
-Bundles are versioned snapshots of all project translations. They allow you to:
+Bundles are versioned snapshots of all project translations. Pin a release state, roll back, compare against live, or export from any snapshot. The export endpoint accepts a `bundle_version` field to select live data, the active bundle, or a specific named version.
 
-* Pin a specific translation state for a production release
-* Roll back to a previous version by comparing and reviewing changes
-* Test a specific version in QA without affecting live data
+See [docs/bundles.md](docs/bundles.md) for the full workflow and API reference.
 
-### How it works
+## Figma Plugin API
 
-1. **Create a bundle** — takes a point-in-time snapshot of all current translations across all languages. Version names are auto-generated (`v1`, `v2`, …) or you can provide a custom name (e.g. `release-2.1.0`).
-2. **Activate a bundle** — marks it as the production bundle for the project. Only one bundle can be active at a time; activating a new one automatically deactivates the previous.
-3. **Compare bundles** — diff any two bundles or compare a bundle against live translations to review what has changed, been added, or removed.
-4. **Export from a bundle** — generate platform-specific files from any bundle snapshot in any supported format.
+Three dedicated endpoints support the Figma plugin workflow: fetching available tags and scopes, pulling translations with optional tag/scope filters, and uploading per-frame context screenshots.
 
-### Plugin / CLI integration
-
-The export endpoint accepts an optional `bundle_version` field to control which translation source is used:
-
-| `bundle_version` value | Behavior                                         | Use case                  |
-| ---------------------- | ------------------------------------------------ | ------------------------- |
-| omitted or `"live"`    | Live translations (latest edits in the database) | Local development         |
-| `"active"`             | Currently active bundle                          | Production CI/CD          |
-| `"v3"` (any name)      | That specific bundle                             | QA, rollback verification |
-
-If `bundle_version='active'` is requested and no bundle is active, the API returns `404` with an explicit error message.
-
-The version names `active` and `live` are reserved and cannot be used as bundle names.
+See [docs/plugin.md](docs/plugin.md) for the full API reference.
 
 ## Webhooks
 
-Webhooks allow external services to receive real-time notifications when events occur in a project.
+Webhooks deliver real-time event notifications to external services. Each endpoint is configured with a URL, event subscriptions, an optional auth token, an optional payload template, and an auto-generated HMAC-SHA256 signing secret.
 
-### Configuration
-
-Each webhook endpoint is configured with:
-
-* **URL** — the destination endpoint (stored encrypted at rest)
-* **Events** — one or more event types to subscribe to
-* **Auth token** (optional) — sent as `Authorization: Bearer <token>` (stored encrypted at rest)
-* **Template** (optional) — a Jinja-style text template for the payload body (e.g. for Slack/Teams integrations)
-* **Signing secret** — auto-generated HMAC-SHA256 secret sent in the `X-Signature` header for payload verification
-
-### Supported events
-
-| Event                      | Triggered when                              |
-| -------------------------- | ------------------------------------------- |
-| `translation.created`      | A new translation is added                  |
-| `translation.updated`      | A translation value is changed              |
-| `translation.status_changed` | A translation status changes              |
-| `token.created`            | A new string key is created                 |
-| `token.deleted`            | A string key is deleted                     |
-| `token.status_changed`     | A string key status changes                 |
-| `language.added`           | A language is added to the project          |
-| `language.removed`         | A language is removed from the project      |
-| `import.completed`         | A file import completes                     |
-| `member.invited`           | A team member is invited                    |
-| `member.role_changed`      | A team member's role is changed             |
-| `verification.completed`   | An AI verification job finishes (any status) |
+See [docs/webhooks.md](docs/webhooks.md) for the full event list and configuration reference.
 
 ## MCP Integration
 
 StringsRepository exposes a [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `POST /api/mcp`, enabling AI agents and IDE assistants (Claude Code, Cursor, VS Code) to manage localization keys without leaving the editor.
 
-### Authentication
-
-The endpoint uses project access tokens — the same tokens used by the CLI. Pass the token in the `Access-Token` request header.
-
-### Available tools
-
-| Tool | Description |
-| ---- | ----------- |
-| `get_project` | Get project info for the configured token |
-| `get_languages` | List all configured language codes |
-| `list_tokens` | List/search localization keys (by name or translation text) |
-| `get_token` | Get a key with all its translations across every language |
-| `create_token` | Create a new localization key |
-| `set_translation` | Create or update a translation for a key and language |
-| `search_similar_tokens` | Find existing keys similar to a given text (duplicate prevention) |
-| `suggest_token_key` | Suggest a key name derived from source text |
-| `get_token_naming_patterns` | Analyse the project's key naming conventions |
-| `batch_create_tokens` | Create multiple keys with translations in one call |
-| `check_glossary` | Check whether words or phrases in a source string match project glossary terms; returns matched terms with definitions and preferred translations |
-| `suggest_translation` | Fetch translation memory suggestions — previously-translated strings whose source text is similar to the given input |
-| `verify_string` | Run AI quality verification on a single source/translation pair (requires an AI provider configured on the project); returns severity, suggested correction, and reason |
-
-### IDE setup (Claude Code)
-
-Create a project access token in the StringsRepository web UI, then add the server to your MCP configuration:
-
-```json
-{
-  "mcpServers": {
-    "strings-repository": {
-      "type": "http",
-      "url": "https://your-server/api/mcp",
-      "headers": {
-        "Access-Token": "your-project-access-token"
-      }
-    }
-  }
-}
-```
-
-### IDE setup via CLI proxy (stdio)
-
-If your IDE only supports stdio MCP transport, use the CLI in proxy mode after configuring it with your server URL and token:
-
-```bash
-strings mcp
-```
-
-See the [CLI repository](https://github.com/HereTrix/strings_repository_cli) for setup details.
+See [docs/mcp.md](docs/mcp.md) for the full tool reference and IDE setup instructions.
 
 ## Machine Translation
 
@@ -188,24 +98,9 @@ Project owners can enforce 2FA across their entire team. When enabled, any membe
 
 ## AI Translation Verification
 
-AI verification runs quality audits on your translations using any OpenAI-compatible or Anthropic-compatible provider (including self-hosted models via a custom endpoint URL). The provider is configured per-project in **Project → Info → AI Provider**.
+AI verification runs async quality audits on your translations using any OpenAI-compatible or Anthropic-compatible provider. Two modes are available: source quality (spelling, grammar, tone) and translation accuracy (semantic correctness against a target language). Results include severity badges, word-level diffs, and one-click apply.
 
-### Modes
-
-| Mode | What is checked | Target language required |
-| ---- | --------------- | ------------------------ |
-| **Source Quality** | Source/default language strings for spelling, grammar, tone, punctuation, capitalisation, and placeholder format | No |
-| **Translation Accuracy** | Translations from the source language to a selected target language for semantic accuracy, placeholder preservation, omissions/additions, grammar, and tone match | Yes |
-
-### How it works
-
-1. **Configure an AI provider** — go to **Project → Info → AI Provider**, select a provider type (OpenAI-compatible or Anthropic-compatible), enter the model name and API key. Leave the endpoint URL blank to use the default. Built-in presets are available for OpenAI, Claude, and Ollama.
-2. **Run a verification** — in the **Verify** tab, click **Run Verification**. Select a mode, optionally filter by scope, tags, or "new only" (Mode 2), choose which checks to include, and click **Estimate strings** to preview API token usage before submitting.
-3. **Review results** — the job runs asynchronously; the tab polls for status every 5 seconds. Each result row shows a severity badge (`ok` / `warning` / `error`), a word-level diff of the current value vs. the AI suggestion, and the reason.
-4. **Apply suggestions** — editors, admins, and owners can select individual suggestions, adjust the text inline, and apply them as standard translation updates with full history tracking. Applying any suggestion marks the report read-only.
-5. **Comment** — any project member can add comments to individual suggestions for discussion.
-
-Reports are capped per project (default: 10; configurable by the project owner). When the cap is reached, the oldest report is deleted automatically. Admins and owners can delete any report manually. A `verification.completed` webhook event fires when each job finishes.
+See [docs/verification.md](docs/verification.md) for modes, workflow, and report management details.
 
 ## Configuration
 
@@ -407,7 +302,7 @@ https://github.com/HereTrix/strings_repository/wiki
 
 ## Contributing
 
-Contributions are welcome!
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
