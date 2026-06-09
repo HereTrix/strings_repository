@@ -47,7 +47,10 @@ class ScopeListCreateAPI(generics.GenericAPIView):
         if not name:
             return Response({'error': 'Name is required'}, status=status.HTTP_400_BAD_REQUEST)
         scope = Scope.objects.create(
-            project=project, name=name, description=description)
+            project=project,
+            name=name,
+            description=description
+        )
         serializer = ScopeSerializer(scope, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

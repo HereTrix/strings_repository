@@ -29,7 +29,7 @@ class AccessTokenAuth(BaseAuthentication):
         token = request.META.get("HTTP_ACCESS_TOKEN")
 
         if not token:
-            raise AuthenticationFailed("No access token")
+            return None
 
         try:
             access = ProjectAccessToken.objects.get(token=token)
@@ -151,10 +151,12 @@ class PushAPI(generics.GenericAPIView):
                     text=item['translation']
                 )
                 if 'tags' in item:
-                    tag_objects = [Tag.objects.get_or_create(tag=t)[0] for t in item['tags']]
+                    tag_objects = [Tag.objects.get_or_create(
+                        tag=t)[0] for t in item['tags']]
                     string_token.tags.set(tag_objects)
                 if 'scope' in item and item['scope']:
-                    scope, _ = Scope.objects.get_or_create(project=project, name=item['scope'])
+                    scope, _ = Scope.objects.get_or_create(
+                        project=project, name=item['scope'])
                     scope.tokens.add(string_token)
             except Exception as e:
                 failed.append({'token': item.get('token'),
@@ -213,11 +215,9 @@ class PluginExportAPI(generics.GenericAPIView):
         project = access.project
         user = access.user
 
-        raw_codes = request.data.get('codes') or []
-        codes = [raw_codes] if isinstance(raw_codes, str) else list(raw_codes)
+        codes = request.data.getlist('codes')
         export_type = request.data.get('type')
-        raw_tags = request.data.get('tags') or []
-        tags = [raw_tags] if isinstance(raw_tags, str) else list(raw_tags)
+        tags = request.data.getlist('tags')
         bundle_version = request.data.get('bundle_version')
 
         try:

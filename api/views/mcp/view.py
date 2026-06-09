@@ -36,7 +36,7 @@ class McpView(APIView):
     permission_classes = []
 
     def get(self, request):
-        return Response({"name": "strings-repository", "version": "1.0", "protocol": "2024-11-05"})
+        return Response({"name": "strings-repository", "version": "1.0", "protocol": "2025-03-26"})
 
     def post(self, request):
         access = request.auth
@@ -64,7 +64,7 @@ class McpView(APIView):
         return Response({
             "jsonrpc": "2.0", "id": id_,
             "result": {
-                "protocolVersion": "2024-11-05",
+                "protocolVersion": "2025-03-26",
                 "capabilities": {"tools": {}},
                 "serverInfo": {"name": "strings-repository", "version": "1.0"},
             },
