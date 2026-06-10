@@ -145,6 +145,7 @@ class ActivateProjectAPI(generics.GenericAPIView):
 
 
 class SignUpAPI(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
 

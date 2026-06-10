@@ -247,3 +247,98 @@ class ExistingDeepLUnaffectedTestCase(TestCase):
         }, format='json')
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['provider'], 'deepl')
+
+
+class IntegrationAPIEdgeCasesTestCase(TestCase):
+
+    def setUp(self):
+        self.owner = make_user('int_edge_owner')
+        self.project = make_project(owner=self.owner)
+        self.client = authed_client(self.owner)
+
+    def test_get_returns_disabled_when_no_integration(self):
+        resp = self.client.get(f'/api/project/{self.project.pk}/integration')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertFalse(data['enabled'])
+        self.assertIn('providers', data)
+
+    def test_get_not_found_for_other_project(self):
+        other = make_project('Other')
+        resp = self.client.get(f'/api/project/{other.pk}/integration')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_post_missing_provider_returns_400(self):
+        resp = self.client.post(f'/api/project/{self.project.pk}/integration', {}, format='json')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_invalid_provider_returns_400(self):
+        resp = self.client.post(f'/api/project/{self.project.pk}/integration', {
+            'provider': 'not_a_real_provider',
+        }, format='json')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_not_allowed_for_other_project(self):
+        other = make_project('Other')
+        resp = self.client.post(f'/api/project/{other.pk}/integration', {
+            'provider': 'ai',
+        }, format='json')
+        self.assertEqual(resp.status_code, 403)
+
+    def test_delete_removes_integration(self):
+        TranslationIntegration.objects.create(project=self.project, provider='ai', api_key=None)
+        resp = self.client.delete(f'/api/project/{self.project.pk}/integration')
+        self.assertEqual(resp.status_code, 204)
+        self.assertFalse(TranslationIntegration.objects.filter(project=self.project).exists())
+
+    def test_delete_when_no_integration_returns_404(self):
+        resp = self.client.delete(f'/api/project/{self.project.pk}/integration')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_delete_not_allowed_for_other_project(self):
+        other = make_project('Other')
+        resp = self.client.delete(f'/api/project/{other.pk}/integration')
+        self.assertEqual(resp.status_code, 403)
+
+
+class VerifyIntegrationEdgeCasesTestCase(TestCase):
+
+    def setUp(self):
+        self.owner = make_user('verify_edge_owner')
+        self.project = make_project(owner=self.owner)
+        self.client = authed_client(self.owner)
+
+    def test_verify_not_allowed_for_other_project(self):
+        other = make_project('Other')
+        resp = self.client.post(f'/api/project/{other.pk}/integration/verify')
+        self.assertEqual(resp.status_code, 403)
+
+    def test_verify_no_integration_returns_400(self):
+        resp = self.client.post(f'/api/project/{self.project.pk}/integration/verify')
+        self.assertEqual(resp.status_code, 400)
+
+
+class MachineTranslateEdgeCasesTestCase(TestCase):
+
+    def setUp(self):
+        self.owner = make_user('mt_edge_owner')
+        self.project = make_project(owner=self.owner)
+        self.client = authed_client(self.owner)
+
+    def test_project_not_found_returns_404(self):
+        other = make_project('Other')
+        resp = self.client.post(f'/api/project/{other.pk}/machine-translate', {
+            'text': 'Hello', 'target_language': 'FR',
+        }, format='json')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_no_integration_returns_400(self):
+        resp = self.client.post(f'/api/project/{self.project.pk}/machine-translate', {
+            'text': 'Hello', 'target_language': 'FR',
+        }, format='json')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_missing_text_and_target_returns_400(self):
+        TranslationIntegration.objects.create(project=self.project, provider='ai', api_key=None)
+        resp = self.client.post(f'/api/project/{self.project.pk}/machine-translate', {}, format='json')
+        self.assertEqual(resp.status_code, 400)
