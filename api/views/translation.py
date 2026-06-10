@@ -56,7 +56,7 @@ class StringTokenAPI(generics.GenericAPIView):
 
         token = StringToken()
         token.token = key
-        token.comment = request.data['comment']
+        token.comment = request.data.get('comment', '')
         token.project = project
         token.save()
 

@@ -31,18 +31,22 @@ type AccessTokenItemProps = {
 
 const AccessTokenItem: FC<AccessTokenItemProps> = ({ token, onDelete }) => {
     return <ListGroupItem>
-        <Stack direction="horizontal" gap={3}>
+        <Stack direction="vertical" gap={3}>
 
-            <Container className="border rounded bg-secondary">
-                <label className="text-center text-white my-2">{token.token}</label>
-            </Container>
-            <label>{token.permission}</label>
-            <label>{token.expiration}</label>
-            <Button
-                className="my-2"
-                variant="danger"
-                onClick={() => onDelete(token.token)}
-            >Delete</Button>
+            <Stack direction="horizontal" gap={3}>
+                <Container className="border rounded bg-secondary">
+                    <label className="text-center text-white my-2">{token.token}</label>
+                </Container>
+                <Button
+                    className="my-2"
+                    variant="danger"
+                    onClick={() => onDelete(token.token)}
+                >Delete</Button>
+            </Stack>
+            <Stack direction="horizontal" gap={3}>
+                <label>{token.permission}</label>
+                <label>{token.expiration}</label>
+            </Stack>
         </Stack>
     </ListGroupItem>
 }

@@ -13,6 +13,10 @@ from api.tests.views.webhook import *
 from api.tests.views.bundle import *
 from api.tests.views.plugin import *
 from api.tests.views.glossary import *
+from api.tests.views.integration import *
+from api.tests.views.two_fa import *
+from api.tests.views.scope import *
+from api.tests.views.generic import *
 from api.tests.views.mcp.test_protocol import *
 from api.tests.views.mcp.test_tools_project import *
 from api.tests.views.mcp.test_tools_tokens import *
