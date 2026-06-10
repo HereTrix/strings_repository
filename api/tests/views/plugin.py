@@ -381,3 +381,128 @@ class ContextAPITestCase(TestCase):
             format='multipart',
         )
         self.assertEqual(resp.status_code, 403)
+
+
+class PullAPIAuthTestCase(TestCase):
+
+    def setUp(self):
+        self.user = make_user('pull_auth_user')
+        self.project = make_project(owner=self.user)
+        self.client = APIClient()
+
+    def test_no_token_returns_403(self):
+        resp = self.client.post(
+            '/api/plugin/pull',
+            {'code': 'en', 'tokens': ['some.key']},
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 403)
+
+
+class PushAPIValidationTestCase(TestCase):
+
+    def setUp(self):
+        self.user = make_user('push_validation_user')
+        self.project = make_project(owner=self.user)
+        make_language(self.project, 'EN')
+        self.write_token = make_access_token(self.project, self.user)
+        self.client = APIClient()
+
+    def _post(self, data, token=None):
+        return self.client.post(
+            '/api/plugin/push',
+            data,
+            format='json',
+            HTTP_ACCESS_TOKEN=(token or self.write_token.token),
+        )
+
+    def test_missing_code_returns_400(self):
+        resp = self._post({'translations': [{'token': 'k', 'translation': 'v'}]})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_missing_translations_returns_400(self):
+        resp = self._post({'code': 'en'})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_partial_failure_returns_207(self):
+        from unittest.mock import patch
+        with patch('api.views.plugin.StringToken.objects.get_or_create', side_effect=Exception('db error')):
+            resp = self._post({'code': 'en', 'translations': [{'token': 'k', 'translation': 'v'}]})
+        self.assertEqual(resp.status_code, 207)
+        self.assertIn('failed', resp.json())
+
+
+class FetchLanguagesAPITestCase(TestCase):
+
+    def setUp(self):
+        self.user = make_user('lang_user')
+        self.project = make_project(owner=self.user)
+        make_language(self.project, 'EN')
+        make_language(self.project, 'DE')
+        self.access_token = make_access_token(self.project, self.user)
+        self.client = APIClient()
+
+    def _get(self, token=None):
+        headers = {}
+        if token is not None:
+            headers['HTTP_ACCESS_TOKEN'] = token
+        return self.client.get('/api/plugin/languages', **headers)
+
+    def test_returns_language_codes(self):
+        resp = self._get(self.access_token.token)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('EN', resp.json())
+        self.assertIn('DE', resp.json())
+
+    def test_no_token_returns_403(self):
+        resp = self._get()
+        self.assertEqual(resp.status_code, 403)
+
+    def test_invalid_token_returns_403(self):
+        resp = self._get('badtoken')
+        self.assertEqual(resp.status_code, 403)
+
+
+class PluginExportAPITestCase(TestCase):
+
+    def setUp(self):
+        self.user = make_user('export_user')
+        self.project = make_project(owner=self.user)
+        self.lang = make_language(self.project, 'EN')
+        token = make_token(self.project, 'app.title')
+        make_translation(token, self.lang, 'Hello')
+        self.access_token = make_access_token(self.project, self.user)
+        self.client = APIClient()
+
+    def _post(self, data=None, token=None):
+        headers = {}
+        if token is not None:
+            headers['HTTP_ACCESS_TOKEN'] = token
+        else:
+            headers['HTTP_ACCESS_TOKEN'] = self.access_token.token
+        return self.client.post('/api/plugin/export', data or {}, **headers)
+
+    def test_no_token_returns_403(self):
+        resp = self.client.post('/api/plugin/export', {})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_unsupported_type_returns_400(self):
+        resp = self._post({'type': 'unsupported_format', 'codes': ['en']})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_auto_fills_codes_from_project_languages(self):
+        resp = self._post({'type': 'json'})
+        self.assertEqual(resp.status_code, 200)
+
+    def test_export_with_explicit_codes(self):
+        resp = self._post({'type': 'json', 'codes': ['en']})
+        self.assertEqual(resp.status_code, 200)
+
+    def test_export_with_tag_filter(self):
+        from api.models.tag import Tag
+        tag = Tag.objects.create(tag='ios')
+        t = make_token(self.project, 'ios.key')
+        t.tags.add(tag)
+        make_translation(t, self.lang, 'iOS')
+        resp = self._post({'type': 'json', 'codes': ['en'], 'tags': ['ios']})
+        self.assertEqual(resp.status_code, 200)

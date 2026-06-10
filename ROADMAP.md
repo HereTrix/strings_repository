@@ -19,7 +19,7 @@ This document describes the planned direction for StringsRepository over the nex
 
 ## Long Term (6–12 months)
 
-- **Multi-tenant hosted option** — optional cloud-hosted mode for teams that do not want to self-host
+- **Live serving URL** - possibility to update translations using live URL
 - **Plugin API** — stable, versioned extension point for community plugins (custom file formats, translation providers, etc.)
 - **Offline CLI mode** — allow the CLI to queue changes locally and sync when connectivity is restored
 - **Android `.xml` plural support improvements** — full parity with iOS CLDR plural handling for Android projects

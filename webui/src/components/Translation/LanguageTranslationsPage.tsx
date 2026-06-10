@@ -75,7 +75,7 @@ const LanguageTranslationsPage = () => {
 
     const language = project?.languages.find(l => l.code.toLowerCase() === code?.toLowerCase())
     return (
-        <Container>
+        <Container className="mb-3">
             <Container className="d-flex my-3 justify-content-between align-items-center">
                 <Button onClick={backToProject}>Back to project</Button>
                 <Stack direction="vertical" gap={2} className="align-items-center">

@@ -141,7 +141,7 @@ const StringTokensList: FC<StringTokenProps> = ({ project }) => {
     const activeScopeName = scopes.find(s => s.id === filters.scope)?.name
 
     return (
-        <Container>
+        <Container className="mb-3">
             <Button onClick={() => setShowDialog(true)} className="my-3">
                 Add localization key
             </Button>
