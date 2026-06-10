@@ -41,6 +41,9 @@ class McpView(APIView):
     def post(self, request):
         access = request.auth
 
+        if not access:
+            return Response(status=403)
+
         try:
             body = json.loads(request.body)
         except (json.JSONDecodeError, ValueError):

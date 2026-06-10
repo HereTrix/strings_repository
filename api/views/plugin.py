@@ -59,6 +59,8 @@ class TagsAPI(generics.GenericAPIView):
 
     def get(self, request):
         access = request.auth
+        if not access:
+            return Response(status=status.HTTP_403_FORBIDDEN)
         project = access.project
 
         tags = list(
@@ -95,6 +97,8 @@ class PullAPI(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         access = request.auth
+        if not access:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
         tokens = StringToken.objects.filter(
             project=access.project
@@ -174,6 +178,8 @@ class FetchLanguagesAPI(generics.GenericAPIView):
 
     def get(self, request):
         access = request.auth
+        if not access:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
         codes = [lang.code for lang in access.project.languages.all()]
         return Response(codes)
@@ -211,6 +217,8 @@ class PluginExportAPI(generics.GenericAPIView):
 
     def post(self, request):
         access = request.auth
+        if not access:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
         project = access.project
         user = access.user
