@@ -1,13 +1,13 @@
 name: Image build
 permissions:
   contents: read
-  
+
 on:
   workflow_dispatch:
 
   push:
     tags:
-      - '*.*.*'
+      - "*.*.*"
 
 env:
   REGISTRY: ghcr.io
@@ -25,8 +25,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
-          python-version: '3.14'
-          cache: 'pip'
+          python-version: "3.14"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -43,7 +43,6 @@ jobs:
           DB_NAME: ci
           DEBUG: "true"
         run: python manage.py test api --verbosity=2
-
 
   push_to_registry:
     name: Build and push Docker image to GitHub Packages
@@ -115,11 +114,11 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           image-ref: ghcr.io/heretrix/strings_repository:${{ github.sha }}
-          format: 'table'
-          exit-code: '1'
+          format: "table"
+          exit-code: "1"
           ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
 
       - name: Docker image push
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
