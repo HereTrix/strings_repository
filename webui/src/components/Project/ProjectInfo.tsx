@@ -11,6 +11,7 @@ import AccessTokenPage from "./AccessToken"
 import AIProviderSettings from "./AIProviderSettings"
 import IntegrationSettings from "./IntegrationSettings"
 import WebhookSettings from "./WebhookSettings"
+import LiveBundleSettingsPanel from "./LiveBundleSettings"
 import CollapseSection from "../UI/CollapseSection"
 import ErrorAlert from "../UI/ErrorAlert"
 
@@ -166,6 +167,10 @@ const ProjectInfo: FC<ProjectInfoProps> = ({ project, onProviderChange }) => {
 
             <CollapseSection title="Webhooks">
                 <WebhookSettings project={project} />
+            </CollapseSection>
+
+            <CollapseSection title="Live Bundle">
+                <LiveBundleSettingsPanel project={project} />
             </CollapseSection>
 
             {project.role === ProjectRole.owner && (

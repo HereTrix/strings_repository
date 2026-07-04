@@ -26,3 +26,7 @@ The export endpoint accepts an optional `bundle_version` field to control which 
 If `bundle_version='active'` is requested and no bundle is active, the API returns `404` with an explicit error message.
 
 The version names `active` and `live` are reserved and cannot be used as bundle names.
+
+## Live bundle serving
+
+Activating a bundle also makes it the one served publicly if the project has **live bundle serving** enabled (Project → Info → Live Bundle) — "active" and "live" refer to the same bundle. See [docs/live-bundle.md](live-bundle.md) for the tokenized public API client applications use to fetch it directly.

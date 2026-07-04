@@ -32,12 +32,13 @@ StringsRepository is a self-hosted translation management service built as a Dja
 
 ## Authentication
 
-Three distinct authentication mechanisms coexist:
+Four distinct authentication mechanisms coexist:
 
 | Mechanism | Used by | How |
 |-----------|---------|-----|
 | Knox token | Web UI, main REST API | `Authorization: Token <token>` header; token stored in `localStorage` key `"auth"` |
 | Project access token | CLI, Figma plugin, MCP | `Access-Token` header; handled by `AccessTokenAuth(BaseAuthentication)` in `api/views/plugin.py`; write-gated endpoints also require `WriteTokenPermission` |
+| Live bundle token | Live bundle public API | `Access-Token` header; handled by `LiveBundleTokenAuth(BaseAuthentication)` in `api/views/live_bundle.py`; a single per-project token with no associated user, valid only for `/api/live-bundle/*` — see [docs/live-bundle.md](live-bundle.md) |
 | Session (passkeys / 2FA) | Web UI login flows | Django session during WebAuthn and TOTP challenge/response |
 
 Project members are assigned one of four roles (`owner`, `admin`, `editor`, `translator`) controlling what they can modify — see [docs/roles.md](roles.md).
@@ -68,7 +69,8 @@ Project
   ├── Glossary / GlossaryItem (many)
   ├── WebhookEndpoint (many)
   ├── VerificationReport (many)
-  └── ProjectAccessToken (many)
+  ├── ProjectAccessToken (many)
+  └── LiveBundleSettings (one) — enable flag + token for public live bundle serving
 User
   ├── TOTPDevice (optional)
   └── PasskeyCredential (many)
@@ -76,14 +78,15 @@ User
 
 ## API Routes
 
-URLs are defined manually with `path()` across four modules under `api/urls/`:
+URLs are defined manually with `path()` across five modules under `api/urls/`:
 
 | Module | Prefix | Covers |
 |--------|--------|--------|
 | `auth.py` | `/api/auth/` | Sign-up, login, logout, profile, password, 2FA, passkeys |
-| `project.py` | `/api/project/` | Project CRUD, members, tokens, webhooks, AI settings |
+| `project.py` | `/api/project/` | Project CRUD, members, tokens, webhooks, AI settings, live bundle settings |
 | `strings.py` | `/api/strings/` | Localization keys, translations, tags, bundles, glossary |
 | `plugin.py` | `/api/plugin/`, `/api/mcp` | CLI/Figma push-pull, MCP endpoint |
+| `live_bundle.py` | `/api/live-bundle/` | Public live bundle version/content endpoints — see [docs/live-bundle.md](live-bundle.md) |
 
 DRF's router is intentionally not used — all views are `APIView` subclasses rather than `ModelViewSet`, so the router would add boilerplate without saving anything. The explicit `path()` list is the intended pattern.
 
@@ -95,8 +98,9 @@ All endpoints are under `/api/`. The REST API is consumed by:
 - The CLI client (project access token)
 - The Figma plugin (project access token)
 - The MCP endpoint at `/api/mcp` (project access token) — see [docs/mcp.md](mcp.md)
+- Client applications via the live bundle API at `/api/live-bundle/*` (live bundle token) — see [docs/live-bundle.md](live-bundle.md)
 
-CORS is enabled only for `/api/plugin/*` and `/api/mcp`; the main API does not need it because the SPA is served by the same process.
+CORS is enabled only for `/api/plugin/*`, `/api/mcp`, and `/api/live-bundle/*`; the main API does not need it because the SPA is served by the same process.
 
 ## MCP Endpoint
 
@@ -196,6 +200,10 @@ To add a new export/import format, touch these files in order:
 1. Implement `read(file) -> list[TranslationModel]` (and `needs_language_code()`) in the same or a new file.
 2. Add a member to `ImportFile` enum in `api/file_processors/import_file_type.py` (value = the file extension without the dot).
 3. Register the reader in `READER_MAP` in `api/file_processors/file_processor.py`, keyed by `ImportFile.<name>.name`.
+
+## Live Bundle Cache
+
+Generated live bundle content (see [docs/live-bundle.md](live-bundle.md)) is cached to disk under `LIVE_BUNDLE_CACHE_ROOT` (`<project_id>/<bundle_id>/<hash-of-filters>.<ext>`), separate from `MEDIA_ROOT` so it is never reachable via the `MEDIA_URL` static file route — only through the token-checked `LiveBundleContentAPI` view. Writes are atomic (temp file + `os.replace`) to avoid partial reads under concurrent requests. The cache directory is not backed by a persistent volume by default; losing it on redeploy is expected, since content regenerates from the database on the next cache miss.
 
 ## Encryption
 

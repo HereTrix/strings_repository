@@ -14,6 +14,7 @@ from api.views.history import ProjectHistoryAPI, ProjectHistoryExportAPI
 from api.views.scope import ScopeDetailAPI, ScopeImageAPI, ScopeListCreateAPI, ScopeTokensAPI
 from api.views.webhook import WebhookDetailAPI, WebhookEventsAPI, WebhookListAPI, WebhookLogsAPI, WebhookVerifyAPI
 from api.views.bundle import BundleActivateAPI, BundleCompareAPI, BundleCompareExportAPI, BundleDeactivateAPI, BundleDetailAPI, BundleExportAPI, BundleListCreateAPI
+from api.views.live_bundle import LiveBundleSettingsAPI, LiveBundleRegenerateAPI
 from api.views.ai_provider import AIProviderAPI
 from api.views.glossary import (
     GlossaryTermListCreateAPI, GlossaryTermDetailAPI,
@@ -71,6 +72,9 @@ urlpatterns = [
     path('project/<int:pk>/bundles/<int:bundle_id>/activate', BundleActivateAPI.as_view()),
     path('project/<int:pk>/bundles/<int:bundle_id>/deactivate', BundleDeactivateAPI.as_view()),
     path('project/<int:pk>/bundles/<int:bundle_id>/export', BundleExportAPI.as_view()),
+    # live bundle
+    path('project/<int:pk>/live-bundle', LiveBundleSettingsAPI.as_view()),
+    path('project/<int:pk>/live-bundle/regenerate', LiveBundleRegenerateAPI.as_view()),
     # AI provider
     path('project/<int:pk>/ai-provider', AIProviderAPI.as_view()),
     # glossary — named sub-routes MUST precede <int:term_id>

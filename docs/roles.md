@@ -31,6 +31,8 @@ Role checks are centralised as class-level lists on `ProjectRole`, used in ORM f
 | Edit translations | ✓ | ✓ | ✓ | ✓ |
 | Create / edit / delete keys | ✓ | ✓ | ✓ | — |
 | Manage bundles | ✓ | ✓ | ✓ | — |
+| Enable / disable live bundle serving, regenerate its token | ✓ | ✓ | — | — |
+| View live bundle access token | ✓ | ✓ | ✓ | — |
 | Import strings | ✓ | ✓ | ✓ | — |
 | Add / remove languages | ✓ | ✓ | — | — |
 | Manage scopes | ✓ | ✓ | — | — |
@@ -64,3 +66,7 @@ Project access tokens (used by the CLI, Figma plugin, and MCP endpoint) are inde
 | `write` | ✓ | ✓ |
 
 When a member is removed from a project, all their access tokens for that project are deleted automatically.
+
+## Live Bundle Token
+
+The [live bundle](live-bundle.md) access token is a separate, single token per project — not tied to an individual user and not part of the project access token system above. It authenticates only against the two live bundle endpoints and grants no other API access. See [docs/live-bundle.md](live-bundle.md) for details.
