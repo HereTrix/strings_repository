@@ -23,6 +23,7 @@ This threat model covers the application layer. Network-layer controls (firewall
 | Application secret key (`APP_SECRET_KEY`) | Critical | Compromise allows forging sessions and decrypting stored secrets |
 | Database contents | High | Contains all of the above |
 | Webhook signing secrets | Medium | Allow forging payloads to downstream webhook consumers |
+| Live bundle access tokens | Medium | Grant read-only access to one project's currently-live translation bundle via a public, unauthenticated-otherwise endpoint |
 
 ---
 
@@ -32,6 +33,7 @@ This threat model covers the application layer. Network-layer controls (firewall
 ┌──────────────────────────────────────────────────────────┐
 │  Internet / Untrusted Zone                               │
 │  - End users (browsers, CLI, CI pipelines)               │
+│  - Client apps (mobile/backend) via live bundle tokens   │
 │  - AI provider APIs (outbound)                           │
 │  - Webhook consumers (outbound)                          │
 └────────────────┬─────────────────────────────────────────┘
@@ -85,6 +87,7 @@ This threat model covers the application layer. Network-layer controls (firewall
 | Credential replay | Tokens are per-device; revocation removes all issued tokens for a user | Low |
 | Passkey / WebAuthn bypass | WebAuthn challenge/response is origin-bound and replay-resistant by design | Low |
 | TOTP replay | django-otp enforces single-use codes within the validity window | Low |
+| Live bundle / plugin / CLI token misuse | These machine tokens (`Access-Token` header) are scoped to their own dedicated endpoints only and cannot authenticate against the general Knox-protected API surface; the live bundle token additionally has no associated user account and is immediately invalidated on disable/regenerate | Low |
 
 ### 5.2 Authorization and Access Control
 
@@ -94,6 +97,7 @@ This threat model covers the application layer. Network-layer controls (firewall
 | Vertical privilege escalation (viewer → admin) | Role checks use DB-persisted role field; no client-side trust | Low |
 | Insecure Direct Object Reference | Django ORM queries always scope resources to the authenticated user's projects | Low |
 | Unauthenticated API access | All non-auth endpoints require a valid Knox token; enforced by DRF permission class | Low |
+| Live bundle content served without opt-in | The public `/api/live-bundle/*` endpoints only ever return data once a project owner/admin explicitly enables live bundle serving; disabled-by-default, and the underlying disk cache is stored outside `MEDIA_ROOT`/`MEDIA_URL` so it is never reachable except through the token-checked view | Low |
 
 ### 5.3 Input Validation and Injection
 
@@ -147,6 +151,7 @@ This section maps each security requirement from [SECURITY.md](../SECURITY.md) t
 | Requirement | Justification |
 |-------------|--------------|
 | Knox token authentication | All API endpoints require a valid token (§5.1). Tokens are cryptographically random and revocable. |
+| Live bundle / plugin / CLI token scoping | Machine tokens authenticate only against their own dedicated endpoints, never the general API (§5.1, §5.2). |
 | Per-project RBAC | Role is checked on every request; no client-side trust (§5.2). |
 | TOTP 2FA | Single-use codes with django-otp; replay-resistant (§5.1). |
 | Passkeys (WebAuthn) | Origin-bound challenge/response; phishing-resistant (§5.1). |

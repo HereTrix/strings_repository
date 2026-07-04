@@ -8,4 +8,5 @@ urlpatterns = [
     path('', include('api.urls.project')),
     path('', include('api.urls.strings')),
     path('', include('api.urls.plugin')),
+    path('', include('api.urls.live_bundle')),
 ]

@@ -50,13 +50,15 @@ CORS_ALLOWED_ORIGINS = [
 # Figma plugins run in a sandboxed iframe which sends a null Origin.
 CORS_ALLOWED_ORIGIN_REGEXES = [r'^null$']
 
-CORS_URLS_REGEX = r'^/api/(plugin/.*|mcp)$'
+CORS_URLS_REGEX = r'^/api/(plugin/.*|mcp|live-bundle/.*)$'
 
 CORS_ALLOW_HEADERS = [
     'Access-Token',
     'Content-Type',
     'User-Agent',
 ]
+
+CORS_EXPOSE_HEADERS = ['X-Bundle-Version']
 
 CORS_ALLOW_METHODS = [
     'GET',
@@ -213,6 +215,9 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Not served via MEDIA_URL/static() — only reachable through LiveBundleContentAPI's token check.
+LIVE_BUNDLE_CACHE_ROOT = BASE_DIR / 'live_bundle_cache'
 
 
 # Default primary key field type

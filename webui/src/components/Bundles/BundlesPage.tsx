@@ -120,7 +120,7 @@ const BundlesPage: FC<BundlesPageProps> = ({ project }): JSX.Element => {
                             <Stack gap={0}>
                                 <Stack direction="horizontal" gap={2}>
                                     <strong>{bundle.version_name}</strong>
-                                    {bundle.is_active && <Badge bg="success">active</Badge>}
+                                    {bundle.is_active && <Badge bg="success">live</Badge>}
                                 </Stack>
                                 <small className="text-muted">
                                     {bundle.translation_count} translations
@@ -153,7 +153,7 @@ const BundlesPage: FC<BundlesPageProps> = ({ project }): JSX.Element => {
                                                 size="sm"
                                                 onClick={() => deactivate(bundle)}
                                             >
-                                                Deactivate
+                                                Remove from live
                                             </Button>
                                         ) : (
                                             <Button
@@ -161,7 +161,7 @@ const BundlesPage: FC<BundlesPageProps> = ({ project }): JSX.Element => {
                                                 size="sm"
                                                 onClick={() => activate(bundle)}
                                             >
-                                                Activate
+                                                Make live
                                             </Button>
                                         )}
                                         <Button

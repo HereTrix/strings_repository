@@ -6,6 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Live bundle serving:** expose a project's live bundle over a tokenized public API (`/api/live-bundle/version`, `/api/live-bundle/content`) so client applications can fetch translations directly at runtime, with tag/scope filtering and on-demand disk caching. Configurable per project from Project → Info → Live Bundle.
+
 ### Planned
 - **Internationalization (i18n):** Localize the web UI to support languages other than English, enabling non-English-speaking teams to use the application in their own language.
 

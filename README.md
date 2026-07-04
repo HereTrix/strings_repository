@@ -18,6 +18,7 @@
 * **Scopes** - group string keys into named scopes with optional context images; translators browse translations by scope in a visual gallery
 * **Import & export** - import/export translations in multiple supported formats
 * **Translation bundles** - versioned snapshots of translations for safe production releases and rollbacks
+* **Live bundle serving** - expose a project's live bundle over a tokenized public API so mobile apps and backend services can fetch translations directly, with tag/scope filtering and on-demand caching
 * **Machine translation** - DeepL, Google Translate, and Generic AI (any OpenAI-compatible REST API) integration
 * **AI translation verification** - async quality audits powered by any OpenAI-compatible or Anthropic-compatible provider; source quality and translation accuracy modes with per-check selection, scope/tag filtering, suggestion review, and one-click apply
 * **Two-factor authentication (2FA)** - TOTP-based 2FA per user account; project owners can require 2FA for all project members
@@ -65,6 +66,12 @@
 Bundles are versioned snapshots of all project translations. Pin a release state, roll back, compare against live, or export from any snapshot. The export endpoint accepts a `bundle_version` field to select live data, the active bundle, or a specific named version.
 
 See [docs/bundles.md](docs/bundles.md) for the full workflow and API reference.
+
+## Live Bundle Serving
+
+Enable per-project public serving of the live bundle so client applications can fetch translations directly over HTTP using a dedicated access token, with optional tag/scope filtering and on-demand disk caching.
+
+See [docs/live-bundle.md](docs/live-bundle.md) for the full API reference.
 
 ## Figma Plugin API
 

@@ -13,6 +13,7 @@ from api.models.translations import Translation
 from api.models.users import TwoFAVerification, BackupCode, PasskeyCredential, PasskeyChallenge
 from api.models.verification import VerificationReport, VerificationComment
 from api.models.glossary import GlossaryTerm, GlossaryTranslation, GlossaryExtractionJob
+from api.models.live_bundle import LiveBundleSettings
 
 admin.site.register(ProjectRole)
 admin.site.register(Project)
@@ -89,3 +90,13 @@ class GlossaryExtractionJobAdmin(admin.ModelAdmin):
     list_display = ['id', 'project', 'status', 'created_by', 'created_at', 'completed_at']
     list_filter = ['status']
     search_fields = ['project__name']
+
+
+@admin.register(LiveBundleSettings)
+class LiveBundleSettingsAdmin(admin.ModelAdmin):
+    list_display = ['project', 'enabled', 'updated_at']
+    search_fields = ['project__name']
+
+    def enabled(self, obj):
+        return obj.token is not None
+    enabled.boolean = True
