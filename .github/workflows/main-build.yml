@@ -149,7 +149,7 @@ jobs:
           fetch-depth: 0
 
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@cb9bde2e2c9cdf3e6c075e0a4578b39c3c45f8a8
+        uses: crazy-max/ghaction-import-gpg@cb9bde2e2525e640591a934b1fd28eef1dcaf5e5
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
@@ -163,7 +163,7 @@ jobs:
           gpg --armor --detach-sign checksums.txt
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@c062e08bd532815e2082a7e09ce9571a6d9aed3c
+        uses: softprops/action-gh-release@2bb465e97f322d3cb2a965294d483e0d26a67aa9
         with:
           generate_release_notes: true
           make_latest: true
