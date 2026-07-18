@@ -167,6 +167,14 @@ jobs:
         with:
           generate_release_notes: true
           make_latest: true
+          draft: true
           files: |
             checksums.txt
             checksums.txt.asc
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          gh release edit "$TAG" --draft=false --repo "${{ github.repository }}"
