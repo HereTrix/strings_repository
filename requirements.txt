@@ -7,9 +7,9 @@ xlsxwriter==3.2.9
 polib==1.2.0
 whitenoise==6.12.0
 django-environ==0.14.0
-django-filter==25.2
+django-filter==26.1
 gunicorn==26.0.0
-cryptography==49.0.0
+cryptography==50.0.1
 Pillow==12.3.0
 django-otp==1.7.0
 qrcode[pil]==8.2.0
