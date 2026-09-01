@@ -262,9 +262,9 @@ django-rest-knox==5.1.0 \
     --hash=sha256:78307dce32858679fe96afb06c4ab2d4fe0ed085c7a739a7ccc03a14dea2b37b \
     --hash=sha256:7dad21e91091db07796ea96f559fd2e1f67b8d42748d4e140d2fa7a0319538e7
     # via -r requirements.txt
-djangorestframework==3.17.1 \
-    --hash=sha256:a6def5f447fe78ff853bff1d47a3c59bf38f5434b031780b351b0c73a62db1a5 \
-    --hash=sha256:c3c74dd3e83a5a3efc37b3c18d92bd6f86a6791c7b7d4dff62bb068500e76457
+djangorestframework==3.17.2 \
+    --hash=sha256:89ed713b6dc83e1539f214b7d10808ae19bb8511004beba886225da6d5c9dafa \
+    --hash=sha256:cb0546a7415d5b46c04e0f4fe0a54b2109f4fdd5e83ca773c8c6183a6493d042
     # via
     #   -r requirements.txt
     #   django-rest-knox
