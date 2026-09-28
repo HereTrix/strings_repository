@@ -14,5 +14,5 @@ Pillow==12.3.0
 django-otp==1.7.3
 qrcode[pil]==8.2.0
 django-q2==1.11.1
-webauthn==3.0.0
+webauthn==3.0.1
 defusedxml==0.7.1
