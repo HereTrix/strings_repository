@@ -23,6 +23,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# TMPDIR must exist before any apt/pip step runs (ca-certificates' postinst uses it)
+RUN mkdir -p /app/tmp && chmod 1777 /app/tmp
+
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
         wget \
         gcc \
@@ -37,12 +40,12 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
 
 # Install Python dependencies
 COPY requirements*.txt ./
-RUN pip install --no-cache-dir -r requirements.txt \
+RUN pip install --no-cache-dir --require-hashes -r requirements.hash.txt \
     && if [ "$DB" = "postgresql" ] || [ "$DB" = "all" ]; then \
-           pip install --no-cache-dir -r requirements-postgresql.txt; \
+           pip install --no-cache-dir --require-hashes -r requirements-postgresql.hash.txt; \
        fi \
     && if [ "$DB" = "mysql" ] || [ "$DB" = "all" ]; then \
-           pip install --no-cache-dir -r requirements-mysql.txt; \
+           pip install --no-cache-dir --require-hashes -r requirements-mysql.hash.txt; \
        fi
 
 # Copy application source

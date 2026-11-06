@@ -22,7 +22,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install Bandit
-        run: pip install bandit
+        run: pip install --require-hashes -r requirements-lint.hash.txt
 
       - name: Run Bandit security scan
         run: bandit -c bandit.yml -r api/ -ll
