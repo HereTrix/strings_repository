@@ -51,6 +51,6 @@
     "react-infinite-scroll-component": "^7.2.1",
     "react-router-dom": "^7.18.5",
     "ts-loader": "^9.6.2",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   }
 }
